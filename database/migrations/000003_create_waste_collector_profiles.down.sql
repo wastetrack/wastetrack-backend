@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS waste_collector_profiles;

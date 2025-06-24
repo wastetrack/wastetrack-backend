@@ -1,0 +1,44 @@
+config.json
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Output of `go build`
+*.out
+
+# Build directories
+/build/
+/bin/
+/dist/
+
+# Vendor directory (if not using Go modules)
+vendor/
+
+# Go workspace file (Go 1.18+)
+go.work
+go.work.sum
+
+# Dependency directories (Go modules)
+**/go.sum
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Test cache
+*.test
+
+# Environment files
+.env
+.env.*

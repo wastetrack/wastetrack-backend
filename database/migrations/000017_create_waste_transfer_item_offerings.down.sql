@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS waste_transfer_item_offerings
