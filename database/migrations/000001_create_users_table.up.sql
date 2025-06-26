@@ -1,4 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS postgis;
 -- Create enum types
 DO $$ 
 BEGIN
@@ -10,18 +11,22 @@ END $$;
 
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    username TEXT UNIQUE NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
-    role user_role NOT NULL,
-    is_email_verified BOOLEAN DEFAULT FALSE,
+    role user_role NOT NULL DEFAULT 'customer',
     phone_number TEXT,
     institution TEXT,
     address TEXT,
     city TEXT,
     province TEXT,
-    points DECIMAL DEFAULT 0,
+    points BIGINT DEFAULT 0,
     balance BIGINT DEFAULT 0,
-    token TEXT,
+    location GEOGRAPHY(Point, 4326),
+    is_email_verified BOOLEAN DEFAULT FALSE,
+    email_verification_token TEXT,
+    reset_password_token TEXT,
+    reset_password_expiry TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
