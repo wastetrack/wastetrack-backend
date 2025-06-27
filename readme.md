@@ -2,7 +2,7 @@
 migrate create -ext sql -dir database/migrations -seq '<migration_name>'
 
 # Apply Migrations
-migrate -database "postgres://user:password@localhost:5432/your_db?sslmode=disable" -path database/migrations up
+migrate -database "postgres://user:password@localhost:5432/your_db?sslmode=disable" -path database/migrations up 
 
 # Rollback
 1. to undo migrations
@@ -20,4 +20,11 @@ migrate -database "postgres://user:password@localhost:5432/your_db?sslmode=disab
 
 ```bash
 go run cmd/web/main.go
+```
+
+# First time running
+
+```bash
+go get
+go go mod tidy
 ```
