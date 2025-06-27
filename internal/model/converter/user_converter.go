@@ -1,3 +1,4 @@
+// internal/converter/user.go
 package converter
 
 import (
@@ -6,6 +7,14 @@ import (
 )
 
 func UserToResponse(user *entity.User) *model.UserResponse {
+	var location *model.LocationResponse
+	if user.Location != nil {
+		location = &model.LocationResponse{
+			Latitude:  user.Location.Lat,
+			Longitude: user.Location.Lng,
+		}
+	}
+
 	return &model.UserResponse{
 		ID:              user.ID,
 		Username:        user.Username,
@@ -19,6 +28,8 @@ func UserToResponse(user *entity.User) *model.UserResponse {
 		Points:          user.Points,
 		Balance:         user.Balance,
 		IsEmailVerified: user.IsEmailVerified,
-		Location:        parseLocation(*user.Location),
+		Location:        location,
+		CreatedAt:       &user.CreatedAt,
+		UpdatedAt:       &user.UpdatedAt,
 	}
 }

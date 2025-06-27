@@ -36,11 +36,11 @@ func (e *EmailHelper) GenerateVerificationToken() (string, error) {
 func (e *EmailHelper) SendVerificationEmail(toEmail, username, token, baseURL string) error {
 	verificationURL := fmt.Sprintf("%s/verify-email?token=%s", baseURL, token)
 
-	subject := "Email Verification - Blessing BE"
+	subject := "Email Verification - Wastetrack"
 	body := fmt.Sprintf(`
 		Hi %s,
 		
-		Welcome to Blessing BE! Please verify your email address by clicking the link below:
+		Welcome to Wastetrack! Please verify your email address by clicking the link below:
 		
 		%s
 		
@@ -49,7 +49,7 @@ func (e *EmailHelper) SendVerificationEmail(toEmail, username, token, baseURL st
 		If you didn't create an account, please ignore this email.
 		
 		Best regards,
-		The Blessing BE Team
+		Wastetrack Team
 	`, username, verificationURL)
 
 	return e.sendEmail(toEmail, subject, body)

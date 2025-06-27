@@ -18,8 +18,8 @@ type UserResponse struct {
 	Province        string            `json:"province,omitempty"`
 	Points          int64             `json:"points"`
 	Balance         int64             `json:"balance"`
-	IsEmailVerified bool              `json:"is_email_verified"`
 	Location        *LocationResponse `json:"location,omitempty"`
+	IsEmailVerified bool              `json:"is_email_verified"`
 	AccessToken     string            `json:"access_token,omitempty"`
 	RefreshToken    string            `json:"refresh_token,omitempty"`
 	CreatedAt       *time.Time        `json:"created_at,omitempty"`
@@ -27,10 +27,16 @@ type UserResponse struct {
 }
 
 type RegisterUserRequest struct {
-	Username string `json:"username" validate:"required,max=100"`
-	Email    string `json:"email" validate:"required,email,max=100"`
-	Password string `json:"password" validate:"required,min=8,max=100"`
-	Role     string `json:"role" validate:"required,max=100"`
+	Username    string           `json:"username" validate:"required,max=100"`
+	Email       string           `json:"email" validate:"required,email,max=100"`
+	Password    string           `json:"password" validate:"required,min=8,max=100"`
+	Role        string           `json:"role" validate:"required,max=100"`
+	PhoneNumber string           `json:"phone_number" validate:"required,max=100"`
+	Institution string           `json:"institution"` // Not required
+	Address     string           `json:"address" validate:"required,max=100"`
+	City        string           `json:"city" validate:"required,max=100"`
+	Province    string           `json:"province" validate:"required,max=100"`
+	Location    *LocationRequest `json:"location"` // Optional pointer to allow null
 }
 
 type LoginUserRequest struct {
@@ -60,7 +66,8 @@ type RefreshTokenRequest struct {
 }
 
 type LogoutUserRequest struct {
-	ID string `json:"id" validate:"required,max=100"`
+	ID           string `json:"id" validate:"required,max=100"`
+	RefreshToken string `json:"refresh_token,omitempty"` // Optional for better logout
 }
 
 type GetUserRequest struct {

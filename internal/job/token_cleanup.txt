@@ -1,0 +1,23 @@
+// package jobs
+
+// import (
+// 	"time"
+
+// 	"github.com/wastetrack/wastetrack-backend/internal/helper"
+// 	"gorm.io/gorm"
+// )
+
+// func StartTokenCleanupJob(db *gorm.DB, jwtHelper *helper.JWTHelper) {
+// 	ticker := time.NewTicker(24 * time.Hour) // Run daily
+// 	go func() {
+// 		for {
+// 			select {
+// 			case <-ticker.C:
+// 				if err := jwtHelper.CleanupExpiredTokens(db); err != nil {
+// 					// Log error
+// 					break
+// 				}
+// 			}
+// 		}
+// 	}()
+// }

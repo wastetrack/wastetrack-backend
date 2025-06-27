@@ -56,8 +56,6 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 	return ctx.JSON(model.WebResponse[*model.UserResponse]{Data: response})
 }
 
-// Add new auth-specific endpoints to UserController
-
 func (c *UserController) VerifyEmail(ctx *fiber.Ctx) error {
 	request := new(model.VerifyEmailRequest)
 	err := ctx.BodyParser(request)

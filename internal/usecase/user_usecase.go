@@ -6,12 +6,14 @@ import (
 
 	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/wastetrack/wastetrack-backend/internal/entity"
 	"github.com/wastetrack/wastetrack-backend/internal/helper"
 	"github.com/wastetrack/wastetrack-backend/internal/model"
 	"github.com/wastetrack/wastetrack-backend/internal/model/converter"
 	"github.com/wastetrack/wastetrack-backend/internal/repository"
+	"github.com/wastetrack/wastetrack-backend/internal/types"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -79,14 +81,27 @@ func (c *UserUseCase) Register(ctx context.Context, request *model.RegisterUserR
 		c.Log.Warnf("Failed to generate verification token: %v", err)
 		return nil, fiber.ErrInternalServerError
 	}
+	var location *types.Point
+	if request.Location != nil {
+		location = &types.Point{
+			Lat: request.Location.Latitude,
+			Lng: request.Location.Longitude,
+		}
+	}
 
 	user := &entity.User{
-		Email:                  request.Email,
 		Username:               request.Username,
+		Email:                  request.Email,
 		Password:               string(password),
 		Role:                   request.Role,
+		PhoneNumber:            request.PhoneNumber,
+		Institution:            request.Institution,
+		Address:                request.Address,
+		City:                   request.City,
+		Province:               request.Province,
 		IsEmailVerified:        false,
 		EmailVerificationToken: verificationToken,
+		Location:               location,
 	}
 
 	if err := c.UserRepository.Create(tx, user); err != nil {
@@ -129,6 +144,17 @@ func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequest
 		return nil, fiber.ErrUnauthorized
 	}
 
+	// Optional: Check session limit (e.g., max 5 active sessions)
+	canCreateSession, err := c.JWTHelper.CheckSessionLimit(tx, user.ID, 5)
+	if err != nil {
+		c.Log.Warnf("Failed to check session limit: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+	if !canCreateSession {
+		// Optionally revoke oldest token or return error
+		return nil, fiber.NewError(fiber.StatusTooManyRequests, "Too many active sessions")
+	}
+
 	// Generate JWT tokens
 	accessToken, err := c.JWTHelper.GenerateAccessToken(user.ID.String(), user.Role, user.IsEmailVerified)
 	if err != nil {
@@ -136,7 +162,8 @@ func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequest
 		return nil, fiber.ErrInternalServerError
 	}
 
-	refreshToken, err := c.JWTHelper.GenerateRefreshToken(user.ID.String())
+	// Generate and store refresh token
+	refreshToken, err := c.JWTHelper.GenerateRefreshToken(tx, user.ID)
 	if err != nil {
 		c.Log.Warnf("Failed to generate refresh token: %+v", err)
 		return nil, fiber.ErrInternalServerError
@@ -181,11 +208,6 @@ func (c *UserUseCase) VerifyEmail(ctx context.Context, request *model.VerifyEmai
 		return nil, fiber.ErrInternalServerError
 	}
 
-	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed commit transaction: %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-
 	// Generate new tokens with updated email verification status
 	accessToken, err := c.JWTHelper.GenerateAccessToken(user.ID.String(), user.Role, user.IsEmailVerified)
 	if err != nil {
@@ -193,9 +215,14 @@ func (c *UserUseCase) VerifyEmail(ctx context.Context, request *model.VerifyEmai
 		return nil, fiber.ErrInternalServerError
 	}
 
-	refreshToken, err := c.JWTHelper.GenerateRefreshToken(user.ID.String())
+	refreshToken, err := c.JWTHelper.GenerateRefreshToken(tx, user.ID)
 	if err != nil {
 		c.Log.Warnf("Failed to generate refresh token: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction: %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
@@ -255,25 +282,31 @@ func (c *UserUseCase) ResendVerification(ctx context.Context, request *model.Res
 }
 
 func (c *UserUseCase) RefreshToken(ctx context.Context, request *model.RefreshTokenRequest) (*model.UserResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
 	if err := c.Validate.Struct(request); err != nil {
 		c.Log.Warnf("Invalid request body: %+v", err)
 		return nil, fiber.ErrBadRequest
 	}
 
-	// Validate refresh token
-	userID, err := c.JWTHelper.ValidateRefreshToken(request.RefreshToken)
+	// Validate refresh token from database
+	refreshToken, err := c.JWTHelper.ValidateRefreshToken(tx, request.RefreshToken)
 	if err != nil {
 		c.Log.Warnf("Invalid refresh token: %+v", err)
 		return nil, fiber.ErrUnauthorized
 	}
 
-	tx := c.DB.WithContext(ctx).Begin()
-	defer tx.Rollback()
-
 	user := new(entity.User)
-	if err := c.UserRepository.FindById(tx, user, userID); err != nil {
+	if err := c.UserRepository.FindById(tx, user, refreshToken.UserID.String()); err != nil {
 		c.Log.Warnf("Failed find user by id: %+v", err)
 		return nil, fiber.ErrNotFound
+	}
+
+	// Revoke the used refresh token
+	if err := c.JWTHelper.RevokeRefreshToken(tx, request.RefreshToken); err != nil {
+		c.Log.Warnf("Failed to revoke refresh token: %+v", err)
+		return nil, fiber.ErrInternalServerError
 	}
 
 	// Generate new tokens
@@ -283,7 +316,7 @@ func (c *UserUseCase) RefreshToken(ctx context.Context, request *model.RefreshTo
 		return nil, fiber.ErrInternalServerError
 	}
 
-	refreshToken, err := c.JWTHelper.GenerateRefreshToken(user.ID.String())
+	newRefreshToken, err := c.JWTHelper.GenerateRefreshToken(tx, user.ID)
 	if err != nil {
 		c.Log.Warnf("Failed to generate refresh token: %+v", err)
 		return nil, fiber.ErrInternalServerError
@@ -296,7 +329,7 @@ func (c *UserUseCase) RefreshToken(ctx context.Context, request *model.RefreshTo
 
 	response := converter.UserToResponse(user)
 	response.AccessToken = accessToken
-	response.RefreshToken = refreshToken
+	response.RefreshToken = newRefreshToken
 
 	return response, nil
 }
@@ -530,20 +563,43 @@ func (c *UserUseCase) Delete(ctx context.Context, request *model.DeleteUserReque
 }
 
 func (c *UserUseCase) Logout(ctx context.Context, request *model.LogoutUserRequest) (bool, error) {
-	// In a stateless JWT system, logout is typically handled client-side
-	// by removing the tokens. However, you could implement token blacklisting
-	// if needed for additional security.
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
 
 	if err := c.Validate.Struct(request); err != nil {
 		c.Log.Warnf("Invalid request body: %+v", err)
 		return false, fiber.ErrBadRequest
 	}
 
-	// For now, we'll just return true as the client should remove the tokens
-	// In a production system, you might want to:
-	// 1. Add tokens to a blacklist
-	// 2. Store logout events
-	// 3. Invalidate refresh tokens in database
+	// If refresh token provided, revoke it
+	if request.RefreshToken != "" {
+		if err := c.JWTHelper.RevokeRefreshToken(tx, request.RefreshToken); err != nil {
+			c.Log.Warnf("Failed to revoke refresh token: %+v", err)
+			// Don't fail logout if token doesn't exist
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction: %+v", err)
+		return false, fiber.ErrInternalServerError
+	}
 
 	return true, nil
+}
+
+func (c *UserUseCase) LogoutAllDevices(ctx context.Context, userID string) error {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	if err := c.JWTHelper.RevokeAllUserTokens(tx, userUUID); err != nil {
+		c.Log.Warnf("Failed to revoke all user tokens: %+v", err)
+		return fiber.ErrInternalServerError
+	}
+
+	return tx.Commit().Error
 }

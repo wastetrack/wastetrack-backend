@@ -25,12 +25,18 @@ type BootstrapConfig struct {
 }
 
 func Bootstrap(config *BootstrapConfig) {
+
+	// Setup repositories
+	userRepository := repository.NewUserRepository(config.Log)
+	refreshTokenRepository := repository.NewRefreshTokenRepository(config.Log)
+
 	// Setup JWT Helper
 	jwtHelper := helper.NewJWTHelper(
 		config.Config.GetString("jwt.secret_key"),                     // JWT secret for access tokens
 		config.Config.GetString("jwt.refresh_secret_key"),             // JWT secret for refresh tokens
 		config.Config.GetDuration("jwt.access_token_ttl")*time.Minute, // Access token TTL (e.g., 15 minutes)
 		config.Config.GetDuration("jwt.refresh_token_ttl")*time.Hour,  // Refresh token TTL (e.g., 24 hours)
+		refreshTokenRepository,
 	)
 
 	// Setup Email Helper
@@ -41,9 +47,6 @@ func Bootstrap(config *BootstrapConfig) {
 		config.Config.GetString("email.smtp_password"), // SMTP password (app password for Gmail)
 		config.Config.GetString("email.from_email"),    // From email address
 	)
-
-	// Setup repositories
-	userRepository := repository.NewUserRepository(config.Log)
 
 	// Setup use cases
 	userUseCase := usecase.NewUserUseCase(
