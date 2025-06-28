@@ -104,21 +104,33 @@ func (c *UserController) Get(ctx *fiber.Ctx) error {
 	return ctx.JSON(model.WebResponse[*model.UserResponse]{Data: response})
 }
 
-// func (c *UserController) Logout(ctx *fiber.Ctx) error {
-// 	auth := middleware.GetUser(ctx)
+func (c *UserController) Logout(ctx *fiber.Ctx) error {
+	auth := middleware.GetUser(ctx)
 
-// 	request := &model.LogoutUserRequest{
-// 		ID: auth.ID,
-// 	}
+	request := &model.LogoutUserRequest{
+		ID: auth.ID,
+	}
 
-// 	response, err := c.UserUsecase.Logout(ctx.UserContext(), request)
-// 	if err != nil {
-// 		c.Log.WithError(err).Warnf("Failed to logout user")
-// 		return err
-// 	}
+	response, err := c.UserUsecase.Logout(ctx.UserContext(), request)
+	if err != nil {
+		c.Log.WithError(err).Warnf("Failed to logout user")
+		return err
+	}
 
-// 	return ctx.JSON(model.WebResponse[bool]{Data: response})
-// }
+	return ctx.JSON(model.WebResponse[bool]{Data: response})
+}
+
+func (c *UserController) LogoutAllDevices(ctx *fiber.Ctx) error {
+	auth := middleware.GetUser(ctx)
+
+	err := c.UserUsecase.LogoutAllDevices(ctx.UserContext(), auth.ID)
+	if err != nil {
+		c.Log.WithError(err).Warn("Failed to logout user from all devices")
+		return err
+	}
+
+	return ctx.JSON(model.WebResponse[bool]{Data: true})
+}
 
 func (c *UserController) ResendVerification(ctx *fiber.Ctx) error {
 	request := new(model.ResendVerificationRequest)

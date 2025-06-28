@@ -4,7 +4,7 @@ DO $$
 BEGIN
     -- Collector management status
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'collector_status') THEN
-        CREATE TYPE collector_status AS ENUM ('pending', 'approved', 'rejected');
+        CREATE TYPE collector_status AS ENUM ('active', 'inactive');
     END IF;
 END $$;
 

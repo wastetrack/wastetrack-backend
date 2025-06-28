@@ -1,3 +1,4 @@
+-- TODO: Revise Request status
 DO $$ 
 BEGIN
     -- Delivery types

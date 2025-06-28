@@ -33,7 +33,8 @@ func (c *RouteConfig) SetupAuthRoute() {
 
 	// Authenticated user endpoints
 	auth.Get("/users/current", c.UserController.Current)
-	// auth.Post("/auth/logout", c.UserController.Logout)
+	auth.Post("/auth/logout", c.UserController.Logout)
+	auth.Post("/auth/logout-all-devices", c.UserController.LogoutAllDevices)
 	// auth.Put("/users", c.UserController.Update)
 	// auth.Delete("/users", c.UserController.Delete)
 

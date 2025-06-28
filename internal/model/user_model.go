@@ -67,7 +67,7 @@ type RefreshTokenRequest struct {
 
 type LogoutUserRequest struct {
 	ID           string `json:"id" validate:"required,max=100"`
-	RefreshToken string `json:"refresh_token,omitempty"` // Optional for better logout
+	RefreshToken string `json:"refresh_token,omitempty"`
 }
 
 type GetUserRequest struct {

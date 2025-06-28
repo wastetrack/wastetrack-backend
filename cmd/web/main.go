@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/wastetrack/wastetrack-backend/internal/config"
 	"github.com/wastetrack/wastetrack-backend/pkg/timezone"
 )
@@ -13,6 +14,15 @@ func main() {
 	db := config.NewDatabase(viperConfig, log)
 	validate := config.NewValidator(viperConfig)
 	app := config.NewFiber(viperConfig)
+
+	// Add CORS middleware
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "http://localhost:3000",
+		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
+		AllowHeaders:     "Origin,Content-Type,Accept,Authorization,Access-Control-Request-Method,Access-Control-Request-Headers",
+		AllowCredentials: true,
+	}))
+
 	timezone.InitTimeLocation()
 	config.Bootstrap(&config.BootstrapConfig{
 		DB:       db,

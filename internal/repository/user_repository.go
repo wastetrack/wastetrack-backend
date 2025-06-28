@@ -35,6 +35,12 @@ func (r *UserRepository) CountByEmail(db *gorm.DB, email string) (int64, error) 
 	return total, err
 }
 
+func (r *UserRepository) CountByUsername(db *gorm.DB, username string) (int64, error) {
+	var total int64
+	err := db.Model(new(entity.User)).Where("username = ?", username).Count(&total).Error
+	return total, err
+}
+
 // func (r *UserRepository) Search(db *gorm.DB, request *model.SearchUserRequest) ([]entity.User, int64, error) {
 // 	var users []entity.User
 // 	if err := db.Scopes(r.FilterUser(request)).Offset((request.Page - 1) * request.Size).Limit(request.Size).Find(&users).Error; err != nil {

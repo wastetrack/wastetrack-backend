@@ -1,3 +1,4 @@
+-- TODO: Revise transaction_type
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Create enum types
