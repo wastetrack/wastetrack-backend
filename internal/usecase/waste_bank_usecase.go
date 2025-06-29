@@ -13,6 +13,7 @@ import (
 	"github.com/wastetrack/wastetrack-backend/internal/model"
 	"github.com/wastetrack/wastetrack-backend/internal/model/converter"
 	"github.com/wastetrack/wastetrack-backend/internal/repository"
+	"github.com/wastetrack/wastetrack-backend/internal/types"
 	"gorm.io/gorm"
 )
 
@@ -66,7 +67,7 @@ func (c *WasteBankUseCase) Create(ctx context.Context, request *model.WasteBankR
 		if err != nil {
 			return nil, fmt.Errorf("invalid open_time format: %w", err)
 		}
-		wasteBank.OpenTime = openTime
+		wasteBank.OpenTime = types.NewTimeOnly(openTime)
 	}
 
 	if request.CloseTime != nil && *request.CloseTime != "" {
@@ -74,7 +75,7 @@ func (c *WasteBankUseCase) Create(ctx context.Context, request *model.WasteBankR
 		if err != nil {
 			return nil, fmt.Errorf("invalid close_time format: %w", err)
 		}
-		wasteBank.CloseTime = closeTime
+		wasteBank.CloseTime = types.NewTimeOnly(closeTime)
 	}
 
 	if err := c.WasteBankRepository.Create(tx, wasteBank); err != nil {
@@ -142,19 +143,19 @@ func (c *WasteBankUseCase) Update(ctx context.Context, request *model.UpdateWast
 	}
 
 	if request.OpenTime != nil && *request.OpenTime != "" {
-		openTime, err := time.Parse("15:04:05", *request.OpenTime)
+		openTime, err := time.Parse("15:04:05Z07:00", *request.OpenTime)
 		if err != nil {
 			return nil, fmt.Errorf("invalid open_time format: %w", err)
 		}
-		wasteBank.OpenTime = openTime
+		wasteBank.OpenTime = types.NewTimeOnly(openTime)
 	}
 
 	if request.CloseTime != nil && *request.CloseTime != "" {
-		closeTime, err := time.Parse("15:04:05", *request.CloseTime)
+		closeTime, err := time.Parse("15:04:05Z07:00", *request.CloseTime)
 		if err != nil {
 			return nil, fmt.Errorf("invalid close_time format: %w", err)
 		}
-		wasteBank.CloseTime = closeTime
+		wasteBank.CloseTime = types.NewTimeOnly(closeTime)
 	}
 
 	if err := c.WasteBankRepository.Update(tx, wasteBank); err != nil {

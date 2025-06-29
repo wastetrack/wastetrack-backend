@@ -7,10 +7,13 @@ import (
 )
 
 type RouteConfig struct {
-	App                 *fiber.App
-	UserController      *http.UserController
-	WasteBankController *http.WasteBankController
-	AuthMiddleware      fiber.Handler
+	App                      *fiber.App
+	UserController           *http.UserController
+	CustomerController       *http.CustomerController
+	WasteBankController      *http.WasteBankController
+	WasteCollectorController *http.WasteCollectorController
+	IndustryController       *http.IndustryController
+	AuthMiddleware           fiber.Handler
 }
 
 func (c *RouteConfig) Setup() {
@@ -38,16 +41,44 @@ func (c *RouteConfig) SetupAuthRoute() {
 	auth.Post("/auth/logout", c.UserController.Logout)
 	auth.Post("/auth/logout-all-devices", c.UserController.LogoutAllDevices)
 
+	// Customer endpoints
+	customerOnly := c.App.Group("/api/customer", c.AuthMiddleware, middleware.RequireRoles("admin", "customer"))
+	// Profiles
+	customerOnly.Get("/profiles/:user_id", c.CustomerController.Get)
+	customerOnly.Put("/profiles/:id", c.CustomerController.Update)
+
 	// WasteBank endpoints
 	wasteBankOnly := c.App.Group("/api/waste-bank", c.AuthMiddleware, middleware.RequireRoles("admin", "waste_bank_unit", "waste_bank_central"))
 	// Profiles
 	wasteBankOnly.Get("/profiles/:user_id", c.WasteBankController.Get)
 	wasteBankOnly.Put("/profiles/:id", c.WasteBankController.Update)
 
+	// WasteCollector endpoints
+	wasteCollectorOnly := c.App.Group("/api/waste-collector", c.AuthMiddleware, middleware.RequireRoles("admin", "waste_collector_unit", "waste_collector_central"))
+	// Profiles
+	wasteCollectorOnly.Get("/profiles/:user_id", c.WasteCollectorController.Get)
+	wasteCollectorOnly.Put("/profiles/:id", c.WasteCollectorController.Update)
+
+	// Industry endpoints
+	industryOnly := c.App.Group("/api/industry", c.AuthMiddleware, middleware.RequireRoles("admin", "industry"))
+	// Profiles
+	industryOnly.Get("/profiles/:user_id", c.IndustryController.Get)
+	industryOnly.Put("/profiles/:id", c.IndustryController.Update)
+
 	// Admin endpoints
 	adminOnly := c.App.Group("/api/admin", c.AuthMiddleware, middleware.RequireRoles("admin"))
+
+	// Customer profiles
+	adminOnly.Delete("/customer/profiles/:id", c.CustomerController.Delete)
+
 	// Wastebank profiles
 	adminOnly.Delete("/waste-bank/profiles/:id", c.WasteBankController.Delete)
+
+	// Waste collector profiles
+	adminOnly.Delete("/waste-collector/profiles/:id", c.WasteCollectorController.Delete)
+
+	// Industry profiles
+	adminOnly.Delete("/industry/profiles/:id", c.IndustryController.Delete)
 
 }
 

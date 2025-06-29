@@ -78,18 +78,7 @@ func (c *UserUseCase) Register(ctx context.Context, request *model.RegisterUserR
 	}
 	if total > 0 {
 		c.Log.Warnf("email already exist")
-		return nil, fiber.ErrConflict
-	}
-
-	// Check if username already exists
-	total, err = c.UserRepository.CountByUsername(tx, request.Email)
-	if err != nil {
-		c.Log.Warnf("Failed to count by username : %v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-	if total > 0 {
-		c.Log.Warnf("username already exist")
-		return nil, fiber.ErrConflict
+		return nil, fiber.NewError(fiber.StatusConflict, "email already exist")
 	}
 
 	// Hash password

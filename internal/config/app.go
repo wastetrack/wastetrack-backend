@@ -66,13 +66,20 @@ func Bootstrap(config *BootstrapConfig) {
 		emailHelper,
 		config.Config.GetString("app.base_url"), // Base URL for email links
 	)
+	customerUseCase := usecase.NewCustomerUseCase(config.DB, config.Log, config.Validate, customerRepository)
 	wasteBankUseCase := usecase.NewWasteBankUseCase(config.DB, config.Log, config.Validate, wasteBankRepository)
+	wasteCollectorUseCase := usecase.NewWasteCollectorUseCase(config.DB, config.Log, config.Validate, wasteCollectorRepository)
+	industryUseCase := usecase.NewIndustryUseCase(config.DB, config.Log, config.Validate, industryRepository)
+
 	// Setup controllers
 	userController := http.NewUserController(
 		userUseCase,
 		config.Log,
 	)
+	customerController := http.NewCustomerController(customerUseCase, config.Log)
 	wasteBankController := http.NewWasteBankController(wasteBankUseCase, config.Log)
+	wasteCollectorController := http.NewWasteCollectorController(wasteCollectorUseCase, config.Log)
+	industryController := http.NewIndustryController(industryUseCase, config.Log)
 
 	// Setup middlewares
 	authMiddleware := middleware.NewJWTAuth(
@@ -80,10 +87,13 @@ func Bootstrap(config *BootstrapConfig) {
 	)
 
 	routeConfig := route.RouteConfig{
-		App:                 config.App,
-		UserController:      userController,
-		WasteBankController: wasteBankController,
-		AuthMiddleware:      authMiddleware,
+		App:                      config.App,
+		UserController:           userController,
+		CustomerController:       customerController,
+		WasteBankController:      wasteBankController,
+		WasteCollectorController: wasteCollectorController,
+		IndustryController:       industryController,
+		AuthMiddleware:           authMiddleware,
 	}
 
 	routeConfig.Setup()

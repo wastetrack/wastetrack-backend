@@ -91,7 +91,7 @@ func (c *WasteCollectorUseCase) Update(ctx context.Context, request *model.Updat
 	return converter.WasteCollectorToResponse(wasteCollector), nil
 }
 
-func (c *WasteCollectorUseCase) Delete(ctx context.Context, request *model.DeleteWasteBankRequest) (*model.WasteCollectorResponse, error) {
+func (c *WasteCollectorUseCase) Delete(ctx context.Context, request *model.DeleteWasteCollectorRequest) (*model.WasteCollectorResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 

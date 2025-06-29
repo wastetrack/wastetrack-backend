@@ -21,6 +21,7 @@ func WasteBankToResponse(wasteBank *entity.WasteBankProfile) *model.WasteBankRes
 	if wasteBank.User.ID != uuid.Nil {
 		userResponse = UserToResponse(&wasteBank.User)
 	}
+
 	return &model.WasteBankResponse{
 		ID:               wasteBank.ID.String(),
 		UserID:           wasteBank.UserID.String(),
