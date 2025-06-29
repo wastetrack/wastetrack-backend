@@ -1,4 +1,4 @@
-// internal/entity/user.go
+// TODO: Add Avatar URL
 package entity
 
 import (
@@ -15,6 +15,7 @@ type User struct {
 	Email       string    `gorm:"column:email;unique;not null"`
 	Password    string    `gorm:"column:password;not null"`
 	Role        string    `gorm:"column:role;type:user_role;default:'customer';not null"`
+	AvatarURL   string    `gorm:"column:avatar_url"`
 	PhoneNumber string    `gorm:"column:phone_number"`
 	Institution string    `gorm:"column:institution"`
 	Address     string    `gorm:"column:address"`

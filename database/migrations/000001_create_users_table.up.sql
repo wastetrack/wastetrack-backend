@@ -5,7 +5,7 @@ DO $$
 BEGIN
     -- User roles
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
-        CREATE TYPE user_role AS ENUM ('admin', 'waste_bank_unit', 'waste_collector_unit','waste_bank_central','waste_collector_central', 'customer', 'offtaker', 'government');
+        CREATE TYPE user_role AS ENUM ('admin', 'waste_bank_unit', 'waste_collector_unit','waste_bank_central','waste_collector_central', 'customer', 'industry', 'government');
     END IF;
 END $$;
 
@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
     role user_role NOT NULL DEFAULT 'customer',
+    avatar_url TEXT,
     phone_number TEXT,
     institution TEXT,
     address TEXT,

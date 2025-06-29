@@ -19,13 +19,17 @@ import (
 )
 
 type UserUseCase struct {
-	DB             *gorm.DB
-	Log            *logrus.Logger
-	Validate       *validator.Validate
-	UserRepository *repository.UserRepository
-	JWTHelper      *helper.JWTHelper
-	EmailHelper    *helper.EmailHelper
-	BaseURL        string
+	DB                       *gorm.DB
+	Log                      *logrus.Logger
+	Validate                 *validator.Validate
+	UserRepository           *repository.UserRepository
+	CustomerRepository       *repository.CustomerRepository
+	WasteBankRepository      *repository.WasteBankRepository
+	WasteCollectorRepository *repository.WasteCollectorRepository
+	IndustryRepository       *repository.IndustryRepository
+	JWTHelper                *helper.JWTHelper
+	EmailHelper              *helper.EmailHelper
+	BaseURL                  string
 }
 
 func NewUserUseCase(
@@ -33,21 +37,30 @@ func NewUserUseCase(
 	log *logrus.Logger,
 	validate *validator.Validate,
 	userRepository *repository.UserRepository,
+	customerRepository *repository.CustomerRepository,
+	wasteBankRepository *repository.WasteBankRepository,
+	wasteCollectorRepository *repository.WasteCollectorRepository,
+	industryRepository *repository.IndustryRepository,
 	jwtHelper *helper.JWTHelper,
 	emailHelper *helper.EmailHelper,
 	baseURL string,
 ) *UserUseCase {
 	return &UserUseCase{
-		DB:             db,
-		Log:            log,
-		Validate:       validate,
-		UserRepository: userRepository,
-		JWTHelper:      jwtHelper,
-		EmailHelper:    emailHelper,
-		BaseURL:        baseURL,
+		DB:                       db,
+		Log:                      log,
+		Validate:                 validate,
+		UserRepository:           userRepository,
+		CustomerRepository:       customerRepository,
+		WasteBankRepository:      wasteBankRepository,
+		WasteCollectorRepository: wasteCollectorRepository,
+		IndustryRepository:       industryRepository,
+		JWTHelper:                jwtHelper,
+		EmailHelper:              emailHelper,
+		BaseURL:                  baseURL,
 	}
 }
 
+// TODO: Create Government profile upon registering
 func (c *UserUseCase) Register(ctx context.Context, request *model.RegisterUserRequest) (*model.UserResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -114,10 +127,55 @@ func (c *UserUseCase) Register(ctx context.Context, request *model.RegisterUserR
 		EmailVerificationToken: verificationToken,
 		Location:               location,
 	}
-
 	if err := c.UserRepository.Create(tx, user); err != nil {
 		c.Log.Warnf("Failed to create user to database: %v", err)
 		return nil, fiber.ErrInternalServerError
+	}
+
+	// Check user role
+	if user.Role == "customer" {
+		// Create customer profile
+		customer := &entity.CustomerProfile{
+			UserID: user.ID,
+		}
+
+		if err := c.CustomerRepository.Create(tx, customer); err != nil {
+			c.Log.Warnf("Failed to create customer profile: %v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+	}
+	if user.Role == "waste_bank_unit" || user.Role == "waste_bank_central" {
+		// Create waste bank profile
+		wasteBank := &entity.WasteBankProfile{
+			UserID: user.ID,
+		}
+
+		if err := c.WasteBankRepository.Create(tx, wasteBank); err != nil {
+			c.Log.Warnf("Failed to create waste bank profile: %v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+	}
+	if user.Role == "waste_collector_unit" || user.Role == "waste_collector_central" {
+		// Create waste collector profile
+		wasteCollector := &entity.WasteCollectorProfile{
+			UserID: user.ID,
+		}
+
+		if err := c.WasteCollectorRepository.Create(tx, wasteCollector); err != nil {
+			c.Log.Warnf("Failed to create waste collector profile: %v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+	}
+	if user.Role == "industry" {
+		// Create industry profile
+		industry := &entity.IndustryProfile{
+			UserID: user.ID,
+		}
+
+		if err := c.IndustryRepository.Create(tx, industry); err != nil {
+			c.Log.Warnf("Failed to create industry profile: %v", err)
+			return nil, fiber.ErrInternalServerError
+		}
 	}
 
 	if err := tx.Commit().Error; err != nil {

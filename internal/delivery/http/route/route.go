@@ -3,12 +3,14 @@ package route
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/wastetrack/wastetrack-backend/internal/delivery/http"
+	"github.com/wastetrack/wastetrack-backend/internal/delivery/http/middleware"
 )
 
 type RouteConfig struct {
-	App            *fiber.App
-	UserController *http.UserController
-	AuthMiddleware fiber.Handler
+	App                 *fiber.App
+	UserController      *http.UserController
+	WasteBankController *http.WasteBankController
+	AuthMiddleware      fiber.Handler
 }
 
 func (c *RouteConfig) Setup() {
@@ -35,14 +37,27 @@ func (c *RouteConfig) SetupAuthRoute() {
 	auth.Get("/users/current", c.UserController.Current)
 	auth.Post("/auth/logout", c.UserController.Logout)
 	auth.Post("/auth/logout-all-devices", c.UserController.LogoutAllDevices)
-	// auth.Put("/users", c.UserController.Update)
-	// auth.Delete("/users", c.UserController.Delete)
 
-	//Email verification required
-	// emailVerified := c.App.Group("", middleware.RequireEmailVerification())
-	// Admin-only routes (requires admin role + email verification)
-	// adminOnly := c.App.Group("/api/admin",
-	// 	middleware.RequireEmailVerification(),
-	// 	middleware.RequireRole("admin"),
-	// )
+	// WasteBank endpoints
+	wasteBankOnly := c.App.Group("/api/waste-bank", c.AuthMiddleware, middleware.RequireRoles("admin", "waste_bank_unit", "waste_bank_central"))
+	// Profiles
+	wasteBankOnly.Get("/profiles/:user_id", c.WasteBankController.Get)
+	wasteBankOnly.Put("/profiles/:id", c.WasteBankController.Update)
+
+	// Admin endpoints
+	adminOnly := c.App.Group("/api/admin", c.AuthMiddleware, middleware.RequireRoles("admin"))
+	// Wastebank profiles
+	adminOnly.Delete("/waste-bank/profiles/:id", c.WasteBankController.Delete)
+
 }
+
+// auth.Put("/users", c.UserController.Update)
+// auth.Delete("/users", c.UserController.Delete)
+
+//Email verification required
+// emailVerified := c.App.Group("", middleware.RequireEmailVerification())
+// Admin-only routes (requires admin role + email verification)
+// adminOnly := c.App.Group("/api/admin",
+// 	middleware.RequireEmailVerification(),
+// 	middleware.RequireRole("admin"),
+// )

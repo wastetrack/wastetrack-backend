@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS waste_transfer_forms (
     source_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     destination_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     form_type form_type,
-    total_weight BIGINT DEFAULT 0,
+    total_weight DECIMAL DEFAULT 0,
     total_price BIGINT DEFAULT 0,
     status waste_transfer_status,
     source_phone_number TEXT,

@@ -16,15 +16,15 @@ import (
 	"gorm.io/gorm"
 )
 
-type WasteBankUsecase struct {
+type WasteBankUseCase struct {
 	DB                  *gorm.DB
 	Log                 *logrus.Logger
 	Validate            *validator.Validate
 	WasteBankRepository *repository.WasteBankRepository
 }
 
-func NewWasteBankUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, wasteBankRepository *repository.WasteBankRepository) *WasteBankUsecase {
-	return &WasteBankUsecase{
+func NewWasteBankUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, wasteBankRepository *repository.WasteBankRepository) *WasteBankUseCase {
+	return &WasteBankUseCase{
 		DB:                  db,
 		Log:                 log,
 		Validate:            validate,
@@ -32,7 +32,7 @@ func NewWasteBankUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Va
 	}
 }
 
-func (c *WasteBankUsecase) Create(ctx context.Context, request *model.WasteBankRequest) (*model.WasteBankResponse, error) {
+func (c *WasteBankUseCase) Create(ctx context.Context, request *model.WasteBankRequest) (*model.WasteBankResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	if tx.Error != nil {
 		c.Log.Warnf("Failed to start transaction: %+v", tx.Error)
@@ -89,9 +89,30 @@ func (c *WasteBankUsecase) Create(ctx context.Context, request *model.WasteBankR
 	return converter.WasteBankToResponse(wasteBank), nil
 }
 
-//TODO: Search,Get
+//TODO: Search
 
-func (c *WasteBankUsecase) Update(ctx context.Context, request *model.WasteBankUpdateRequest) (*model.WasteBankResponse, error) {
+func (c *WasteBankUseCase) Get(ctx context.Context, request *model.GetWasteBankRequest) (*model.WasteBankResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request body : %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+	wasteBank := new(entity.WasteBankProfile)
+	if err := c.WasteBankRepository.FindByUserID(tx, wasteBank, request.ID); err != nil {
+		c.Log.Warnf("Failed find profile by user id : %+v", err)
+		return nil, fiber.ErrNotFound
+	}
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.WasteBankToResponse(wasteBank), nil
+
+}
+
+func (c *WasteBankUseCase) Update(ctx context.Context, request *model.UpdateWasteBankRequest, userID string, userRole string) (*model.WasteBankResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -99,10 +120,17 @@ func (c *WasteBankUsecase) Update(ctx context.Context, request *model.WasteBankU
 		c.Log.Warnf("Invalid request body : %+v", err)
 		return nil, fiber.ErrBadRequest
 	}
+
 	wasteBank := new(entity.WasteBankProfile)
 	if err := c.WasteBankRepository.FindById(tx, wasteBank, request.ID); err != nil {
 		c.Log.Warnf("Failed find subject by id : %+v", err)
 		return nil, fiber.ErrNotFound
+	}
+
+	// Authorization check: Skip for admin, otherwise check ownership
+	if userRole != "admin" && wasteBank.UserID != uuid.MustParse(userID) {
+		c.Log.Warnf("User %s is not authorized to update waste bank %s", userID, request.ID)
+		return nil, fiber.ErrForbidden
 	}
 
 	if request.TotalWasteWeight != nil {
@@ -133,6 +161,7 @@ func (c *WasteBankUsecase) Update(ctx context.Context, request *model.WasteBankU
 		c.Log.Warnf("Failed to update waste bank: %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
+
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction: %+v", err)
 		return nil, fiber.ErrInternalServerError
@@ -141,7 +170,7 @@ func (c *WasteBankUsecase) Update(ctx context.Context, request *model.WasteBankU
 	return converter.WasteBankToResponse(wasteBank), nil
 }
 
-func (c *WasteBankUsecase) Delete(ctx context.Context, request *model.DeleteWasteBankRequest) (*model.WasteBankResponse, error) {
+func (c *WasteBankUseCase) Delete(ctx context.Context, request *model.DeleteWasteBankRequest) (*model.WasteBankResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 

@@ -29,6 +29,10 @@ func Bootstrap(config *BootstrapConfig) {
 	// Setup repositories
 	userRepository := repository.NewUserRepository(config.Log)
 	refreshTokenRepository := repository.NewRefreshTokenRepository(config.Log)
+	customerRepository := repository.NewCustomerRepository(config.Log)
+	wasteBankRepository := repository.NewWasteBankRepository(config.Log)
+	wasteCollectorRepository := repository.NewWasteCollectorRepository(config.Log)
+	industryRepository := repository.NewIndustryRepository(config.Log)
 
 	// Setup JWT Helper
 	jwtHelper := helper.NewJWTHelper(
@@ -54,16 +58,21 @@ func Bootstrap(config *BootstrapConfig) {
 		config.Log,
 		config.Validate,
 		userRepository,
+		customerRepository,
+		wasteBankRepository,
+		wasteCollectorRepository,
+		industryRepository,
 		jwtHelper,
 		emailHelper,
 		config.Config.GetString("app.base_url"), // Base URL for email links
 	)
-
+	wasteBankUseCase := usecase.NewWasteBankUseCase(config.DB, config.Log, config.Validate, wasteBankRepository)
 	// Setup controllers
 	userController := http.NewUserController(
 		userUseCase,
 		config.Log,
 	)
+	wasteBankController := http.NewWasteBankController(wasteBankUseCase, config.Log)
 
 	// Setup middlewares
 	authMiddleware := middleware.NewJWTAuth(
@@ -71,9 +80,10 @@ func Bootstrap(config *BootstrapConfig) {
 	)
 
 	routeConfig := route.RouteConfig{
-		App:            config.App,
-		UserController: userController,
-		AuthMiddleware: authMiddleware,
+		App:                 config.App,
+		UserController:      userController,
+		WasteBankController: wasteBankController,
+		AuthMiddleware:      authMiddleware,
 	}
 
 	routeConfig.Setup()

@@ -8,7 +8,7 @@ type CustomerRequestItem struct {
 	Request          CustomerRequest `gorm:"foreignKey:RequestID"`
 	WasteTypeID      uuid.UUID       `gorm:"column:waste_type_id;not null"`
 	WasteType        WasteType       `gorm:"foreignKey:WasteTypeID"`
-	Quantity         float64         `gorm:"column:quantity"`
+	Quantity         int64           `gorm:"column:quantity"`
 	VerifiedWeight   float64         `gorm:"column:verified_weight"`
 	VerifiedSubtotal int64           `gorm:"column:verified_subtotal"`
 }
