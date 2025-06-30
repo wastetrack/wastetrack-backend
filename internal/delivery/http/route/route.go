@@ -7,14 +7,15 @@ import (
 )
 
 type RouteConfig struct {
-	App                      *fiber.App
-	UserController           *http.UserController
-	CustomerController       *http.CustomerController
-	WasteBankController      *http.WasteBankController
-	WasteCollectorController *http.WasteCollectorController
-	IndustryController       *http.IndustryController
-	WasteCategoryController  *http.WasteCategoryController
-	AuthMiddleware           fiber.Handler
+	App                        *fiber.App
+	UserController             *http.UserController
+	CustomerController         *http.CustomerController
+	WasteBankController        *http.WasteBankController
+	WasteCollectorController   *http.WasteCollectorController
+	IndustryController         *http.IndustryController
+	WasteCategoryController    *http.WasteCategoryController
+	WasteSubCategoryController *http.WasteSubCategoryController
+	AuthMiddleware             fiber.Handler
 }
 
 func (c *RouteConfig) Setup() {
@@ -87,6 +88,13 @@ func (c *RouteConfig) SetupAuthRoute() {
 	adminOnly.Post("/waste-categories", c.WasteCategoryController.Create)
 	adminOnly.Put("/waste-categories/:id", c.WasteCategoryController.Update)
 	adminOnly.Delete("/waste-categories/:id", c.WasteCategoryController.Delete)
+
+	// Waste SubCategories
+	adminOnly.Get("/waste-subcategories", c.WasteSubCategoryController.List)
+	adminOnly.Get("/waste-subcategories/:id", c.WasteSubCategoryController.Get)
+	adminOnly.Post("/waste-subcategories", c.WasteSubCategoryController.Create)
+	adminOnly.Put("/waste-subcategories/:id", c.WasteSubCategoryController.Update)
+	adminOnly.Delete("/waste-subcategories/:id", c.WasteSubCategoryController.Delete)
 
 }
 

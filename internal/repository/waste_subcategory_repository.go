@@ -17,18 +17,21 @@ func NewWasteSubCategoryRepository(log *logrus.Logger) *WasteSubCategoryReposito
 		Log: log,
 	}
 }
+func (r *WasteSubCategoryRepository) FindById(db *gorm.DB, entity *entity.WasteSubcategory, id string) error {
+	return db.Where("id = ?", id).Preload("WasteCategory").Take(entity).Error
+}
 
 func (r *WasteSubCategoryRepository) Search(db *gorm.DB, request *model.SearchWasteSubCategoryRequest) ([]entity.WasteSubcategory, int64, error) {
-	var wasteCategories []entity.WasteSubcategory
-	if err := db.Scopes(r.FilterWasteSubCategory(request)).Offset((request.Page - 1) * request.Size).Limit(request.Size).Find(&wasteCategories).Error; err != nil {
+	var wasteSubCategories []entity.WasteSubcategory
+	if err := db.Scopes(r.FilterWasteSubCategory(request)).Preload("WasteCategory").Offset((request.Page - 1) * request.Size).Limit(request.Size).Find(&wasteSubCategories).Error; err != nil {
 		return nil, 0, err
 	}
 
 	var total int64 = 0
-	if err := db.Model(&entity.WasteCategory{}).Scopes(r.FilterWasteSubCategory(request)).Count(&total).Error; err != nil {
+	if err := db.Model(&entity.WasteSubcategory{}).Scopes(r.FilterWasteSubCategory(request)).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-	return wasteCategories, total, nil
+	return wasteSubCategories, total, nil
 }
 
 func (r *WasteSubCategoryRepository) FilterWasteSubCategory(request *model.SearchWasteSubCategoryRequest) func(tx *gorm.DB) *gorm.DB {

@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/wastetrack/wastetrack-backend/internal/entity"
 	"github.com/wastetrack/wastetrack-backend/internal/model"
@@ -18,151 +17,164 @@ type WasteSubCategoryUsecase struct {
 	DB                         *gorm.DB
 	Log                        *logrus.Logger
 	Validate                   *validator.Validate
+	WasteCategoryRepository    *repository.WasteCategoryRepository
 	WasteSubCategoryRepository *repository.WasteSubCategoryRepository
 }
 
-func NewWasteSubCategoryUsecase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, wasteSubCategoryRepository *repository.WasteSubCategoryRepository) *WasteSubCategoryUsecase {
+func NewWasteSubCategoryUsecase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, wasteCategoryRepository *repository.WasteCategoryRepository, repo *repository.WasteSubCategoryRepository) *WasteSubCategoryUsecase {
 	return &WasteSubCategoryUsecase{
 		DB:                         db,
 		Log:                        log,
 		Validate:                   validate,
-		WasteSubCategoryRepository: wasteSubCategoryRepository,
+		WasteCategoryRepository:    wasteCategoryRepository,
+		WasteSubCategoryRepository: repo,
 	}
 }
 
 func (c *WasteSubCategoryUsecase) Create(ctx context.Context, request *model.WasteSubCategoryRequest) (*model.WasteSubCategoryResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
-	if tx.Error != nil {
-		c.Log.Warnf("Failed to start transaction: %+v", tx.Error)
-		return nil, fiber.ErrInternalServerError
-	}
 	defer tx.Rollback()
+
 	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
+		c.Log.Warnf("Invalid request body: %+v", err)
 		return nil, fiber.ErrBadRequest
 	}
+	// check if category exists
+	category := new(entity.WasteCategory)
+	if err := c.WasteCategoryRepository.FindById(tx, category, request.CategoryID); err != nil {
+		c.Log.Warnf("Failed to find waste category by ID: %+v", err)
+		return nil, fiber.ErrNotFound
+	}
+
 	wasteSubCategory := &entity.WasteSubcategory{
 		Name:        request.Name,
 		Description: request.Description,
-		CategoryID:  uuid.MustParse(request.CategoryID),
+		CategoryID:  category.ID,
 	}
 
 	if err := c.WasteSubCategoryRepository.Create(tx, wasteSubCategory); err != nil {
-		c.Log.Warnf("Failed to create waste category: %+v", err)
+		c.Log.Warnf("Failed to create waste subcategory: %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
+
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction: %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
-	return converter.WasteCategoryToResponse(wasteSubCategory), nil
+	return converter.WasteSubCategoryToResponse(wasteSubCategory), nil
 }
+
 func (c *WasteSubCategoryUsecase) Get(ctx context.Context, request *model.GetWasteCategoryRequest) (*model.WasteSubCategoryResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
+
 	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
+		c.Log.Warnf("Invalid request body: %+v", err)
 		return nil, fiber.ErrBadRequest
 	}
-	wasteCategory := new(entity.WasteCategory)
-	if err := c.WasteSubCategoryRepository.FindById(tx, wasteCategory, request.ID); err != nil {
-		c.Log.Warnf("Failed find waste category by id : %+v", err)
+
+	wasteSubCategory := new(entity.WasteSubcategory)
+	if err := c.WasteSubCategoryRepository.FindById(tx, wasteSubCategory, request.ID); err != nil {
+		c.Log.Warnf("Failed to find waste subcategory by ID: %+v", err)
 		return nil, fiber.ErrNotFound
 	}
+
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed commit transaction : %+v", err)
+		c.Log.Warnf("Failed to commit transaction: %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
-	return converter.WasteCategoryToResponse(wasteCategory), nil
-
+	return converter.WasteSubCategoryToResponse(wasteSubCategory), nil
 }
 
-func (c *WasteSubCategoryUsecase) Update(ctx context.Context, request *model.UpdateWasteCategoryRequest) (*model.WasteSubCategoryResponse, error) {
+func (c *WasteSubCategoryUsecase) Update(ctx context.Context, request *model.UpdateWasteSubCategoryRequest) (*model.WasteSubCategoryResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
 	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
+		c.Log.Warnf("Invalid request body: %+v", err)
 		return nil, fiber.ErrBadRequest
 	}
-	wasteCategory := new(entity.WasteCategory)
-	if err := c.WasteSubCategoryRepository.FindById(tx, wasteCategory, request.ID); err != nil {
-		c.Log.Warnf("Failed find waste category by id : %+v", err)
+
+	wasteSubCategory := new(entity.WasteSubcategory)
+	if err := c.WasteSubCategoryRepository.FindById(tx, wasteSubCategory, request.ID); err != nil {
+		c.Log.Warnf("Failed to find waste subcategory by ID: %+v", err)
 		return nil, fiber.ErrNotFound
 	}
 
 	if request.Name != "" {
-		wasteCategory.Name = request.Name
+		wasteSubCategory.Name = request.Name
 	}
 	if request.Description != "" {
-		wasteCategory.Description = request.Description
+		wasteSubCategory.Description = request.Description
 	}
 
-	if err := c.WasteSubCategoryRepository.Update(tx, wasteCategory); err != nil {
-		c.Log.Warnf("Failed to update waste category: %+v", err)
+	if err := c.WasteSubCategoryRepository.Update(tx, wasteSubCategory); err != nil {
+		c.Log.Warnf("Failed to update waste subcategory: %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
+
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction: %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
-	return converter.WasteCategoryToResponse(wasteCategory), nil
+	return converter.WasteSubCategoryToResponse(wasteSubCategory), nil
 }
 
-func (c *WasteSubCategoryUsecase) Search(ctx context.Context, request *model.SearchWasteCategoryRequest) ([]model.WasteSubCategoryResponse, int64, error) {
+func (c *WasteSubCategoryUsecase) Search(ctx context.Context, request *model.SearchWasteSubCategoryRequest) ([]model.WasteSubCategoryResponse, int64, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
+
 	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Warnf("Invalid request body")
+		c.Log.WithError(err).Warn("Invalid request body")
 		return nil, 0, fiber.ErrBadRequest
 	}
-	wasteCategories, total, err := c.WasteSubCategoryRepository.Search(tx, request)
+
+	subCategories, total, err := c.WasteSubCategoryRepository.Search(tx, request)
 	if err != nil {
-		c.Log.WithError(err).Warnf("Failed to search waste categories")
+		c.Log.WithError(err).Warn("Failed to search waste subcategories")
 		return nil, 0, fiber.ErrInternalServerError
 	}
+
 	if err := tx.Commit().Error; err != nil {
 		c.Log.WithError(err).Error("Failed to commit transaction")
 		return nil, 0, fiber.ErrInternalServerError
 	}
 
-	responses := make([]model.WasteSubCategoryResponse, len(wasteCategories))
-	for i, wasteCategory := range wasteCategories {
-		responses[i] = *converter.WasteCategoryToResponse(&wasteCategory)
+	responses := make([]model.WasteSubCategoryResponse, len(subCategories))
+	for i, sub := range subCategories {
+		responses[i] = *converter.WasteSubCategoryToResponse(&sub)
 	}
+
 	return responses, total, nil
 }
-func (c *WasteSubCategoryUsecase) Delete(ctx context.Context, request *model.DeleteWasteCategoryRequest) (*model.WasteSubCategoryResponse, error) {
+
+func (c *WasteSubCategoryUsecase) Delete(ctx context.Context, request *model.DeleteWasteSubCategoryRequest) (*model.WasteSubCategoryResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	// Validate request
 	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
+		c.Log.Warnf("Invalid request body: %+v", err)
 		return nil, fiber.ErrBadRequest
 	}
 
-	// Find waste category by id
-	wasteCategory := new(entity.WasteCategory)
-	if err := c.WasteSubCategoryRepository.FindById(tx, wasteCategory, request.ID); err != nil {
-		c.Log.Warnf("Failed find subject by id : %+v", err)
+	wasteSubCategory := new(entity.WasteSubcategory)
+	if err := c.WasteSubCategoryRepository.FindById(tx, wasteSubCategory, request.ID); err != nil {
+		c.Log.Warnf("Failed to find waste subcategory by ID: %+v", err)
 		return nil, fiber.ErrNotFound
 	}
 
-	// Delete waste category
-	if err := c.WasteSubCategoryRepository.Delete(tx, wasteCategory); err != nil {
-		c.Log.Warnf("Failed delete waste category : %+v", err)
+	if err := c.WasteSubCategoryRepository.Delete(tx, wasteSubCategory); err != nil {
+		c.Log.Warnf("Failed to delete waste subcategory: %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
-	// Commit transaction
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
+		c.Log.Warnf("Failed to commit transaction: %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
-	return converter.WasteCategoryToResponse(wasteCategory), nil
+	return converter.WasteSubCategoryToResponse(wasteSubCategory), nil
 }
