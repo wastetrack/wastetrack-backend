@@ -17,6 +17,7 @@ type RouteConfig struct {
 	WasteSubCategoryController    *http.WasteSubCategoryController
 	WasteTypeController           *http.WasteTypeController
 	WasteBankPricedTypeController *http.WasteBankPricedTypeController
+	WasteDropRequestController    *http.WasteDropRequestController
 	AuthMiddleware                fiber.Handler
 }
 
@@ -41,15 +42,22 @@ func (c *RouteConfig) SetupAuthRoute() {
 	auth := c.App.Group("/api", c.AuthMiddleware)
 
 	// Authenticated user endpoints
+	// Auth
 	auth.Get("/users/current", c.UserController.Current)
 	auth.Post("/auth/logout", c.UserController.Logout)
 	auth.Post("/auth/logout-all-devices", c.UserController.LogoutAllDevices)
+
+	// Waste Drop Requests
+	auth.Get("/waste-drop-requests", c.WasteDropRequestController.List)
+	auth.Get("/waste-drop-requests/:id", c.WasteDropRequestController.Get)
 
 	// Customer endpoints
 	customerOnly := c.App.Group("/api/customer", c.AuthMiddleware, middleware.RequireRoles("admin", "customer"))
 	// Profiles
 	customerOnly.Get("/profiles/:user_id", c.CustomerController.Get)
 	customerOnly.Put("/profiles/:id", c.CustomerController.Update)
+	// Waste Drop Requests
+	customerOnly.Post("/waste-drop-requests", c.WasteDropRequestController.Create)
 
 	// WasteBank endpoints
 	wasteBankOnly := c.App.Group("/api/waste-bank", c.AuthMiddleware, middleware.RequireRoles("admin", "waste_bank_unit", "waste_bank_central"))
@@ -63,12 +71,17 @@ func (c *RouteConfig) SetupAuthRoute() {
 	wasteBankOnly.Post("/waste-type-prices", c.WasteBankPricedTypeController.Create)
 	wasteBankOnly.Put("/waste-type-prices/:id", c.WasteBankPricedTypeController.Update)
 	wasteBankOnly.Delete("/waste-type-prices/:id", c.WasteBankPricedTypeController.Delete)
+	// Waste Drop Requests
+	wasteBankOnly.Put("/waste-drop-requests/:id", c.WasteDropRequestController.UpdateStatus)
+	wasteBankOnly.Put("/waste-drop-requests/:id/assign-collector", c.WasteDropRequestController.AssignCollector)
 
 	// WasteCollector endpoints
 	wasteCollectorOnly := c.App.Group("/api/waste-collector", c.AuthMiddleware, middleware.RequireRoles("admin", "waste_collector_unit", "waste_collector_central"))
 	// Profiles
 	wasteCollectorOnly.Get("/profiles/:user_id", c.WasteCollectorController.Get)
 	wasteCollectorOnly.Put("/profiles/:id", c.WasteCollectorController.Update)
+	// Waste Drop Requests
+	wasteCollectorOnly.Put("/waste-drop-requests/:id/complete", c.WasteDropRequestController.Complete)
 
 	// Industry endpoints
 	industryOnly := c.App.Group("/api/industry", c.AuthMiddleware, middleware.RequireRoles("admin", "industry"))
@@ -78,39 +91,35 @@ func (c *RouteConfig) SetupAuthRoute() {
 
 	// Admin endpoints
 	adminOnly := c.App.Group("/api/admin", c.AuthMiddleware, middleware.RequireRoles("admin"))
-
 	// Customer profiles
 	adminOnly.Delete("/customer/profiles/:id", c.CustomerController.Delete)
-
 	// Wastebank profiles
 	adminOnly.Delete("/waste-bank/profiles/:id", c.WasteBankController.Delete)
-
 	// Waste collector profiles
 	adminOnly.Delete("/waste-collector/profiles/:id", c.WasteCollectorController.Delete)
-
 	// Industry profiles
 	adminOnly.Delete("/industry/profiles/:id", c.IndustryController.Delete)
-
 	// Waste Categories
 	adminOnly.Get("/waste-categories", c.WasteCategoryController.List)
 	adminOnly.Get("/waste-categories/:id", c.WasteCategoryController.Get)
 	adminOnly.Post("/waste-categories", c.WasteCategoryController.Create)
 	adminOnly.Put("/waste-categories/:id", c.WasteCategoryController.Update)
 	adminOnly.Delete("/waste-categories/:id", c.WasteCategoryController.Delete)
-
 	// Waste SubCategories
 	adminOnly.Get("/waste-subcategories", c.WasteSubCategoryController.List)
 	adminOnly.Get("/waste-subcategories/:id", c.WasteSubCategoryController.Get)
 	adminOnly.Post("/waste-subcategories", c.WasteSubCategoryController.Create)
 	adminOnly.Put("/waste-subcategories/:id", c.WasteSubCategoryController.Update)
 	adminOnly.Delete("/waste-subcategories/:id", c.WasteSubCategoryController.Delete)
-
 	// Waste Types
 	adminOnly.Get("/waste-types", c.WasteTypeController.List)
 	adminOnly.Get("/waste-types/:id", c.WasteTypeController.Get)
 	adminOnly.Post("/waste-types", c.WasteTypeController.Create)
 	adminOnly.Put("/waste-types/:id", c.WasteTypeController.Update)
 	adminOnly.Delete("/waste-types/:id", c.WasteTypeController.Delete)
+	// Waste Drop Requests
+	adminOnly.Put("/waste-drop-requests/:id", c.WasteDropRequestController.Update)
+	adminOnly.Delete("/waste-drop-requests/:id", c.WasteDropRequestController.Delete)
 
 }
 

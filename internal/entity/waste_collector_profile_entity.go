@@ -9,5 +9,4 @@ type WasteCollectorProfile struct {
 	UserID           uuid.UUID `gorm:"column:user_id;unique;not null"`
 	User             User      `gorm:"foreignKey:UserID"`
 	TotalWasteWeight float64   `gorm:"column:total_waste_weight;default:0"`
-	Notes            string    `gorm:"column:notes"`
 }

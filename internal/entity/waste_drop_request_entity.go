@@ -16,7 +16,7 @@ type WasteDropRequest struct {
 
 	UserPhoneNumber string     `gorm:"column:user_phone_number"`
 	WasteBankID     *uuid.UUID `gorm:"column:waste_bank_id;not null"` // Nullable
-	WasteBank       *User      `gorm:"foreignKey:WasteBankID"`
+	WasteBank       User       `gorm:"foreignKey:WasteBankID"`
 
 	AssignedCollectorID *uuid.UUID `gorm:"column:assigned_collector_id"` // Nullable
 	AssignedCollector   *User      `gorm:"foreignKey:AssignedCollectorID"`
@@ -25,10 +25,10 @@ type WasteDropRequest struct {
 	ImageURL   string `gorm:"column:image_url"`
 	Status     string `gorm:"type:request_status;default:'pending'"` // ENUM
 
-	AppointmentLocation  *types.Point `gorm:"type:geography(POINT,4326);"` // Requires custom handling for GEOGRAPHY(Point,4326)
-	AppointmentDate      time.Time    `gorm:"type:date"`
-	AppointmentStartTime time.Time    `gorm:"type:timetz"`
-	AppointmentEndTime   time.Time    `gorm:"type:timetz"`
+	AppointmentLocation  *types.Point   `gorm:"type:geography(POINT,4326);"` // Requires custom handling for GEOGRAPHY(Point,4326)
+	AppointmentDate      time.Time      `gorm:"type:date"`
+	AppointmentStartTime types.TimeOnly `gorm:"type:timetz"`
+	AppointmentEndTime   types.TimeOnly `gorm:"type:timetz"`
 
 	Notes     string    `gorm:"column:notes"`
 	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`

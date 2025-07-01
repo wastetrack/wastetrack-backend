@@ -37,6 +37,7 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteSubCategoryRepository := repository.NewWasteSubCategoryRepository(config.Log)
 	wasteTypeRepository := repository.NewWasteTypeRepository(config.Log)
 	wasteBankPricedTypeRepository := repository.NewWasteBankPricedTypeRepository(config.Log)
+	wasteDropRequestRepository := repository.NewWasteDropRequestRepository(config.Log)
 
 	// Setup JWT Helper
 	jwtHelper := helper.NewJWTHelper(
@@ -78,6 +79,7 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteSubCategoryUseCase := usecase.NewWasteSubCategoryUsecase(config.DB, config.Log, config.Validate, wasteCategoryRepository, wasteSubCategoryRepository)
 	wasteTypeUseCase := usecase.NewWasteTypeUsecase(config.DB, config.Log, config.Validate, wasteCategoryRepository, wasteSubCategoryRepository, wasteTypeRepository)
 	wasteBankPricedTypeUseCase := usecase.NewWasteBankPricedTypeUsecase(config.DB, config.Log, config.Validate, wasteBankPricedTypeRepository, wasteTypeRepository)
+	wasteDropRequestUseCase := usecase.NewWasteDropRequestUsecase(config.DB, config.Log, config.Validate, wasteDropRequestRepository, userRepository)
 
 	// Setup controllers
 	userController := http.NewUserController(
@@ -92,6 +94,7 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteSubCategoryController := http.NewWasteSubCategoryController(wasteSubCategoryUseCase, config.Log)
 	wasteTypeController := http.NewWasteTypeController(wasteTypeUseCase, config.Log)
 	wasteBankPricedTypeController := http.NewWasteBankPricedTypeController(wasteBankPricedTypeUseCase, config.Log)
+	wasteDropRequestController := http.NewWasteDropRequestController(wasteDropRequestUseCase, config.Log)
 
 	// Setup middlewares
 	authMiddleware := middleware.NewJWTAuth(
@@ -109,6 +112,7 @@ func Bootstrap(config *BootstrapConfig) {
 		WasteSubCategoryController:    wasteSubCategoryController,
 		WasteTypeController:           wasteTypeController,
 		WasteBankPricedTypeController: wasteBankPricedTypeController,
+		WasteDropRequestController:    wasteDropRequestController,
 		AuthMiddleware:                authMiddleware,
 	}
 

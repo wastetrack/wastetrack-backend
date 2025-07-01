@@ -10,11 +10,11 @@ func WasteBankToResponse(wasteBank *entity.WasteBankProfile) *model.WasteBankRes
 	var openTime, closeTime string
 
 	if !wasteBank.OpenTime.IsZero() {
-		openTime = wasteBank.OpenTime.Format("15:04:05")
+		openTime = wasteBank.OpenTime.Format("15:04:05Z07:00")
 	}
 
 	if !wasteBank.CloseTime.IsZero() {
-		closeTime = wasteBank.CloseTime.Format("15:04:05")
+		closeTime = wasteBank.CloseTime.Format("15:04:05Z07:00")
 	}
 
 	var userResponse *model.UserResponse
