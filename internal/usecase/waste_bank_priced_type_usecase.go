@@ -43,7 +43,6 @@ func (uc *WasteBankPricedTypeUsecase) CreateBatch(ctx context.Context, requests 
 		return nil, fiber.ErrBadRequest
 	}
 
-	// Validate all items
 	for _, req := range requests {
 		if err := uc.Validate.Struct(req); err != nil {
 			uc.Log.Warn("Validation error in batch request: ", err)
@@ -51,7 +50,6 @@ func (uc *WasteBankPricedTypeUsecase) CreateBatch(ctx context.Context, requests 
 		}
 	}
 
-	// Optional: check all WasteType IDs exist (to avoid partial failure)
 	for _, req := range requests {
 		wasteType := new(entity.WasteType)
 		if err := uc.WasteTypeRepository.FindById(tx, wasteType, req.WasteTypeID); err != nil {
@@ -62,9 +60,21 @@ func (uc *WasteBankPricedTypeUsecase) CreateBatch(ctx context.Context, requests 
 
 	var entities []*entity.WasteBankPricedType
 	for _, req := range requests {
+		wasteBankID := uuid.MustParse(req.WasteBankID)
+		wasteTypeID := uuid.MustParse(req.WasteTypeID)
+
+		exists, err := uc.WasteBankPricedTypeRepository.ExistsByBankAndType(tx, wasteBankID, wasteTypeID)
+		if err != nil {
+			uc.Log.Warn("Failed to check unique constraint: ", err)
+			return nil, fiber.ErrInternalServerError
+		}
+		if exists {
+			return nil, fiber.NewError(fiber.StatusConflict, "Duplicate waste_type_id found for waste bank: "+wasteTypeID.String())
+		}
+
 		entities = append(entities, &entity.WasteBankPricedType{
-			WasteBankID:       uuid.MustParse(req.WasteBankID),
-			WasteTypeID:       uuid.MustParse(req.WasteTypeID),
+			WasteBankID:       wasteBankID,
+			WasteTypeID:       wasteTypeID,
 			CustomPricePerKgs: req.CustomPricePerKgs,
 		})
 	}
@@ -79,7 +89,6 @@ func (uc *WasteBankPricedTypeUsecase) CreateBatch(ctx context.Context, requests 
 		return nil, fiber.ErrInternalServerError
 	}
 
-	// Convert to response
 	var responses []*model.WasteBankPricedTypeResponse
 	for _, e := range entities {
 		responses = append(responses, converter.WasteBankPricedTypeToResponse(e))
@@ -87,6 +96,7 @@ func (uc *WasteBankPricedTypeUsecase) CreateBatch(ctx context.Context, requests 
 
 	return responses, nil
 }
+
 func (uc *WasteBankPricedTypeUsecase) Create(ctx context.Context, request *model.WasteBankPricedTypeRequest) (*model.WasteBankPricedTypeResponse, error) {
 	tx := uc.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -101,6 +111,20 @@ func (uc *WasteBankPricedTypeUsecase) Create(ctx context.Context, request *model
 	if err := uc.WasteTypeRepository.FindById(tx, wasteType, request.WasteTypeID); err != nil {
 		uc.Log.Warnf("Failed to find waste type by ID: %+v", err)
 		return nil, fiber.ErrNotFound
+	}
+
+	// check if the pair already exists
+	exists, err := uc.WasteBankPricedTypeRepository.ExistsByBankAndType(
+		tx,
+		uuid.MustParse(request.WasteBankID),
+		uuid.MustParse(request.WasteTypeID),
+	)
+	if err != nil {
+		uc.Log.Warn("Failed to check unique constraint: ", err)
+		return nil, fiber.ErrInternalServerError
+	}
+	if exists {
+		return nil, fiber.NewError(fiber.StatusConflict, "Waste type already priced by this waste bank")
 	}
 
 	wpt := &entity.WasteBankPricedType{
@@ -192,7 +216,7 @@ func (uc *WasteBankPricedTypeUsecase) Delete(ctx context.Context, request *model
 	return converter.WasteBankPricedTypeToResponse(wpt), nil
 }
 
-func (c *WasteBankPricedTypeUsecase) Search(ctx context.Context, request *model.SearchWasteBankPricedTypeRequest) ([]model.WasteBankPricedTypeListResponse, int64, error) {
+func (c *WasteBankPricedTypeUsecase) Search(ctx context.Context, request *model.SearchWasteBankPricedTypeRequest) ([]model.WasteBankPricedTypeSimpleResponse, int64, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 	if err := c.Validate.Struct(request); err != nil {
@@ -209,9 +233,9 @@ func (c *WasteBankPricedTypeUsecase) Search(ctx context.Context, request *model.
 		return nil, 0, fiber.ErrInternalServerError
 	}
 
-	responses := make([]model.WasteBankPricedTypeListResponse, len(wasteBankPricedTypes))
+	responses := make([]model.WasteBankPricedTypeSimpleResponse, len(wasteBankPricedTypes))
 	for i, wasteBankPricedType := range wasteBankPricedTypes {
-		responses[i] = *converter.WasteBankPricedTypeToListResponse(&wasteBankPricedType)
+		responses[i] = *converter.WasteBankPricedTypeToSimpleResponse(&wasteBankPricedType)
 	}
 	return responses, total, nil
 }
