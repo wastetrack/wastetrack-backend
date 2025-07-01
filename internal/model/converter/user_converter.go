@@ -1,4 +1,3 @@
-// internal/converter/user.go
 package converter
 
 import (
@@ -20,6 +19,7 @@ func UserToResponse(user *entity.User) *model.UserResponse {
 		Username:        user.Username,
 		Email:           user.Email,
 		Role:            user.Role,
+		AvatarURL:       user.AvatarURL,
 		PhoneNumber:     user.PhoneNumber,
 		Institution:     user.Institution,
 		Address:         user.Address,

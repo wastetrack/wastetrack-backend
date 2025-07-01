@@ -13,11 +13,15 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'waste_transfer_status') THEN
         CREATE TYPE waste_transfer_status AS ENUM (
             'pending', 
-            'accepted', 
-            'on_progress', 
-            'rejected', 
+            'assigned', 
+            'collecting', 
             'completed', 
-            'recycled'
+            'cancelled',
+            'weighing_in',
+            'recycling_in_process',
+            'weighing_out',
+            'recycled',
+            'recycle_cancelled'
         );
     END IF;
 END $$;

@@ -36,6 +36,7 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteCategoryRepository := repository.NewWasteCategoryRepository(config.Log)
 	wasteSubCategoryRepository := repository.NewWasteSubCategoryRepository(config.Log)
 	wasteTypeRepository := repository.NewWasteTypeRepository(config.Log)
+	wasteBankPricedTypeRepository := repository.NewWasteBankPricedTypeRepository(config.Log)
 
 	// Setup JWT Helper
 	jwtHelper := helper.NewJWTHelper(
@@ -76,6 +77,7 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteCategoryUseCase := usecase.NewWasteCategoryUsecase(config.DB, config.Log, config.Validate, wasteCategoryRepository)
 	wasteSubCategoryUseCase := usecase.NewWasteSubCategoryUsecase(config.DB, config.Log, config.Validate, wasteCategoryRepository, wasteSubCategoryRepository)
 	wasteTypeUseCase := usecase.NewWasteTypeUsecase(config.DB, config.Log, config.Validate, wasteCategoryRepository, wasteSubCategoryRepository, wasteTypeRepository)
+	wasteBankPricedTypeUseCase := usecase.NewWasteBankPricedTypeUsecase(config.DB, config.Log, config.Validate, wasteBankPricedTypeRepository, wasteTypeRepository)
 
 	// Setup controllers
 	userController := http.NewUserController(
@@ -89,6 +91,7 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteCategoryController := http.NewWasteCategoryController(wasteCategoryUseCase, config.Log)
 	wasteSubCategoryController := http.NewWasteSubCategoryController(wasteSubCategoryUseCase, config.Log)
 	wasteTypeController := http.NewWasteTypeController(wasteTypeUseCase, config.Log)
+	wasteBankPricedTypeController := http.NewWasteBankPricedTypeController(wasteBankPricedTypeUseCase, config.Log)
 
 	// Setup middlewares
 	authMiddleware := middleware.NewJWTAuth(
@@ -96,16 +99,17 @@ func Bootstrap(config *BootstrapConfig) {
 	)
 
 	routeConfig := route.RouteConfig{
-		App:                        config.App,
-		UserController:             userController,
-		CustomerController:         customerController,
-		WasteBankController:        wasteBankController,
-		WasteCollectorController:   wasteCollectorController,
-		IndustryController:         industryController,
-		WasteCategoryController:    wasteCategoryController,
-		WasteSubCategoryController: wasteSubCategoryController,
-		WasteTypeController:        wasteTypeController,
-		AuthMiddleware:             authMiddleware,
+		App:                           config.App,
+		UserController:                userController,
+		CustomerController:            customerController,
+		WasteBankController:           wasteBankController,
+		WasteCollectorController:      wasteCollectorController,
+		IndustryController:            industryController,
+		WasteCategoryController:       wasteCategoryController,
+		WasteSubCategoryController:    wasteSubCategoryController,
+		WasteTypeController:           wasteTypeController,
+		WasteBankPricedTypeController: wasteBankPricedTypeController,
+		AuthMiddleware:                authMiddleware,
 	}
 
 	routeConfig.Setup()

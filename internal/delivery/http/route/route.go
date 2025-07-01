@@ -7,16 +7,17 @@ import (
 )
 
 type RouteConfig struct {
-	App                        *fiber.App
-	UserController             *http.UserController
-	CustomerController         *http.CustomerController
-	WasteBankController        *http.WasteBankController
-	WasteCollectorController   *http.WasteCollectorController
-	IndustryController         *http.IndustryController
-	WasteCategoryController    *http.WasteCategoryController
-	WasteSubCategoryController *http.WasteSubCategoryController
-	WasteTypeController        *http.WasteTypeController
-	AuthMiddleware             fiber.Handler
+	App                           *fiber.App
+	UserController                *http.UserController
+	CustomerController            *http.CustomerController
+	WasteBankController           *http.WasteBankController
+	WasteCollectorController      *http.WasteCollectorController
+	IndustryController            *http.IndustryController
+	WasteCategoryController       *http.WasteCategoryController
+	WasteSubCategoryController    *http.WasteSubCategoryController
+	WasteTypeController           *http.WasteTypeController
+	WasteBankPricedTypeController *http.WasteBankPricedTypeController
+	AuthMiddleware                fiber.Handler
 }
 
 func (c *RouteConfig) Setup() {
@@ -55,6 +56,13 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Profiles
 	wasteBankOnly.Get("/profiles/:user_id", c.WasteBankController.Get)
 	wasteBankOnly.Put("/profiles/:id", c.WasteBankController.Update)
+	// Waste Type Prices
+	wasteBankOnly.Get("/waste-type-prices", c.WasteBankPricedTypeController.List)
+	wasteBankOnly.Get("/waste-type-prices/:id", c.WasteBankPricedTypeController.Get)
+	wasteBankOnly.Post("/batch-waste-type-prices", c.WasteBankPricedTypeController.CreateBatch)
+	wasteBankOnly.Post("/waste-type-prices", c.WasteBankPricedTypeController.Create)
+	wasteBankOnly.Put("/waste-type-prices/:id", c.WasteBankPricedTypeController.Update)
+	wasteBankOnly.Delete("/waste-type-prices/:id", c.WasteBankPricedTypeController.Delete)
 
 	// WasteCollector endpoints
 	wasteCollectorOnly := c.App.Group("/api/waste-collector", c.AuthMiddleware, middleware.RequireRoles("admin", "waste_collector_unit", "waste_collector_central"))
