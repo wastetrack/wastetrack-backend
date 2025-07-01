@@ -8,6 +8,13 @@ type WasteSubCategoryResponse struct {
 	WasteCategory *WasteCategoryResponse `json:"waste_category,omitempty"`
 }
 
+type WasteSubCategorySimpleResponse struct {
+	ID          string `json:"id"`
+	CategoryID  string `json:"category_id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
 type WasteSubCategoryRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`

@@ -1,1 +1,0 @@
-DROP TABLE IF EXISTS waste_transfer_forms;

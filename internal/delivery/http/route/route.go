@@ -15,6 +15,7 @@ type RouteConfig struct {
 	IndustryController         *http.IndustryController
 	WasteCategoryController    *http.WasteCategoryController
 	WasteSubCategoryController *http.WasteSubCategoryController
+	WasteTypeController        *http.WasteTypeController
 	AuthMiddleware             fiber.Handler
 }
 
@@ -95,6 +96,13 @@ func (c *RouteConfig) SetupAuthRoute() {
 	adminOnly.Post("/waste-subcategories", c.WasteSubCategoryController.Create)
 	adminOnly.Put("/waste-subcategories/:id", c.WasteSubCategoryController.Update)
 	adminOnly.Delete("/waste-subcategories/:id", c.WasteSubCategoryController.Delete)
+
+	// Waste Types
+	adminOnly.Get("/waste-types", c.WasteTypeController.List)
+	adminOnly.Get("/waste-types/:id", c.WasteTypeController.Get)
+	adminOnly.Post("/waste-types", c.WasteTypeController.Create)
+	adminOnly.Put("/waste-types/:id", c.WasteTypeController.Update)
+	adminOnly.Delete("/waste-types/:id", c.WasteTypeController.Delete)
 
 }
 

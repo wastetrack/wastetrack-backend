@@ -23,7 +23,7 @@ BEGIN
 END $$;
 
 -- Table creation
-CREATE TABLE IF NOT EXISTS waste_transfer_forms (
+CREATE TABLE IF NOT EXISTS waste_transfer_requests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     source_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     destination_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,

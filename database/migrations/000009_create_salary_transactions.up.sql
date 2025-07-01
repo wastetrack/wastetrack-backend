@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS salary_transactions (
     sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     receiver_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     transaction_type transaction_type NOT NULL,
+    amount BIGINT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     status transaction_status DEFAULT 'completed',
     notes TEXT

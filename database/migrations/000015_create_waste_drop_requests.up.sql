@@ -13,12 +13,13 @@ BEGIN
 END $$;
 
 
-CREATE TABLE IF NOT EXISTS customer_requests (
+CREATE TABLE IF NOT EXISTS waste_drop_requests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     delivery_type delivery_type NOT NULL,
     customer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     user_phone_number TEXT,
     waste_bank_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    assigned_collector_id UUID REFERENCES users(id) ON DELETE SET NULL,
     total_price BIGINT DEFAULT 0,
     status request_status DEFAULT 'pending',
     appointment_date DATE,

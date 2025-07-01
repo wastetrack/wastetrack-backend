@@ -35,6 +35,7 @@ func Bootstrap(config *BootstrapConfig) {
 	industryRepository := repository.NewIndustryRepository(config.Log)
 	wasteCategoryRepository := repository.NewWasteCategoryRepository(config.Log)
 	wasteSubCategoryRepository := repository.NewWasteSubCategoryRepository(config.Log)
+	wasteTypeRepository := repository.NewWasteTypeRepository(config.Log)
 
 	// Setup JWT Helper
 	jwtHelper := helper.NewJWTHelper(
@@ -74,6 +75,7 @@ func Bootstrap(config *BootstrapConfig) {
 	industryUseCase := usecase.NewIndustryUseCase(config.DB, config.Log, config.Validate, industryRepository)
 	wasteCategoryUseCase := usecase.NewWasteCategoryUsecase(config.DB, config.Log, config.Validate, wasteCategoryRepository)
 	wasteSubCategoryUseCase := usecase.NewWasteSubCategoryUsecase(config.DB, config.Log, config.Validate, wasteCategoryRepository, wasteSubCategoryRepository)
+	wasteTypeUseCase := usecase.NewWasteTypeUsecase(config.DB, config.Log, config.Validate, wasteCategoryRepository, wasteSubCategoryRepository, wasteTypeRepository)
 
 	// Setup controllers
 	userController := http.NewUserController(
@@ -86,6 +88,7 @@ func Bootstrap(config *BootstrapConfig) {
 	industryController := http.NewIndustryController(industryUseCase, config.Log)
 	wasteCategoryController := http.NewWasteCategoryController(wasteCategoryUseCase, config.Log)
 	wasteSubCategoryController := http.NewWasteSubCategoryController(wasteSubCategoryUseCase, config.Log)
+	wasteTypeController := http.NewWasteTypeController(wasteTypeUseCase, config.Log)
 
 	// Setup middlewares
 	authMiddleware := middleware.NewJWTAuth(
@@ -101,6 +104,7 @@ func Bootstrap(config *BootstrapConfig) {
 		IndustryController:         industryController,
 		WasteCategoryController:    wasteCategoryController,
 		WasteSubCategoryController: wasteSubCategoryController,
+		WasteTypeController:        wasteTypeController,
 		AuthMiddleware:             authMiddleware,
 	}
 
