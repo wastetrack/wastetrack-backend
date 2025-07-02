@@ -20,3 +20,6 @@ func NewWasteBankRepository(log *logrus.Logger) *WasteBankRepository {
 func (r *WasteBankRepository) FindByUserID(db *gorm.DB, profile *entity.WasteBankProfile, userID string) error {
 	return db.Where("user_id = ?", userID).Preload("User").First(profile).Error
 }
+func (r *WasteBankRepository) FindByUserIDNoPreload(db *gorm.DB, profile *entity.WasteBankProfile, userID string) error {
+	return db.Where("user_id = ?", userID).First(profile).Error
+}

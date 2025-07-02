@@ -38,6 +38,7 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteTypeRepository := repository.NewWasteTypeRepository(config.Log)
 	wasteBankPricedTypeRepository := repository.NewWasteBankPricedTypeRepository(config.Log)
 	wasteDropRequestRepository := repository.NewWasteDropRequestRepository(config.Log)
+	wasteDropRequesItemRepository := repository.NewWasteDropRequestItemRepository(config.Log)
 	collectorManagementRepository := repository.NewCollectorManagementRepository(config.Log)
 
 	// Setup JWT Helper
@@ -81,7 +82,8 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteSubCategoryUseCase := usecase.NewWasteSubCategoryUsecase(config.DB, config.Log, config.Validate, wasteCategoryRepository, wasteSubCategoryRepository)
 	wasteTypeUseCase := usecase.NewWasteTypeUsecase(config.DB, config.Log, config.Validate, wasteCategoryRepository, wasteSubCategoryRepository, wasteTypeRepository)
 	wasteBankPricedTypeUseCase := usecase.NewWasteBankPricedTypeUsecase(config.DB, config.Log, config.Validate, wasteBankPricedTypeRepository, wasteTypeRepository)
-	wasteDropRequestUseCase := usecase.NewWasteDropRequestUsecase(config.DB, config.Log, config.Validate, wasteDropRequestRepository, userRepository)
+	wasteDropRequestUseCase := usecase.NewWasteDropRequestUsecase(config.DB, config.Log, config.Validate, wasteDropRequestRepository, userRepository, wasteTypeRepository, wasteDropRequesItemRepository, wasteBankPricedTypeRepository, customerRepository, wasteBankRepository, wasteCollectorRepository)
+	wasteDropRequestItemUseCase := usecase.NewWasteDropRequestItemUsecase(config.DB, config.Log, config.Validate, wasteDropRequesItemRepository, wasteDropRequestRepository, wasteTypeRepository)
 
 	// Setup controllers
 	userController := http.NewUserController(
@@ -97,6 +99,7 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteTypeController := http.NewWasteTypeController(wasteTypeUseCase, config.Log)
 	wasteBankPricedTypeController := http.NewWasteBankPricedTypeController(wasteBankPricedTypeUseCase, config.Log)
 	wasteDropRequestController := http.NewWasteDropRequestController(wasteDropRequestUseCase, config.Log)
+	wasteDropRequestItemController := http.NewWasteDropRequestItemController(wasteDropRequestItemUseCase, config.Log)
 
 	// Setup middlewares
 	authMiddleware := middleware.NewJWTAuth(
@@ -104,18 +107,19 @@ func Bootstrap(config *BootstrapConfig) {
 	)
 
 	routeConfig := route.RouteConfig{
-		App:                           config.App,
-		UserController:                userController,
-		CustomerController:            customerController,
-		WasteBankController:           wasteBankController,
-		WasteCollectorController:      wasteCollectorController,
-		IndustryController:            industryController,
-		WasteCategoryController:       wasteCategoryController,
-		WasteSubCategoryController:    wasteSubCategoryController,
-		WasteTypeController:           wasteTypeController,
-		WasteBankPricedTypeController: wasteBankPricedTypeController,
-		WasteDropRequestController:    wasteDropRequestController,
-		AuthMiddleware:                authMiddleware,
+		App:                            config.App,
+		UserController:                 userController,
+		CustomerController:             customerController,
+		WasteBankController:            wasteBankController,
+		WasteCollectorController:       wasteCollectorController,
+		IndustryController:             industryController,
+		WasteCategoryController:        wasteCategoryController,
+		WasteSubCategoryController:     wasteSubCategoryController,
+		WasteTypeController:            wasteTypeController,
+		WasteBankPricedTypeController:  wasteBankPricedTypeController,
+		WasteDropRequestController:     wasteDropRequestController,
+		WasteDropRequestItemController: wasteDropRequestItemController,
+		AuthMiddleware:                 authMiddleware,
 	}
 
 	routeConfig.Setup()

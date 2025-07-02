@@ -20,3 +20,7 @@ func NewCustomerRepository(log *logrus.Logger) *CustomerRepository {
 func (r *CustomerRepository) FindByUserID(db *gorm.DB, profile *entity.CustomerProfile, userID string) error {
 	return db.Where("user_id = ?", userID).Preload("User").First(profile).Error
 }
+
+func (r *CustomerRepository) FindByUserIDNoPreload(db *gorm.DB, profile *entity.CustomerProfile, userID string) error {
+	return db.Where("user_id = ?", userID).First(profile).Error
+}

@@ -150,19 +150,19 @@ func (c *WasteDropRequestController) UpdateStatus(ctx *fiber.Ctx) error {
 	return ctx.JSON(model.WebResponse[*model.WasteDropRequestSimpleResponse]{Data: response})
 }
 
+// UPDATED COMPLETE METHOD - Now handles item verification
 func (c *WasteDropRequestController) Complete(ctx *fiber.Ctx) error {
-	request := &model.UpdateWasteDropRequest{
-		ID: ctx.Params("id"),
+	request := new(model.CompleteWasteDropRequest)
+	request.ID = ctx.Params("id")
+
+	if err := ctx.BodyParser(request); err != nil {
+		c.Log.Warnf("Failed to parse request body: %v", err)
+		return fiber.ErrBadRequest
 	}
 
-	updateRequest := &model.UpdateWasteDropRequest{
-		ID:     request.ID,
-		Status: "completed",
-	}
-
-	response, err := c.WasteDropRequestUsecase.Update(ctx.UserContext(), updateRequest)
+	response, err := c.WasteDropRequestUsecase.Complete(ctx.UserContext(), request)
 	if err != nil {
-		c.Log.Warnf("Failed to update waste drop request status: %v", err)
+		c.Log.Warnf("Failed to complete waste drop request: %v", err)
 		return err
 	}
 

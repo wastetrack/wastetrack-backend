@@ -2,6 +2,10 @@ package model
 
 import "time"
 
+type WasteDropRequestItems struct {
+	WasteTypeIDs []string `json:"waste_type_ids" validate:"required,min=1"`
+	Quantities   []int64  `json:"quantities" validate:"required,min=1"`
+}
 type WasteDropRequestSimpleResponse struct {
 	ID                   string            `json:"id"`
 	DeliveryType         string            `json:"delivery_type"`
@@ -44,18 +48,19 @@ type WasteDropRequestResponse struct {
 }
 
 type WasteDropRequestRequest struct {
-	DeliveryType         string           `json:"delivery_type" validate:"required,max=100"`
-	CustomerID           string           `json:"customer_id" validate:"required,max=100"`
-	UserPhoneNumber      string           `json:"user_phone_number,omitempty"`
-	WasteBankID          string           `json:"waste_bank_id,omitempty"`
-	AssignedCollectorID  string           `json:"assigned_collector_id,omitempty"`
-	TotalPrice           int64            `json:"total_price"`
-	ImageURL             string           `json:"image_url,omitempty"`
-	AppointmentLocation  *LocationRequest `json:"appointment_location,omitempty"`
-	AppointmentDate      string           `json:"appointment_date,omitempty"`
-	AppointmentStartTime string           `json:"appointment_start_time,omitempty"`
-	AppointmentEndTime   string           `json:"appointment_end_time,omitempty"`
-	Notes                string           `json:"notes,omitempty"`
+	DeliveryType         string                 `json:"delivery_type" validate:"required,max=100"`
+	CustomerID           string                 `json:"customer_id" validate:"required,max=100"`
+	UserPhoneNumber      string                 `json:"user_phone_number,omitempty"`
+	WasteBankID          string                 `json:"waste_bank_id,omitempty"`
+	AssignedCollectorID  string                 `json:"assigned_collector_id,omitempty"`
+	TotalPrice           int64                  `json:"total_price"`
+	ImageURL             string                 `json:"image_url,omitempty"`
+	AppointmentLocation  *LocationRequest       `json:"appointment_location,omitempty"`
+	AppointmentDate      string                 `json:"appointment_date,omitempty"`
+	AppointmentStartTime string                 `json:"appointment_start_time,omitempty"`
+	AppointmentEndTime   string                 `json:"appointment_end_time,omitempty"`
+	Notes                string                 `json:"notes,omitempty"`
+	Items                *WasteDropRequestItems `json:"items" validate:"required"`
 }
 
 type SearchWasteDropRequest struct {
