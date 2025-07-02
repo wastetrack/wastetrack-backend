@@ -19,17 +19,18 @@ import (
 )
 
 type UserUseCase struct {
-	DB                       *gorm.DB
-	Log                      *logrus.Logger
-	Validate                 *validator.Validate
-	UserRepository           *repository.UserRepository
-	CustomerRepository       *repository.CustomerRepository
-	WasteBankRepository      *repository.WasteBankRepository
-	WasteCollectorRepository *repository.WasteCollectorRepository
-	IndustryRepository       *repository.IndustryRepository
-	JWTHelper                *helper.JWTHelper
-	EmailHelper              *helper.EmailHelper
-	BaseURL                  string
+	DB                            *gorm.DB
+	Log                           *logrus.Logger
+	Validate                      *validator.Validate
+	UserRepository                *repository.UserRepository
+	CustomerRepository            *repository.CustomerRepository
+	WasteBankRepository           *repository.WasteBankRepository
+	WasteCollectorRepository      *repository.WasteCollectorRepository
+	IndustryRepository            *repository.IndustryRepository
+	CollectorManagementRepository *repository.CollectorManagementRepository
+	JWTHelper                     *helper.JWTHelper
+	EmailHelper                   *helper.EmailHelper
+	BaseURL                       string
 }
 
 func NewUserUseCase(
@@ -41,22 +42,24 @@ func NewUserUseCase(
 	wasteBankRepository *repository.WasteBankRepository,
 	wasteCollectorRepository *repository.WasteCollectorRepository,
 	industryRepository *repository.IndustryRepository,
+	collectorManagementRepository *repository.CollectorManagementRepository,
 	jwtHelper *helper.JWTHelper,
 	emailHelper *helper.EmailHelper,
 	baseURL string,
 ) *UserUseCase {
 	return &UserUseCase{
-		DB:                       db,
-		Log:                      log,
-		Validate:                 validate,
-		UserRepository:           userRepository,
-		CustomerRepository:       customerRepository,
-		WasteBankRepository:      wasteBankRepository,
-		WasteCollectorRepository: wasteCollectorRepository,
-		IndustryRepository:       industryRepository,
-		JWTHelper:                jwtHelper,
-		EmailHelper:              emailHelper,
-		BaseURL:                  baseURL,
+		DB:                            db,
+		Log:                           log,
+		Validate:                      validate,
+		UserRepository:                userRepository,
+		CustomerRepository:            customerRepository,
+		WasteBankRepository:           wasteBankRepository,
+		WasteCollectorRepository:      wasteCollectorRepository,
+		IndustryRepository:            industryRepository,
+		CollectorManagementRepository: collectorManagementRepository,
+		JWTHelper:                     jwtHelper,
+		EmailHelper:                   emailHelper,
+		BaseURL:                       baseURL,
 	}
 }
 
@@ -145,9 +148,27 @@ func (c *UserUseCase) Register(ctx context.Context, request *model.RegisterUserR
 		}
 	}
 	if user.Role == "waste_collector_unit" || user.Role == "waste_collector_central" {
+		// Check if waste bank exists
+		if request.InstitutionID == "" {
+			return nil, fiber.NewError(fiber.StatusBadRequest, "InstitutionID is required")
+		}
+		wasteBank := new(entity.User)
+		if err := c.UserRepository.FindById(tx, wasteBank, request.InstitutionID); err != nil {
+			c.Log.Warnf("Failed to find waste bank by id: %v", err)
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Institution not found")
+		}
 		// Create waste collector profile
 		wasteCollector := &entity.WasteCollectorProfile{
 			UserID: user.ID,
+		}
+		collectorManagement := &entity.CollectorManagement{
+			WasteBankID: uuid.MustParse(request.InstitutionID),
+			CollectorID: user.ID,
+			Status:      "active",
+		}
+		if err := c.CollectorManagementRepository.Create(tx, collectorManagement); err != nil {
+			c.Log.Warnf("Failed to create collector management: %v", err)
+			return nil, fiber.ErrInternalServerError
 		}
 
 		if err := c.WasteCollectorRepository.Create(tx, wasteCollector); err != nil {
@@ -512,40 +533,40 @@ func (c *UserUseCase) Get(ctx context.Context, request *model.GetUserRequest) (*
 	return c.Current(ctx, request)
 }
 
-// func (c *UserUseCase) Search(ctx context.Context, request *model.SearchUserRequest) ([]model.UserResponse, int64, error) {
-// 	tx := c.DB.WithContext(ctx).Begin()
-// 	defer tx.Rollback()
+func (c *UserUseCase) Search(ctx context.Context, request *model.SearchUserRequest) ([]model.UserResponse, int64, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
 
-// 	if err := c.Validate.Struct(request); err != nil {
-// 		c.Log.Warnf("Invalid request body: %+v", err)
-// 		return nil, 0, fiber.ErrBadRequest
-// 	}
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request body: %+v", err)
+		return nil, 0, fiber.ErrBadRequest
+	}
 
-// 	if request.Page < 1 {
-// 		request.Page = 1
-// 	}
-// 	if request.Size < 1 {
-// 		request.Size = 10
-// 	}
+	if request.Page < 1 {
+		request.Page = 1
+	}
+	if request.Size < 1 {
+		request.Size = 10
+	}
 
-// 	users, total, err := c.UserRepository.Search(tx, request)
-// 	if err != nil {
-// 		c.Log.Warnf("Failed search users: %+v", err)
-// 		return nil, 0, fiber.ErrInternalServerError
-// 	}
+	users, total, err := c.UserRepository.Search(tx, request)
+	if err != nil {
+		c.Log.Warnf("Failed search users: %+v", err)
+		return nil, 0, fiber.ErrInternalServerError
+	}
 
-// 	if err := tx.Commit().Error; err != nil {
-// 		c.Log.Warnf("Failed commit transaction: %+v", err)
-// 		return nil, 0, fiber.ErrInternalServerError
-// 	}
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction: %+v", err)
+		return nil, 0, fiber.ErrInternalServerError
+	}
 
-// 	responses := make([]model.UserResponse, len(users))
-// 	for i, user := range users {
-// 		responses[i] = *converter.UserToResponse(&user)
-// 	}
+	responses := make([]model.UserResponse, len(users))
+	for i, user := range users {
+		responses[i] = *converter.UserToResponse(&user)
+	}
 
-// 	return responses, total, nil
-// }
+	return responses, total, nil
+}
 
 // func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserRequest) (*model.UserResponse, error) {
 // 	tx := c.DB.WithContext(ctx).Begin()

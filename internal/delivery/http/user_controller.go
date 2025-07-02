@@ -1,6 +1,8 @@
 package http
 
 import (
+	"math"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/wastetrack/wastetrack-backend/internal/delivery/http/middleware"
@@ -75,6 +77,37 @@ func (c *UserController) VerifyEmail(ctx *fiber.Ctx) error {
 	})
 }
 
+func (c *UserController) List(ctx *fiber.Ctx) error {
+	request := &model.SearchUserRequest{
+		Username:    ctx.Query("username"),
+		Email:       ctx.Query("email"),
+		Role:        ctx.Query("role"),
+		Institution: ctx.Query("institution"),
+		Address:     ctx.Query("address"),
+		City:        ctx.Query("city"),
+		Province:    ctx.Query("province"),
+		Page:        ctx.QueryInt("page"),
+		Size:        ctx.QueryInt("size"),
+	}
+
+	responses, total, err := c.UserUsecase.Search(ctx.UserContext(), request)
+	if err != nil {
+		c.Log.WithError(err).Warnf("Failed to search users")
+		return err
+	}
+
+	paging := &model.PageMetadata{
+		Page:      request.Page,
+		Size:      request.Size,
+		TotalItem: total,
+		TotalPage: int64(math.Ceil(float64(total) / float64(request.Size))),
+	}
+
+	return ctx.JSON(model.WebResponse[[]model.UserResponse]{
+		Data:   responses,
+		Paging: paging,
+	})
+}
 func (c *UserController) Current(ctx *fiber.Ctx) error {
 	auth := middleware.GetUser(ctx)
 

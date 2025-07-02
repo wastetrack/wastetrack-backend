@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/wastetrack/wastetrack-backend/internal/entity"
+	"github.com/wastetrack/wastetrack-backend/internal/model"
 	"gorm.io/gorm"
 )
 
@@ -41,36 +42,42 @@ func (r *UserRepository) CountByUsername(db *gorm.DB, username string) (int64, e
 	return total, err
 }
 
-// func (r *UserRepository) Search(db *gorm.DB, request *model.SearchUserRequest) ([]entity.User, int64, error) {
-// 	var users []entity.User
-// 	if err := db.Scopes(r.FilterUser(request)).Offset((request.Page - 1) * request.Size).Limit(request.Size).Find(&users).Error; err != nil {
-// 		return nil, 0, err
-// 	}
+func (r *UserRepository) Search(db *gorm.DB, request *model.SearchUserRequest) ([]entity.User, int64, error) {
+	var users []entity.User
+	if err := db.Scopes(r.FilterUser(request)).Offset((request.Page - 1) * request.Size).Limit(request.Size).Find(&users).Error; err != nil {
+		return nil, 0, err
+	}
 
-// 	var total int64 = 0
-// 	if err := db.Model(&entity.User{}).Scopes(r.FilterUser(request)).Count(&total).Error; err != nil {
-// 		return nil, 0, err
-// 	}
-// 	return users, total, nil
-// }
+	var total int64 = 0
+	if err := db.Model(&entity.User{}).Scopes(r.FilterUser(request)).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	return users, total, nil
+}
 
-// func (r *UserRepository) FilterUser(request *model.SearchUserRequest) func(tx *gorm.DB) *gorm.DB {
-// 	return func(tx *gorm.DB) *gorm.DB {
-// 		if username := request.Username; username != "" {
-// 			tx = tx.Where("username LIKE ?", "%"+username+"%")
-// 		}
-// 		if email := request.Email; email != "" {
-// 			tx = tx.Where("email LIKE ?", "%"+email+"%")
-// 		}
-// 		if phoneNumber := request.PhoneNumber; phoneNumber != "" {
-// 			tx = tx.Where("phone_number LIKE ?", "%"+phoneNumber+"%")
-// 		}
-// 		if gradeLevel := request.GradeLevel; gradeLevel != 0 {
-// 			tx = tx.Where("grade_level = ?", gradeLevel)
-// 		}
-// 		if birthDate := request.BirthDate; birthDate != nil {
-// 			tx = tx.Where("birth_date = ?", birthDate)
-// 		}
-// 		return tx
-// 	}
-// }
+func (r *UserRepository) FilterUser(request *model.SearchUserRequest) func(tx *gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		if username := request.Username; username != "" {
+			tx = tx.Where("username ILIKE ?", "%"+username+"%")
+		}
+		if email := request.Email; email != "" {
+			tx = tx.Where("email ILIKE ?", "%"+email+"%")
+		}
+		if role := request.Role; role != "" {
+			tx = tx.Where("role = ?", role)
+		}
+		if institution := request.Institution; institution != "" {
+			tx = tx.Where("institution ILIKE ?", "%"+institution+"%")
+		}
+		if address := request.Address; address != "" {
+			tx = tx.Where("address ILIKE ?", "%"+address+"%")
+		}
+		if city := request.City; city != "" {
+			tx = tx.Where("city ILIKE ?", "%"+city+"%")
+		}
+		if province := request.Province; province != "" {
+			tx = tx.Where("province ILIKE ?", "%"+province+"%")
+		}
+		return tx
+	}
+}

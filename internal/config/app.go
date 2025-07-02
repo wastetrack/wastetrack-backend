@@ -38,6 +38,7 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteTypeRepository := repository.NewWasteTypeRepository(config.Log)
 	wasteBankPricedTypeRepository := repository.NewWasteBankPricedTypeRepository(config.Log)
 	wasteDropRequestRepository := repository.NewWasteDropRequestRepository(config.Log)
+	collectorManagementRepository := repository.NewCollectorManagementRepository(config.Log)
 
 	// Setup JWT Helper
 	jwtHelper := helper.NewJWTHelper(
@@ -67,6 +68,7 @@ func Bootstrap(config *BootstrapConfig) {
 		wasteBankRepository,
 		wasteCollectorRepository,
 		industryRepository,
+		collectorManagementRepository,
 		jwtHelper,
 		emailHelper,
 		config.Config.GetString("app.base_url"), // Base URL for email links

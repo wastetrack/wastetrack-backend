@@ -46,10 +46,11 @@ func (c *RouteConfig) SetupAuthRoute() {
 	auth.Get("/users/current", c.UserController.Current)
 	auth.Post("/auth/logout", c.UserController.Logout)
 	auth.Post("/auth/logout-all-devices", c.UserController.LogoutAllDevices)
-
 	// Waste Drop Requests
 	auth.Get("/waste-drop-requests", c.WasteDropRequestController.List)
 	auth.Get("/waste-drop-requests/:id", c.WasteDropRequestController.Get)
+	// Users
+	auth.Get("/users", c.UserController.List)
 
 	// Customer endpoints
 	customerOnly := c.App.Group("/api/customer", c.AuthMiddleware, middleware.RequireRoles("admin", "customer"))

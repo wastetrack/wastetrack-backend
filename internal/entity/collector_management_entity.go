@@ -10,5 +10,5 @@ type CollectorManagement struct {
 	WasteBank   User      `gorm:"foreignKey:WasteBankID"`
 	CollectorID uuid.UUID `gorm:"column:collector_id;not null"`
 	Collector   User      `gorm:"foreignKey:CollectorID"`
-	Status      string    `gorm:"column:status;default:'pending'"`
+	Status      string    `gorm:"column:status;default:'active'"`
 }
