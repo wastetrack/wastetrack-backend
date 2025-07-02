@@ -148,27 +148,29 @@ func (c *UserUseCase) Register(ctx context.Context, request *model.RegisterUserR
 		}
 	}
 	if user.Role == "waste_collector_unit" || user.Role == "waste_collector_central" {
-		// Check if waste bank exists
-		if request.InstitutionID == "" {
-			return nil, fiber.NewError(fiber.StatusBadRequest, "InstitutionID is required")
-		}
-		wasteBank := new(entity.User)
-		if err := c.UserRepository.FindById(tx, wasteBank, request.InstitutionID); err != nil {
-			c.Log.Warnf("Failed to find waste bank by id: %v", err)
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Institution not found")
-		}
 		// Create waste collector profile
 		wasteCollector := &entity.WasteCollectorProfile{
 			UserID: user.ID,
 		}
-		collectorManagement := &entity.CollectorManagement{
-			WasteBankID: uuid.MustParse(request.InstitutionID),
-			CollectorID: user.ID,
-			Status:      "active",
-		}
-		if err := c.CollectorManagementRepository.Create(tx, collectorManagement); err != nil {
-			c.Log.Warnf("Failed to create collector management: %v", err)
-			return nil, fiber.ErrInternalServerError
+
+		// Only create collector management if InstitutionID is provided
+		if request.InstitutionID != "" {
+			// Validate that the institution exists
+			wasteBank := new(entity.User)
+			if err := c.UserRepository.FindById(tx, wasteBank, request.InstitutionID); err != nil {
+				c.Log.Warnf("Failed to find waste bank by id: %v", err)
+				return nil, fiber.NewError(fiber.StatusBadRequest, "Institution not found")
+			}
+
+			collectorManagement := &entity.CollectorManagement{
+				WasteBankID: uuid.MustParse(request.InstitutionID),
+				CollectorID: user.ID,
+				Status:      "active",
+			}
+			if err := c.CollectorManagementRepository.Create(tx, collectorManagement); err != nil {
+				c.Log.Warnf("Failed to create collector management: %v", err)
+				return nil, fiber.ErrInternalServerError
+			}
 		}
 
 		if err := c.WasteCollectorRepository.Create(tx, wasteCollector); err != nil {
