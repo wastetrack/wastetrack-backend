@@ -482,6 +482,20 @@ func (c *WasteDropRequestUsecase) Complete(ctx context.Context, request *model.C
 		return nil, fiber.ErrInternalServerError
 	}
 
+	// Add totalVerifiedPrice to user's points
+	user := &entity.User{}
+	if err := tx.First(user, "id = ?", wasteDropRequest.CustomerID).Error; err != nil {
+		c.Log.Warnf("Failed to find user for point update: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	user.Points += totalVerifiedPrice
+
+	if err := c.UserRepository.Update(tx, user); err != nil {
+		c.Log.Warnf("Failed to update user points: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
 	// Update related profiles
 	if err := c.updateCustomerProfile(tx, wasteDropRequest.CustomerID, totalVerifiedWeight, int64(len(existingItems))); err != nil {
 		c.Log.Warnf("Failed to update customer profile: %+v", err)
