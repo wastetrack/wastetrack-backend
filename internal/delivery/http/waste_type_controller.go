@@ -51,11 +51,10 @@ func (c *WasteTypeController) Get(ctx *fiber.Ctx) error {
 
 func (c *WasteTypeController) List(ctx *fiber.Ctx) error {
 	request := &model.SearchWasteTypeRequest{
-		Name:          ctx.Query("name"),
-		CategoryID:    ctx.Query("category_id"),
-		SubCategoryID: ctx.Query("subcategory_id"),
-		Page:          ctx.QueryInt("page", 1),
-		Size:          ctx.QueryInt("size", 10),
+		Name:       ctx.Query("name"),
+		CategoryID: ctx.Query("category_id"),
+		Page:       ctx.QueryInt("page", 1),
+		Size:       ctx.QueryInt("size", 10),
 	}
 
 	responses, total, err := c.WasteTypeUsecase.Search(ctx.UserContext(), request)

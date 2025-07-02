@@ -14,7 +14,6 @@ type RouteConfig struct {
 	WasteCollectorController       *http.WasteCollectorController
 	IndustryController             *http.IndustryController
 	WasteCategoryController        *http.WasteCategoryController
-	WasteSubCategoryController     *http.WasteSubCategoryController
 	WasteTypeController            *http.WasteTypeController
 	WasteBankPricedTypeController  *http.WasteBankPricedTypeController
 	WasteDropRequestController     *http.WasteDropRequestController
@@ -50,9 +49,6 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Waste Categories
 	auth.Get("/waste-categories", c.WasteCategoryController.List)
 	auth.Get("/waste-categories/:id", c.WasteCategoryController.Get)
-	// Waste Sub Categories
-	auth.Get("/waste-subcategories", c.WasteSubCategoryController.List)
-	auth.Get("/waste-subcategories/:id", c.WasteSubCategoryController.Get)
 	// Waste Type
 	auth.Get("/waste-types", c.WasteTypeController.List)
 	auth.Get("/waste-types/:id", c.WasteTypeController.Get)
@@ -119,10 +115,6 @@ func (c *RouteConfig) SetupAuthRoute() {
 	adminOnly.Post("/waste-categories", c.WasteCategoryController.Create)
 	adminOnly.Put("/waste-categories/:id", c.WasteCategoryController.Update)
 	adminOnly.Delete("/waste-categories/:id", c.WasteCategoryController.Delete)
-	// Waste SubCategories
-	adminOnly.Post("/waste-subcategories", c.WasteSubCategoryController.Create)
-	adminOnly.Put("/waste-subcategories/:id", c.WasteSubCategoryController.Update)
-	adminOnly.Delete("/waste-subcategories/:id", c.WasteSubCategoryController.Delete)
 	// Waste Types
 	adminOnly.Post("/waste-types", c.WasteTypeController.Create)
 	adminOnly.Put("/waste-types/:id", c.WasteTypeController.Update)

@@ -34,7 +34,6 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteCollectorRepository := repository.NewWasteCollectorRepository(config.Log)
 	industryRepository := repository.NewIndustryRepository(config.Log)
 	wasteCategoryRepository := repository.NewWasteCategoryRepository(config.Log)
-	wasteSubCategoryRepository := repository.NewWasteSubCategoryRepository(config.Log)
 	wasteTypeRepository := repository.NewWasteTypeRepository(config.Log)
 	wasteBankPricedTypeRepository := repository.NewWasteBankPricedTypeRepository(config.Log)
 	wasteDropRequestRepository := repository.NewWasteDropRequestRepository(config.Log)
@@ -79,8 +78,7 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteCollectorUseCase := usecase.NewWasteCollectorUseCase(config.DB, config.Log, config.Validate, wasteCollectorRepository)
 	industryUseCase := usecase.NewIndustryUseCase(config.DB, config.Log, config.Validate, industryRepository)
 	wasteCategoryUseCase := usecase.NewWasteCategoryUsecase(config.DB, config.Log, config.Validate, wasteCategoryRepository)
-	wasteSubCategoryUseCase := usecase.NewWasteSubCategoryUsecase(config.DB, config.Log, config.Validate, wasteCategoryRepository, wasteSubCategoryRepository)
-	wasteTypeUseCase := usecase.NewWasteTypeUsecase(config.DB, config.Log, config.Validate, wasteCategoryRepository, wasteSubCategoryRepository, wasteTypeRepository)
+	wasteTypeUseCase := usecase.NewWasteTypeUsecase(config.DB, config.Log, config.Validate, wasteCategoryRepository, wasteTypeRepository)
 	wasteBankPricedTypeUseCase := usecase.NewWasteBankPricedTypeUsecase(config.DB, config.Log, config.Validate, wasteBankPricedTypeRepository, wasteTypeRepository)
 	wasteDropRequestUseCase := usecase.NewWasteDropRequestUsecase(config.DB, config.Log, config.Validate, wasteDropRequestRepository, userRepository, wasteTypeRepository, wasteDropRequesItemRepository, wasteBankPricedTypeRepository, customerRepository, wasteBankRepository, wasteCollectorRepository)
 	wasteDropRequestItemUseCase := usecase.NewWasteDropRequestItemUsecase(config.DB, config.Log, config.Validate, wasteDropRequesItemRepository, wasteDropRequestRepository, wasteTypeRepository)
@@ -95,7 +93,6 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteCollectorController := http.NewWasteCollectorController(wasteCollectorUseCase, config.Log)
 	industryController := http.NewIndustryController(industryUseCase, config.Log)
 	wasteCategoryController := http.NewWasteCategoryController(wasteCategoryUseCase, config.Log)
-	wasteSubCategoryController := http.NewWasteSubCategoryController(wasteSubCategoryUseCase, config.Log)
 	wasteTypeController := http.NewWasteTypeController(wasteTypeUseCase, config.Log)
 	wasteBankPricedTypeController := http.NewWasteBankPricedTypeController(wasteBankPricedTypeUseCase, config.Log)
 	wasteDropRequestController := http.NewWasteDropRequestController(wasteDropRequestUseCase, config.Log)
@@ -114,7 +111,6 @@ func Bootstrap(config *BootstrapConfig) {
 		WasteCollectorController:       wasteCollectorController,
 		IndustryController:             industryController,
 		WasteCategoryController:        wasteCategoryController,
-		WasteSubCategoryController:     wasteSubCategoryController,
 		WasteTypeController:            wasteTypeController,
 		WasteBankPricedTypeController:  wasteBankPricedTypeController,
 		WasteDropRequestController:     wasteDropRequestController,

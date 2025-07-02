@@ -7,6 +7,10 @@ import (
 )
 
 func WasteBankPricedTypeToSimpleResponse(wasteBankPricedType *entity.WasteBankPricedType) *model.WasteBankPricedTypeSimpleResponse {
+	var wasteType *model.WasteTypeResponse
+	if wasteBankPricedType.WasteTypeID != uuid.Nil {
+		wasteType = WasteTypeToResponse(&wasteBankPricedType.WasteType)
+	}
 	return &model.WasteBankPricedTypeSimpleResponse{
 		ID:                wasteBankPricedType.ID.String(),
 		WasteBankID:       wasteBankPricedType.WasteBankID.String(),
@@ -14,6 +18,7 @@ func WasteBankPricedTypeToSimpleResponse(wasteBankPricedType *entity.WasteBankPr
 		CustomPricePerKgs: wasteBankPricedType.CustomPricePerKgs,
 		CreatedAt:         wasteBankPricedType.CreatedAt.String(),
 		UpdatedAt:         wasteBankPricedType.UpdatedAt.String(),
+		WasteType:         wasteType,
 	}
 }
 

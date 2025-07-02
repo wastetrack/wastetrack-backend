@@ -14,22 +14,20 @@ import (
 )
 
 type WasteTypeUsecase struct {
-	DB                         *gorm.DB
-	Log                        *logrus.Logger
-	Validate                   *validator.Validate
-	WasteCategoryRepository    *repository.WasteCategoryRepository
-	WasteSubCategoryRepository *repository.WasteSubCategoryRepository
-	WasteTypeRepository        *repository.WasteTypeRepository
+	DB                      *gorm.DB
+	Log                     *logrus.Logger
+	Validate                *validator.Validate
+	WasteCategoryRepository *repository.WasteCategoryRepository
+	WasteTypeRepository     *repository.WasteTypeRepository
 }
 
-func NewWasteTypeUsecase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, wasteCategoryRepository *repository.WasteCategoryRepository, wasteSubCategoryRepository *repository.WasteSubCategoryRepository, wasteTypeRepository *repository.WasteTypeRepository) *WasteTypeUsecase {
+func NewWasteTypeUsecase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, wasteCategoryRepository *repository.WasteCategoryRepository, wasteTypeRepository *repository.WasteTypeRepository) *WasteTypeUsecase {
 	return &WasteTypeUsecase{
-		DB:                         db,
-		Log:                        log,
-		Validate:                   validate,
-		WasteCategoryRepository:    wasteCategoryRepository,
-		WasteSubCategoryRepository: wasteSubCategoryRepository,
-		WasteTypeRepository:        wasteTypeRepository,
+		DB:                      db,
+		Log:                     log,
+		Validate:                validate,
+		WasteCategoryRepository: wasteCategoryRepository,
+		WasteTypeRepository:     wasteTypeRepository,
 	}
 }
 
@@ -49,18 +47,10 @@ func (u *WasteTypeUsecase) Create(ctx context.Context, request *model.WasteTypeR
 		return nil, fiber.NewError(fiber.StatusNotFound, "Waste Category not found")
 	}
 
-	// check if subcategory exists
-	subcategory := new(entity.WasteSubcategory)
-	if err := u.WasteSubCategoryRepository.FindById(tx, subcategory, request.SubCategoryID); err != nil {
-		u.Log.Warnf("Subcategory not found: %v", err)
-		return nil, fiber.NewError(fiber.StatusNotFound, "Waste Subcategory not found")
-	}
-
 	wasteType := &entity.WasteType{
-		Name:          request.Name,
-		Description:   request.Description,
-		CategoryID:    category.ID,
-		SubcategoryID: subcategory.ID,
+		Name:        request.Name,
+		Description: request.Description,
+		CategoryID:  category.ID,
 	}
 
 	if err := u.WasteTypeRepository.Create(tx, wasteType); err != nil {

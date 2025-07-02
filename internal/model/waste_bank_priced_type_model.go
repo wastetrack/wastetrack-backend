@@ -1,12 +1,13 @@
 package model
 
 type WasteBankPricedTypeSimpleResponse struct {
-	ID                string `json:"id"`
-	WasteBankID       string `json:"waste_bank_id"`
-	WasteTypeID       string `json:"waste_type_id"`
-	CustomPricePerKgs int64  `json:"custom_price_per_kgs"`
-	CreatedAt         string `json:"created_at"`
-	UpdatedAt         string `json:"updated_at"`
+	ID                string             `json:"id"`
+	WasteBankID       string             `json:"waste_bank_id"`
+	WasteTypeID       string             `json:"waste_type_id"`
+	CustomPricePerKgs int64              `json:"custom_price_per_kgs"`
+	CreatedAt         string             `json:"created_at"`
+	UpdatedAt         string             `json:"updated_at"`
+	WasteType         *WasteTypeResponse `json:"waste_type"`
 }
 type WasteBankPricedTypeResponse struct {
 	ID                string             `json:"id"`

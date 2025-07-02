@@ -22,7 +22,6 @@ func (r *WasteTypeRepository) FindById(db *gorm.DB, entity *entity.WasteType, id
 	return db.
 		Where("id = ?", id).
 		Preload("WasteCategory").
-		Preload("WasteSubcategory").
 		Take(entity).
 		Error
 }
@@ -32,7 +31,6 @@ func (r *WasteTypeRepository) Search(db *gorm.DB, request *model.SearchWasteType
 	if err := db.
 		Scopes(r.FilterWasteType(request)).
 		Preload("WasteCategory").
-		Preload("WasteSubcategory").
 		Offset((request.Page - 1) * request.Size).
 		Limit(request.Size).
 		Find(&wasteTypes).Error; err != nil {
@@ -56,9 +54,6 @@ func (r *WasteTypeRepository) FilterWasteType(request *model.SearchWasteTypeRequ
 		}
 		if categoryID := request.CategoryID; categoryID != "" {
 			tx = tx.Where("category_id = ?", categoryID)
-		}
-		if subCategoryID := request.SubCategoryID; subCategoryID != "" {
-			tx = tx.Where("subcategory_id = ?", subCategoryID)
 		}
 		return tx
 	}
