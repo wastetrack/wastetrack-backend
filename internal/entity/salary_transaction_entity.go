@@ -12,6 +12,7 @@ type SalaryTransaction struct {
 	Sender          User      `gorm:"foreignKey:SenderID"`
 	ReceiverID      uuid.UUID `gorm:"column:receiver_id;not null"`
 	Receiver        User      `gorm:"foreignKey:ReceiverID"`
+	Amount          int64     `gorm:"column:amount;default:0"`
 	TransactionType string    `gorm:"column:transaction_type;not null"`
 	CreatedAt       time.Time `gorm:"column:created_at;default:now()"`
 	Status          string    `gorm:"column:status;default:'pending'"`

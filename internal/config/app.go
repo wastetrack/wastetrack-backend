@@ -39,6 +39,7 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteDropRequestRepository := repository.NewWasteDropRequestRepository(config.Log)
 	wasteDropRequesItemRepository := repository.NewWasteDropRequestItemRepository(config.Log)
 	collectorManagementRepository := repository.NewCollectorManagementRepository(config.Log)
+	salaryTransactionRepository := repository.NewSalaryTransactionRepository(config.Log)
 
 	// Setup JWT Helper
 	jwtHelper := helper.NewJWTHelper(
@@ -82,6 +83,8 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteBankPricedTypeUseCase := usecase.NewWasteBankPricedTypeUsecase(config.DB, config.Log, config.Validate, wasteBankPricedTypeRepository, wasteTypeRepository)
 	wasteDropRequestUseCase := usecase.NewWasteDropRequestUsecase(config.DB, config.Log, config.Validate, wasteDropRequestRepository, userRepository, wasteTypeRepository, wasteDropRequesItemRepository, wasteBankPricedTypeRepository, customerRepository, wasteBankRepository, wasteCollectorRepository)
 	wasteDropRequestItemUseCase := usecase.NewWasteDropRequestItemUsecase(config.DB, config.Log, config.Validate, wasteDropRequesItemRepository, wasteDropRequestRepository, wasteTypeRepository)
+	collectorManagementUseCase := usecase.NewCollectorManagementUsecase(config.DB, config.Log, config.Validate, collectorManagementRepository, userRepository)
+	salaryTransactionUseCase := usecase.NewSalaryTransactionUsecase(config.DB, config.Log, config.Validate, salaryTransactionRepository, userRepository)
 
 	// Setup controllers
 	userController := http.NewUserController(
@@ -97,6 +100,8 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteBankPricedTypeController := http.NewWasteBankPricedTypeController(wasteBankPricedTypeUseCase, config.Log)
 	wasteDropRequestController := http.NewWasteDropRequestController(wasteDropRequestUseCase, config.Log)
 	wasteDropRequestItemController := http.NewWasteDropRequestItemController(wasteDropRequestItemUseCase, config.Log)
+	collectorManagementController := http.NewCollectorManagementController(collectorManagementUseCase, config.Log)
+	salaryTransactionController := http.NewSalaryTransactionController(salaryTransactionUseCase, config.Log)
 
 	// Setup middlewares
 	authMiddleware := middleware.NewJWTAuth(
@@ -115,6 +120,8 @@ func Bootstrap(config *BootstrapConfig) {
 		WasteBankPricedTypeController:  wasteBankPricedTypeController,
 		WasteDropRequestController:     wasteDropRequestController,
 		WasteDropRequestItemController: wasteDropRequestItemController,
+		CollectorManagementController:  collectorManagementController,
+		SalaryTransactionController:    salaryTransactionController,
 		AuthMiddleware:                 authMiddleware,
 	}
 
