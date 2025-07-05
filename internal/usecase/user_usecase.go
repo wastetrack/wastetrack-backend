@@ -427,8 +427,8 @@ func (c *UserUseCase) ForgotPassword(ctx context.Context, request *model.ForgotP
 	user := new(entity.User)
 	if err := c.UserRepository.FindByEmail(tx, user, request.Email); err != nil {
 		c.Log.Warnf("Failed find user by email: %+v", err)
-		// Don't reveal that email doesn't exist
-		return nil
+
+		return fiber.NewError(fiber.StatusNotFound, "Email not found")
 	}
 
 	// Generate reset token
