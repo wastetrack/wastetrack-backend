@@ -34,11 +34,12 @@ CREATE TABLE IF NOT EXISTS waste_transfer_requests (
     form_type form_type,
     total_weight DECIMAL DEFAULT 0,
     total_price BIGINT DEFAULT 0,
-    status waste_transfer_status,
+    status waste_transfer_status DEFAULT 'pending',
     source_phone_number TEXT,
     destination_phone_number TEXT,
     appointment_date DATE,
-    appointment_time TIMETZ,
+    appointment_start_time TIMETZ,
+    appointment_end_time TIMETZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

@@ -7,20 +7,22 @@ import (
 )
 
 type RouteConfig struct {
-	App                            *fiber.App
-	UserController                 *http.UserController
-	CustomerController             *http.CustomerController
-	WasteBankController            *http.WasteBankController
-	WasteCollectorController       *http.WasteCollectorController
-	IndustryController             *http.IndustryController
-	WasteCategoryController        *http.WasteCategoryController
-	WasteTypeController            *http.WasteTypeController
-	WasteBankPricedTypeController  *http.WasteBankPricedTypeController
-	WasteDropRequestController     *http.WasteDropRequestController
-	WasteDropRequestItemController *http.WasteDropRequestItemController
-	CollectorManagementController  *http.CollectorManagementController
-	SalaryTransactionController    *http.SalaryTransactionController
-	AuthMiddleware                 fiber.Handler
+	App                                 *fiber.App
+	UserController                      *http.UserController
+	CustomerController                  *http.CustomerController
+	WasteBankController                 *http.WasteBankController
+	WasteCollectorController            *http.WasteCollectorController
+	IndustryController                  *http.IndustryController
+	WasteCategoryController             *http.WasteCategoryController
+	WasteTypeController                 *http.WasteTypeController
+	WasteBankPricedTypeController       *http.WasteBankPricedTypeController
+	WasteDropRequestController          *http.WasteDropRequestController
+	WasteDropRequestItemController      *http.WasteDropRequestItemController
+	WasteTransferController             *http.WasteTransferRequestController
+	WasteTransferItemOfferingController *http.WasteTransferItemOfferingController
+	CollectorManagementController       *http.CollectorManagementController
+	SalaryTransactionController         *http.SalaryTransactionController
+	AuthMiddleware                      fiber.Handler
 }
 
 func (c *RouteConfig) Setup() {
@@ -66,6 +68,12 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Waste Drop Request Items
 	auth.Get("/waste-drop-request-items", c.WasteDropRequestItemController.List)
 	auth.Get("/waste-drop-request-items/:id", c.WasteDropRequestItemController.Get)
+	// Waste Transfer Requests
+	auth.Get("/waste-transfer-requests", c.WasteTransferController.List)
+	auth.Get("/waste-transfer-requests/:id", c.WasteTransferController.Get)
+	// Waste Transfer Item Offerings
+	auth.Get("/waste-transfer-item-offerings", c.WasteTransferItemOfferingController.List)
+	auth.Get("/waste-transfer-item-offerings/:id", c.WasteTransferItemOfferingController.Get)
 
 	// Users
 	auth.Get("/users", c.UserController.List)
@@ -90,6 +98,8 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Waste Drop Requests
 	wasteBankOnly.Put("/waste-drop-requests/:id", c.WasteDropRequestController.UpdateStatus)
 	wasteBankOnly.Put("/waste-drop-requests/:id/assign-collector", c.WasteDropRequestController.AssignCollector)
+	// Waste Transfer
+	wasteBankOnly.Post("/waste-transfer-requests", c.WasteTransferController.Create)
 	// Collector Management
 	wasteBankOnly.Get("/collector-management", c.CollectorManagementController.List)
 	wasteBankOnly.Get("/collector-management/:id", c.CollectorManagementController.Get)
@@ -137,6 +147,9 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Waste Drop Requests
 	adminOnly.Put("/waste-drop-requests/:id", c.WasteDropRequestController.Update)
 	adminOnly.Delete("/waste-drop-requests/:id", c.WasteDropRequestController.Delete)
+	// Waste Transfer
+	adminOnly.Put("/waste-transfer-requests/:id", c.WasteTransferController.Update)
+	adminOnly.Delete("/waste-transfer-requests/:id", c.WasteTransferController.Delete)
 	// Salary Transactions
 	adminOnly.Delete("/salary-transactions/:id", c.SalaryTransactionController.Delete)
 

@@ -38,6 +38,8 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteBankPricedTypeRepository := repository.NewWasteBankPricedTypeRepository(config.Log)
 	wasteDropRequestRepository := repository.NewWasteDropRequestRepository(config.Log)
 	wasteDropRequesItemRepository := repository.NewWasteDropRequestItemRepository(config.Log)
+	wasteTransferRequestRepository := repository.NewWasteTransferRequestRepository(config.Log)
+	wasteTransferItemOfferingRepository := repository.NewWasteTransferItemOfferingRepository(config.Log)
 	collectorManagementRepository := repository.NewCollectorManagementRepository(config.Log)
 	salaryTransactionRepository := repository.NewSalaryTransactionRepository(config.Log)
 
@@ -83,6 +85,8 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteBankPricedTypeUseCase := usecase.NewWasteBankPricedTypeUsecase(config.DB, config.Log, config.Validate, wasteBankPricedTypeRepository, wasteTypeRepository)
 	wasteDropRequestUseCase := usecase.NewWasteDropRequestUsecase(config.DB, config.Log, config.Validate, wasteDropRequestRepository, userRepository, wasteTypeRepository, wasteDropRequesItemRepository, wasteBankPricedTypeRepository, customerRepository, wasteBankRepository, wasteCollectorRepository)
 	wasteDropRequestItemUseCase := usecase.NewWasteDropRequestItemUsecase(config.DB, config.Log, config.Validate, wasteDropRequesItemRepository, wasteDropRequestRepository, wasteTypeRepository)
+	wasteTransferRequestUseCase := usecase.NewWasteTransferRequestUsecase(config.DB, config.Log, config.Validate, wasteTransferRequestRepository, wasteTransferItemOfferingRepository, userRepository, wasteTypeRepository)
+	wasteTransferItemOfferingUseCase := usecase.NewWasteTransferItemOfferingUsecase(config.DB, config.Log, config.Validate, wasteTransferItemOfferingRepository, wasteTransferRequestRepository, wasteTypeRepository)
 	collectorManagementUseCase := usecase.NewCollectorManagementUsecase(config.DB, config.Log, config.Validate, collectorManagementRepository, userRepository)
 	salaryTransactionUseCase := usecase.NewSalaryTransactionUsecase(config.DB, config.Log, config.Validate, salaryTransactionRepository, userRepository)
 
@@ -100,6 +104,8 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteBankPricedTypeController := http.NewWasteBankPricedTypeController(wasteBankPricedTypeUseCase, config.Log)
 	wasteDropRequestController := http.NewWasteDropRequestController(wasteDropRequestUseCase, config.Log)
 	wasteDropRequestItemController := http.NewWasteDropRequestItemController(wasteDropRequestItemUseCase, config.Log)
+	wasteTransferRequestController := http.NewWasteTransferRequestController(wasteTransferRequestUseCase, config.Log)
+	wasteTransferItemOfferingController := http.NewWasteTransferItemOfferingController(wasteTransferItemOfferingUseCase, config.Log)
 	collectorManagementController := http.NewCollectorManagementController(collectorManagementUseCase, config.Log)
 	salaryTransactionController := http.NewSalaryTransactionController(salaryTransactionUseCase, config.Log)
 
@@ -109,20 +115,22 @@ func Bootstrap(config *BootstrapConfig) {
 	)
 
 	routeConfig := route.RouteConfig{
-		App:                            config.App,
-		UserController:                 userController,
-		CustomerController:             customerController,
-		WasteBankController:            wasteBankController,
-		WasteCollectorController:       wasteCollectorController,
-		IndustryController:             industryController,
-		WasteCategoryController:        wasteCategoryController,
-		WasteTypeController:            wasteTypeController,
-		WasteBankPricedTypeController:  wasteBankPricedTypeController,
-		WasteDropRequestController:     wasteDropRequestController,
-		WasteDropRequestItemController: wasteDropRequestItemController,
-		CollectorManagementController:  collectorManagementController,
-		SalaryTransactionController:    salaryTransactionController,
-		AuthMiddleware:                 authMiddleware,
+		App:                                 config.App,
+		UserController:                      userController,
+		CustomerController:                  customerController,
+		WasteBankController:                 wasteBankController,
+		WasteCollectorController:            wasteCollectorController,
+		IndustryController:                  industryController,
+		WasteCategoryController:             wasteCategoryController,
+		WasteTypeController:                 wasteTypeController,
+		WasteBankPricedTypeController:       wasteBankPricedTypeController,
+		WasteDropRequestController:          wasteDropRequestController,
+		WasteDropRequestItemController:      wasteDropRequestItemController,
+		WasteTransferController:             wasteTransferRequestController,
+		WasteTransferItemOfferingController: wasteTransferItemOfferingController,
+		CollectorManagementController:       collectorManagementController,
+		SalaryTransactionController:         salaryTransactionController,
+		AuthMiddleware:                      authMiddleware,
 	}
 
 	routeConfig.Setup()
