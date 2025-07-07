@@ -15,10 +15,12 @@ import (
 
 func main() {
 	var (
-		dbURL   = flag.String("db", "", "Database URL (required)")
-		clear   = flag.Bool("clear", false, "Clear all data before seeding")
-		help    = flag.Bool("help", false, "Show help message")
-		verbose = flag.Bool("verbose", false, "Enable verbose logging")
+		dbURL     = flag.String("db", "", "Database URL (required)")
+		clear     = flag.Bool("clear", false, "Clear all data before seeding")
+		onlyClear = flag.Bool("only-clear", false, "Only clear data and exit")
+		onlySeed  = flag.Bool("only-seed", false, "Only run seeders (skip clearing)")
+		help      = flag.Bool("help", false, "Show help message")
+		verbose   = flag.Bool("verbose", false, "Enable verbose logging")
 	)
 	flag.Parse()
 
@@ -54,8 +56,18 @@ func main() {
 		log.Printf("Warning: Auto-migration failed: %v", err)
 	}
 
-	// Clear data if requested
-	if *clear {
+	// -- Handle only-clear flag
+	if *onlyClear {
+		log.Println("Clearing existing data...")
+		if err := seeder.ClearAllData(db); err != nil {
+			log.Fatalf("Failed to clear data: %v", err)
+		}
+		log.Println("Data cleared successfully!")
+		return
+	}
+
+	// -- Handle clear flag unless -only-seed is present
+	if *clear && !*onlySeed {
 		log.Println("Clearing existing data...")
 		if err := seeder.ClearAllData(db); err != nil {
 			log.Fatalf("Failed to clear data: %v", err)
@@ -63,12 +75,13 @@ func main() {
 		log.Println("Data cleared successfully!")
 	}
 
-	// Run seeders
-	if err := seeder.RunAllSeeders(db); err != nil {
-		log.Fatalf("Seeding failed: %v", err)
+	// -- Run seeders (default or when -only-seed is passed)
+	if *onlySeed || !*onlyClear {
+		if err := seeder.RunAllSeeders(db); err != nil {
+			log.Fatalf("Seeding failed: %v", err)
+		}
+		log.Println("All seeders completed successfully!")
 	}
-
-	log.Println("All seeders completed successfully!")
 }
 
 func showHelp() {
@@ -76,15 +89,19 @@ func showHelp() {
 	fmt.Println("Usage: go run cmd/seeder/main.go [options]")
 	fmt.Println()
 	fmt.Println("Options:")
-	fmt.Println("  -db string      Database URL (can also use DATABASE_URL env var)")
-	fmt.Println("  -clear          Clear all existing data before seeding")
-	fmt.Println("  -verbose        Enable verbose database logging")
-	fmt.Println("  -help           Show this help message")
+	fmt.Println("  -db string        Database URL (can also use DATABASE_URL env var)")
+	fmt.Println("  -clear            Clear all existing data before seeding")
+	fmt.Println("  -only-clear       Only clear data and exit (skip seeding)")
+	fmt.Println("  -only-seed        Only run seeders (skip clearing)")
+	fmt.Println("  -verbose          Enable verbose database logging")
+	fmt.Println("  -help             Show this help message")
 	fmt.Println()
 	fmt.Println("Examples:")
 	fmt.Println("  go run cmd/seeder/main.go -db 'postgres://user:pass@localhost/wastetrack'")
-	fmt.Println("  go run cmd/seeder/main.go -clear -verbose")
-	fmt.Println("  DATABASE_URL='postgres://user:pass@localhost/wastetrack' go run cmd/seeder/main.go")
+	fmt.Println("  go run cmd/seeder/main.go -clear")
+	fmt.Println("  go run cmd/seeder/main.go -only-clear")
+	fmt.Println("  go run cmd/seeder/main.go -only-seed")
+	fmt.Println("  DATABASE_URL='postgres://user:pass@localhost/wastetrack' go run cmd/seeder/main.go -clear")
 }
 
 func autoMigrate(db *gorm.DB) error {

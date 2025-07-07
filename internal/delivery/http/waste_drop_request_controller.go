@@ -2,6 +2,7 @@ package http
 
 import (
 	"math"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
@@ -42,6 +43,25 @@ func (c *WasteDropRequestController) Get(ctx *fiber.Ctx) error {
 		ID: ctx.Params("id"),
 	}
 
+	// Parse optional latitude and longitude query parameters
+	if latStr := ctx.Query("latitude"); latStr != "" {
+		if lat, err := strconv.ParseFloat(latStr, 64); err == nil {
+			request.Latitude = &lat
+		} else {
+			c.Log.Warnf("Invalid latitude parameter: %v", err)
+			return fiber.ErrBadRequest
+		}
+	}
+
+	if lngStr := ctx.Query("longitude"); lngStr != "" {
+		if lng, err := strconv.ParseFloat(lngStr, 64); err == nil {
+			request.Longitude = &lng
+		} else {
+			c.Log.Warnf("Invalid longitude parameter: %v", err)
+			return fiber.ErrBadRequest
+		}
+	}
+
 	response, err := c.WasteDropRequestUsecase.Get(ctx.UserContext(), request)
 	if err != nil {
 		c.Log.Warnf("Failed to get waste drop request: %v", err)
@@ -63,6 +83,25 @@ func (c *WasteDropRequestController) List(ctx *fiber.Ctx) error {
 		AppointmentEndTime:   ctx.Query("appointment_end_time"),
 		Page:                 ctx.QueryInt("page"),
 		Size:                 ctx.QueryInt("size"),
+	}
+
+	// Parse optional latitude and longitude query parameters for distance calculation
+	if latStr := ctx.Query("latitude"); latStr != "" {
+		if lat, err := strconv.ParseFloat(latStr, 64); err == nil {
+			request.Latitude = &lat
+		} else {
+			c.Log.Warnf("Invalid latitude parameter: %v", err)
+			return fiber.ErrBadRequest
+		}
+	}
+
+	if lngStr := ctx.Query("longitude"); lngStr != "" {
+		if lng, err := strconv.ParseFloat(lngStr, 64); err == nil {
+			request.Longitude = &lng
+		} else {
+			c.Log.Warnf("Invalid longitude parameter: %v", err)
+			return fiber.ErrBadRequest
+		}
 	}
 
 	// Set default values for pagination

@@ -2,10 +2,6 @@ package model
 
 import "time"
 
-type WasteDropRequestItems struct {
-	WasteTypeIDs []string `json:"waste_type_ids" validate:"required,min=1"`
-	Quantities   []int64  `json:"quantities" validate:"required,min=1"`
-}
 type WasteDropRequestSimpleResponse struct {
 	ID                   string            `json:"id"`
 	DeliveryType         string            `json:"delivery_type"`
@@ -21,6 +17,7 @@ type WasteDropRequestSimpleResponse struct {
 	AppointmentStartTime string            `json:"appointment_start_time,omitempty"`
 	AppointmentEndTime   string            `json:"appointment_end_time,omitempty"`
 	Notes                string            `json:"notes,omitempty"`
+	Distance             *float64          `json:"distance,omitempty"` // Distance in kilometers
 	CreatedAt            *time.Time        `json:"created_at"`
 	UpdatedAt            *time.Time        `json:"updated_at"`
 }
@@ -40,6 +37,7 @@ type WasteDropRequestResponse struct {
 	AppointmentStartTime string            `json:"appointment_start_time,omitempty"`
 	AppointmentEndTime   string            `json:"appointment_end_time,omitempty"`
 	Notes                string            `json:"notes,omitempty"`
+	Distance             *float64          `json:"distance,omitempty"` // Distance in kilometers
 	CreatedAt            *time.Time        `json:"created_at"`
 	UpdatedAt            *time.Time        `json:"updated_at"`
 	Customer             *UserResponse     `json:"customer"`
@@ -72,12 +70,19 @@ type SearchWasteDropRequest struct {
 	AppointmentStartTime string `json:"appointment_start_time,omitempty"`
 	AppointmentEndTime   string `json:"appointment_end_time,omitempty"`
 	Status               string `json:"status"`
-	Page                 int    `json:"page,omitempty" validate:"min=1"`
-	Size                 int    `json:"size,omitempty" validate:"min=1,max=100"`
+	// Location parameters for distance calculation
+	Latitude  *float64 `json:"latitude,omitempty"`
+	Longitude *float64 `json:"longitude,omitempty"`
+	Page      int      `json:"page,omitempty" validate:"min=1"`
+	Size      int      `json:"size,omitempty" validate:"min=1,max=100"`
 }
+
 type GetWasteDropRequest struct {
-	ID string `json:"id" validate:"required,max=100"`
+	ID        string   `json:"id" validate:"required,max=100"`
+	Latitude  *float64 `json:"latitude,omitempty"`
+	Longitude *float64 `json:"longitude,omitempty"`
 }
+
 type UpdateWasteDropRequest struct {
 	ID                  string `json:"id" validate:"required,max=100"`
 	DeliveryType        string `json:"delivery_type"`

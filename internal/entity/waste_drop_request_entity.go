@@ -33,4 +33,7 @@ type WasteDropRequest struct {
 	Notes     string    `gorm:"column:notes"`
 	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`
+
+	// Distance field for calculated distance (not stored in DB)
+	Distance *float64 `gorm:"-" json:"-"`
 }

@@ -313,7 +313,9 @@ func (c *WasteDropRequestUsecase) Get(ctx context.Context, request *model.GetWas
 	}
 
 	wasteDropRequest := new(entity.WasteDropRequest)
-	if err := c.WasteDropRequestRepository.FindByID(tx, wasteDropRequest, request.ID); err != nil {
+
+	// Use the new method that supports distance calculation
+	if err := c.WasteDropRequestRepository.FindByIDWithDistance(tx, wasteDropRequest, request.ID, request.Latitude, request.Longitude); err != nil {
 		c.Log.Warnf("Failed to find waste drop request by ID: %+v", err)
 		return nil, fiber.ErrNotFound
 	}

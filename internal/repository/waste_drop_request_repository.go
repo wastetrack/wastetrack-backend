@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/sirupsen/logrus"
 	"github.com/wastetrack/wastetrack-backend/internal/entity"
 	"github.com/wastetrack/wastetrack-backend/internal/model"
@@ -25,15 +27,33 @@ func (r *WasteDropRequestRepository) FindByID(db *gorm.DB, wasteDropRequest *ent
 func (r *WasteDropRequestRepository) Search(db *gorm.DB, request *model.SearchWasteDropRequest) ([]entity.WasteDropRequest, int64, error) {
 	var wasteDropRequests []entity.WasteDropRequest
 
-	// Apply filters, pagination and preload related entities
-	if err := db.Scopes(r.FilterWasteDropRequest(request)).
-		Offset((request.Page - 1) * request.Size).
+	// Build the query with distance calculation if coordinates provided
+	query := db.Scopes(r.FilterWasteDropRequest(request))
+
+	// If latitude and longitude are provided, calculate distance and order by it
+	if request.Latitude != nil && request.Longitude != nil {
+		distanceSelect := fmt.Sprintf(`*, 
+    CASE 
+        WHEN appointment_location IS NOT NULL THEN 
+            ST_Distance(
+                appointment_location, 
+                ST_SetSRID(ST_MakePoint(%f, %f), 4326)
+            )
+        ELSE NULL 
+    END as distance`,
+			*request.Longitude, *request.Latitude)
+
+		query = query.Select(distanceSelect).Order("distance ASC NULLS LAST")
+	}
+
+	// Apply pagination and execute query
+	if err := query.Offset((request.Page - 1) * request.Size).
 		Limit(request.Size).
 		Find(&wasteDropRequests).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Count total records with same filters
+	// Count total records with same filters (without distance calculation for performance)
 	var total int64 = 0
 	if err := db.Model(&entity.WasteDropRequest{}).
 		Scopes(r.FilterWasteDropRequest(request)).
@@ -72,6 +92,27 @@ func (r *WasteDropRequestRepository) FilterWasteDropRequest(request *model.Searc
 		}
 		return tx
 	}
+}
+
+// FindByIDWithDistance finds a waste drop request by ID and calculates distance if coordinates are provided
+func (r *WasteDropRequestRepository) FindByIDWithDistance(db *gorm.DB, wasteDropRequest *entity.WasteDropRequest, id string, lat, lng *float64) error {
+	query := db.Where("id = ?", id).Preload("AssignedCollector").Preload("Customer").Preload("WasteBank")
+
+	if lat != nil && lng != nil {
+		distanceSelect := fmt.Sprintf(`*, 
+			CASE 
+				WHEN appointment_location IS NOT NULL THEN 
+					ST_Distance(
+						appointment_location, 
+						ST_SetSRID(ST_MakePoint(%f, %f), 4326)
+					) / 1000.0
+				ELSE NULL 
+			END as distance`,
+			*lng, *lat)
+		query = query.Select(distanceSelect)
+	}
+
+	return query.First(wasteDropRequest).Error
 }
 
 func (r *WasteDropRequestRepository) UpdateStatus(db *gorm.DB, id string, status string) error {

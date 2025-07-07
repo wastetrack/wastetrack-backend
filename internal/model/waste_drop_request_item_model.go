@@ -1,6 +1,9 @@
 package model
 
-// Add these new models to your existing model file
+type WasteDropRequestItems struct {
+	WasteTypeIDs []string `json:"waste_type_ids" validate:"required,min=1"`
+	Quantities   []int64  `json:"quantities" validate:"required,min=1"`
+}
 
 type CompleteWasteDropRequestItems struct {
 	WasteTypeIDs []string  `json:"waste_type_ids" validate:"required,min=1"`
