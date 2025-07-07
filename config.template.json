@@ -1,0 +1,39 @@
+{
+  "app": {
+    "name": "wastetrack",
+    "port": {{APP_PORT}},
+    "base_url": "{{APP_BASE_URL}}"
+  },
+  "web": {
+    "prefork": {{WEB_PREFORK}},
+    "port": {{WEB_PORT}}
+  },
+  "log": {
+    "level": {{LOG_LEVEL}}
+  },
+  "db": {
+    "username": "{{DB_USERNAME}}",
+    "password": "{{DB_PASSWORD}}",
+    "host": "{{DB_HOST}}",
+    "port": {{DB_PORT}},
+    "name": "{{DB_NAME}}",
+    "pool": {
+      "idle": {{DB_POOL_IDLE}},
+      "max": {{DB_POOL_MAX}},
+      "lifetime": {{DB_POOL_LIFETIME}}
+    }
+  },
+  "jwt": {
+    "secret_key": "{{JWT_SECRET_KEY}}",
+    "refresh_secret_key": "{{JWT_REFRESH_SECRET_KEY}}",
+    "access_token_ttl": {{JWT_ACCESS_TTL}},
+    "refresh_token_ttl": {{JWT_REFRESH_TTL}}
+  },
+  "email": {
+    "smtp_host": "{{SMTP_HOST}}",
+    "smtp_port": "{{SMTP_PORT}}",
+    "smtp_username": "{{SMTP_USERNAME}}",
+    "smtp_password": "{{SMTP_PASSWORD}}",
+    "from_email": "{{EMAIL_FROM}}"
+  }
+}
