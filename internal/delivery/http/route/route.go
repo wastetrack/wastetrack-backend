@@ -31,6 +31,8 @@ func (c *RouteConfig) Setup() {
 }
 
 func (c *RouteConfig) SetupGuestRoute() {
+	// Users
+	c.App.Get("/api/users", c.UserController.List)
 	// Authentication routes (no auth required)
 	c.App.Post("/api/auth/register", c.UserController.Register)
 	c.App.Post("/api/auth/login", c.UserController.Login)
@@ -74,9 +76,6 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Waste Transfer Item Offerings
 	auth.Get("/waste-transfer-item-offerings", c.WasteTransferItemOfferingController.List)
 	auth.Get("/waste-transfer-item-offerings/:id", c.WasteTransferItemOfferingController.Get)
-
-	// Users
-	auth.Get("/users", c.UserController.List)
 
 	// Customer endpoints
 	customerOnly := c.App.Group("/api/customer", c.AuthMiddleware, middleware.RequireRoles("admin", "customer"))

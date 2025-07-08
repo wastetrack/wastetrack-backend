@@ -138,11 +138,14 @@ func (c *UserController) Get(ctx *fiber.Ctx) error {
 }
 
 func (c *UserController) Logout(ctx *fiber.Ctx) error {
+	request := new(model.LogoutUserRequest)
 	auth := middleware.GetUser(ctx)
-
-	request := &model.LogoutUserRequest{
-		ID: auth.ID,
+	err := ctx.BodyParser(request)
+	if err != nil {
+		c.Log.Warnf("Failed to parse request body: %v", err)
+		return fiber.ErrBadRequest
 	}
+	request.ID = auth.ID
 
 	response, err := c.UserUsecase.Logout(ctx.UserContext(), request)
 	if err != nil {

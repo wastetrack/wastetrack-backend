@@ -30,9 +30,8 @@
   "paths": {
     "/api/auth/register": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "operationId": "RegisterUser",
+        "tags": ["Authentication"],
         "summary": "Register a new user",
         "security": [],
         "requestBody": {
@@ -51,34 +50,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "$ref": "#/components/schemas/UserResponse"
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/UserResponse"
                     }
-                  ]
+                  }
                 }
               }
             }
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
     },
     "/api/auth/login": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "operationId": "LoginUser",
+        "tags": ["Authentication"],
         "summary": "Login user",
         "security": [],
         "requestBody": {
@@ -97,19 +93,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "$ref": "#/components/schemas/UserResponse"
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/UserResponse"
                     }
-                  ]
+                  }
                 }
               }
             }
@@ -119,15 +107,17 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
     },
     "/api/auth/verify-email": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "operationId": "VerifyEmail",
+        "tags": ["Authentication"],
         "summary": "Verify email address",
         "security": [],
         "requestBody": {
@@ -146,34 +136,28 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "$ref": "#/components/schemas/UserResponse"
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/UserResponse"
                     }
-                  ]
+                  }
                 }
               }
             }
           },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
     },
     "/api/auth/resend-verification": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "operationId": "ResendVerification",
+        "tags": ["Authentication"],
         "summary": "Resend verification email",
         "security": [],
         "requestBody": {
@@ -192,35 +176,32 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "string",
-                          "example": "success"
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "type": "string",
+                      "example": "success"
                     }
-                  ]
+                  }
                 }
               }
             }
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
     },
     "/api/auth/forgot-password": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "operationId": "ForgotPassword",
+        "tags": ["Authentication"],
         "summary": "Request password reset",
         "security": [],
         "requestBody": {
@@ -239,35 +220,32 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "string",
-                          "example": "success"
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "type": "string",
+                      "example": "success"
                     }
-                  ]
+                  }
                 }
               }
             }
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
     },
     "/api/auth/reset-password": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "operationId": "ResetPassword",
+        "tags": ["Authentication"],
         "summary": "Reset password",
         "security": [],
         "requestBody": {
@@ -286,35 +264,29 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "string",
-                          "example": "success"
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "type": "string",
+                      "example": "success"
                     }
-                  ]
+                  }
                 }
               }
             }
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
     },
     "/api/auth/refresh-token": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "operationId": "RefreshToken",
+        "tags": ["Authentication"],
         "summary": "Refresh access token",
         "security": [],
         "requestBody": {
@@ -333,19 +305,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "$ref": "#/components/schemas/UserResponse"
-                        }
-                      }
+                  "properties": {
+                    "data":{
+                      "$ref": "#/components/schemas/UserResponse"
                     }
-                  ]
+                  }
                 }
               }
             }
@@ -361,9 +325,8 @@
     },
     "/api/auth/logout": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "operationId": "Logout",
+        "tags": ["Authentication"],
         "summary": "Logout user",
         "responses": {
           "200": {
@@ -371,35 +334,29 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "boolean",
-                          "example": true
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "type": "boolean",
+                      "example": true
                     }
-                  ]
+                  }
                 }
               }
             }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          },
+          "500":{
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
     },
     "/api/auth/logout-all-devices": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "operationId": "LogoutAllDevices",
+        "tags": ["Authentication"],
         "summary": "Logout user from all devices",
         "responses": {
           "200": {
@@ -407,35 +364,29 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "boolean",
-                          "example": true
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "type": "boolean",
+                      "example": true
                     }
-                  ]
+                  }
                 }
               }
             }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          },
+          "500":{
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
     },
     "/api/users": {
       "get": {
-        "tags": [
-          "Users"
-        ],
+        "operationId": "SearchUsers",
+        "tags": ["Users"],
         "summary": "Search users",
         "parameters": [
           {
@@ -544,9 +495,8 @@
     },
     "/api/users/current": {
       "get": {
-        "tags": [
-          "Users"
-        ],
+        "operationId": "GetCurrentUser",
+        "tags": ["Users"],
         "summary": "Get current user",
         "responses": {
           "200": {
@@ -554,34 +504,28 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "$ref": "#/components/schemas/UserResponse"
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/UserResponse"
                     }
-                  ]
+                  }
                 }
               }
             }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          },
+          "500":{
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
     },
     "/api/waste-bank/profiles/{user_id}": {
       "get": {
-        "tags": [
-          "Waste Bank"
-        ],
+        "operationId": "GetWasteBankProfile",
+        "tags": ["Waste Bank"],
         "summary": "Get waste bank profile",
         "parameters": [
           {
@@ -627,9 +571,7 @@
     },
     "/api/waste-bank/profiles/{id}": {
       "put": {
-        "tags": [
-          "Waste Bank"
-        ],
+        "tags": ["Waste Bank"],
         "summary": "Update waste bank profile",
         "security": [
           {
@@ -696,9 +638,7 @@
     },
     "/api/waste-categories": {
       "get": {
-        "tags": [
-          "Waste Categories"
-        ],
+        "tags": ["User - Waste Categories"],
         "summary": "List waste categories",
         "parameters": [
           {
@@ -765,9 +705,7 @@
     },
     "/api/waste-categories/{id}": {
       "get": {
-        "tags": [
-          "Waste Categories"
-        ],
+        "tags": ["Waste Categories"],
         "summary": "Get waste category by ID",
         "parameters": [
           {
@@ -787,7 +725,7 @@
                 "schema": {
                   "allOf": [
                     {
-                      "$ref": "#/components/schemas/WebResponse"
+                      "$ref": "#/components/schemas/WasteCategoryResponse"
                     },
                     {
                       "type": "object",
@@ -813,9 +751,7 @@
     },
     "/api/waste-types": {
       "get": {
-        "tags": [
-          "Waste Types"
-        ],
+        "tags": ["User - Waste Types"],
         "summary": "List waste types",
         "parameters": [
           {
@@ -889,9 +825,7 @@
     },
     "/api/waste-types/{id}": {
       "get": {
-        "tags": [
-          "Waste Types"
-        ],
+        "tags": ["Waste Types"],
         "summary": "Get waste type by ID",
         "parameters": [
           {
@@ -937,9 +871,7 @@
     },
     "/api/waste-type-prices": {
       "get": {
-        "tags": [
-          "Waste Bank Priced Types"
-        ],
+        "tags": ["User - Waste Prices"],
         "summary": "List waste bank priced types",
         "parameters": [
           {
@@ -1013,9 +945,7 @@
     },
     "/api/waste-type-prices/{id}": {
       "get": {
-        "tags": [
-          "Waste Bank Priced Types"
-        ],
+        "tags": ["Waste Bank Priced Types"],
         "summary": "Get waste bank priced type by ID",
         "parameters": [
           {
@@ -1061,9 +991,7 @@
     },
     "/api/waste-drop-requests": {
       "get": {
-        "tags": [
-          "Waste Drop Requests"
-        ],
+        "tags": ["User - Waste Drop Requests"],
         "summary": "List waste drop requests",
         "parameters": [
           {
@@ -1195,9 +1123,7 @@
     },
     "/api/waste-drop-requests/{id}": {
       "get": {
-        "tags": [
-          "Waste Drop Requests"
-        ],
+        "tags": ["Waste Drop Requests"],
         "summary": "Get waste drop request by ID",
         "parameters": [
           {
@@ -1259,9 +1185,7 @@
     },
     "/api/customer/waste-drop-requests": {
       "post": {
-        "tags": [
-          "Customer - Waste Drop Requests"
-        ],
+        "tags": ["Customer - Waste Drop Requests"],
         "summary": "Create waste drop request",
         "security": [
           {
@@ -1315,9 +1239,7 @@
     },
     "/api/customer/profiles/{user_id}": {
       "get": {
-        "tags": [
-          "Customer"
-        ],
+        "tags": ["Customer"],
         "summary": "Get customer profile",
         "security": [
           {
@@ -1369,9 +1291,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Customer"
-        ],
+        "tags": ["Customer"],
         "summary": "Update customer profile",
         "security": [
           {
@@ -1438,9 +1358,7 @@
     },
     "/api/waste-bank/batch-waste-type-prices": {
       "post": {
-        "tags": [
-          "Waste Bank - Priced Types"
-        ],
+        "tags": ["Waste Bank - Priced Types"],
         "summary": "Create waste type prices in batch",
         "security": [
           {
@@ -1500,9 +1418,7 @@
     },
     "/api/waste-bank/waste-type-prices": {
       "post": {
-        "tags": [
-          "Waste Bank - Priced Types"
-        ],
+        "tags": ["Waste Bank - Priced Types"],
         "summary": "Create waste type price",
         "security": [
           {
@@ -1556,9 +1472,7 @@
     },
     "/api/waste-bank/waste-type-prices/{id}": {
       "put": {
-        "tags": [
-          "Waste Bank - Priced Types"
-        ],
+        "tags": ["Waste Bank - Priced Types"],
         "summary": "Update waste type price",
         "security": [
           {
@@ -1623,9 +1537,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Waste Bank - Priced Types"
-        ],
+        "tags": ["Waste Bank - Priced Types"],
         "summary": "Delete waste type price",
         "security": [
           {
@@ -1679,9 +1591,7 @@
     },
     "/api/waste-bank/collector-management": {
       "get": {
-        "tags": [
-          "Waste Bank - Collector Management"
-        ],
+        "tags": ["Waste Bank - Collector Management"],
         "summary": "List collector managements",
         "security": [
           {
@@ -1768,9 +1678,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Waste Bank - Collector Management"
-        ],
+        "tags": ["Waste Bank - Collector Management"],
         "summary": "Create collector management",
         "security": [
           {
@@ -1824,9 +1732,7 @@
     },
     "/api/waste-collector/waste-drop-requests/{id}/complete": {
       "put": {
-        "tags": [
-          "Waste Collector - Waste Drop Requests"
-        ],
+        "tags": ["Waste Collector - Waste Drop Requests"],
         "summary": "Complete waste drop request",
         "security": [
           {
@@ -1893,9 +1799,7 @@
     },
     "/api/admin/waste-categories": {
       "post": {
-        "tags": [
-          "Admin - Waste Categories"
-        ],
+        "tags": ["Admin - Waste Categories"],
         "summary": "Create waste category",
         "security": [
           {
@@ -1949,9 +1853,7 @@
     },
     "/api/admin/waste-categories/{id}": {
       "put": {
-        "tags": [
-          "Admin - Waste Categories"
-        ],
+        "tags": ["Admin - Waste Categories"],
         "summary": "Update waste category",
         "security": [
           {
@@ -2016,9 +1918,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Admin - Waste Categories"
-        ],
+        "tags": ["Admin - Waste Categories"],
         "summary": "Delete waste category",
         "security": [
           {
@@ -2143,6 +2043,38 @@
             }
           }
         }
+      },
+      "Conflict": {
+        "description": "Conflict - ID already exists",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "errors": {
+                  "type": "string",
+                  "example": "Resource already exists"
+                }
+              }
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal Server Error - Server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "errors": {
+                  "type": "string",
+                  "example": "Internal server error"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "schemas": {
@@ -2154,10 +2086,6 @@
           },
           "paging": {
             "$ref": "#/components/schemas/PageMetadata"
-          },
-          "errors": {
-            "type": "string",
-            "description": "Error message if any"
           }
         }
       },
@@ -2183,12 +2111,7 @@
             "description": "Total number of pages"
           }
         },
-        "required": [
-          "page",
-          "size",
-          "total_item",
-          "total_page"
-        ]
+        "required": ["page", "size", "total_item", "total_page"]
       },
       "LocationRequest": {
         "type": "object",
@@ -2202,10 +2125,7 @@
             "format": "double"
           }
         },
-        "required": [
-          "latitude",
-          "longitude"
-        ]
+        "required": ["latitude", "longitude"]
       },
       "LocationResponse": {
         "type": "object",
@@ -2219,10 +2139,7 @@
             "format": "double"
           }
         },
-        "required": [
-          "latitude",
-          "longitude"
-        ]
+        "required": ["latitude", "longitude"]
       },
       "RegisterUserRequest": {
         "type": "object",
@@ -2295,10 +2212,7 @@
             "maxLength": 100
           }
         },
-        "required": [
-          "email",
-          "password"
-        ]
+        "required": ["email", "password"]
       },
       "VerifyEmailRequest": {
         "type": "object",
@@ -2307,9 +2221,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "token"
-        ]
+        "required": ["token"]
       },
       "ResendVerificationRequest": {
         "type": "object",
@@ -2319,9 +2231,7 @@
             "format": "email"
           }
         },
-        "required": [
-          "email"
-        ]
+        "required": ["email"]
       },
       "ForgotPasswordRequest": {
         "type": "object",
@@ -2331,9 +2241,7 @@
             "format": "email"
           }
         },
-        "required": [
-          "email"
-        ]
+        "required": ["email"]
       },
       "ResetPasswordRequest": {
         "type": "object",
@@ -2347,10 +2255,7 @@
             "maxLength": 100
           }
         },
-        "required": [
-          "token",
-          "new_password"
-        ]
+        "required": ["token", "new_password"]
       },
       "RefreshTokenRequest": {
         "type": "object",
@@ -2359,9 +2264,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "refresh_token"
-        ]
+        "required": ["refresh_token"]
       },
       "UserResponse": {
         "type": "object",
@@ -2568,11 +2471,7 @@
             "$ref": "#/components/schemas/UserResponse"
           }
         },
-        "required": [
-          "id",
-          "user_id",
-          "total_waste_weight"
-        ]
+        "required": ["id", "user_id", "total_waste_weight"]
       },
       "IndustryResponse": {
         "type": "object",
@@ -2615,11 +2514,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "name",
-          "description"
-        ]
+        "required": ["id", "name", "description"]
       },
       "WasteCategoryRequest": {
         "type": "object",
@@ -2631,9 +2526,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ]
+        "required": ["name"]
       },
       "UpdateWasteCategoryRequest": {
         "type": "object",
@@ -2665,12 +2558,7 @@
             "$ref": "#/components/schemas/WasteCategoryResponse"
           }
         },
-        "required": [
-          "id",
-          "category_id",
-          "name",
-          "description"
-        ]
+        "required": ["id", "category_id", "name", "description"]
       },
       "WasteBankPricedTypeSimpleResponse": {
         "type": "object",
@@ -2759,10 +2647,7 @@
             "format": "int64"
           }
         },
-        "required": [
-          "waste_type_id",
-          "custom_price_per_kgs"
-        ]
+        "required": ["waste_type_id", "custom_price_per_kgs"]
       },
       "UpdateWasteBankPricedTypeRequest": {
         "type": "object",
@@ -2772,9 +2657,7 @@
             "format": "int64"
           }
         },
-        "required": [
-          "custom_price_per_kgs"
-        ]
+        "required": ["custom_price_per_kgs"]
       },
       "WasteDropRequestItems": {
         "type": "object",
@@ -2795,10 +2678,7 @@
             "minItems": 1
           }
         },
-        "required": [
-          "waste_type_ids",
-          "quantities"
-        ]
+        "required": ["waste_type_ids", "quantities"]
       },
       "CompleteWasteDropRequestItems": {
         "type": "object",
@@ -2819,10 +2699,7 @@
             "minItems": 1
           }
         },
-        "required": [
-          "waste_type_ids",
-          "weights"
-        ]
+        "required": ["waste_type_ids", "weights"]
       },
       "WasteDropRequestSimpleResponse": {
         "type": "object",
@@ -3013,11 +2890,7 @@
             "$ref": "#/components/schemas/WasteDropRequestItems"
           }
         },
-        "required": [
-          "delivery_type",
-          "customer_id",
-          "items"
-        ]
+        "required": ["delivery_type", "customer_id", "items"]
       },
       "CollectorManagementSimpleResponse": {
         "type": "object",
@@ -3035,12 +2908,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "waste_bank_id",
-          "collector_id",
-          "status"
-        ]
+        "required": ["id", "waste_bank_id", "collector_id", "status"]
       },
       "WasteTransferItemOfferingSimpleResponse": {
         "type": "object",
@@ -3161,9 +3029,7 @@
       },
       "GetWasteTransferItemOfferingRequest": {
         "type": "object",
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "properties": {
           "id": {
             "type": "string",
@@ -3173,9 +3039,7 @@
       },
       "UpdateWasteTransferItemOfferingRequest": {
         "type": "object",
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "properties": {
           "id": {
             "type": "string",
@@ -3197,9 +3061,7 @@
       },
       "DeleteWasteTransferItemOfferingRequest": {
         "type": "object",
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "properties": {
           "id": {
             "type": "string",
@@ -3229,12 +3091,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "waste_bank_id",
-          "collector_id",
-          "status"
-        ]
+        "required": ["id", "waste_bank_id", "collector_id", "status"]
       },
       "CollectorManagementRequest": {
         "type": "object",
@@ -3247,9 +3104,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "collector_id"
-        ]
+        "required": ["collector_id"]
       },
       "WasteTransferRequestItems": {
         "type": "object",
@@ -3479,9 +3334,7 @@
       },
       "GetWasteTransferRequest": {
         "type": "object",
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "properties": {
           "id": {
             "type": "string",
@@ -3491,9 +3344,7 @@
       },
       "UpdateWasteTransferRequest": {
         "type": "object",
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "properties": {
           "id": {
             "type": "string",
@@ -3519,9 +3370,7 @@
       },
       "DeleteWasteTransferRequest": {
         "type": "object",
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "properties": {
           "id": {
             "type": "string",
