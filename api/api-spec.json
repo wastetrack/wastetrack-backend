@@ -3041,7 +3041,7 @@
         }
       }
     },
-    "api/admin/industry/profiles/{id}": {
+    "/api/admin/industry/profiles/{id}": {
       "delete": {
         "operationId": "DeleteIndustryProfile",
         "tags": ["Admin - Industry Profiles"],
