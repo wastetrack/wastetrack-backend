@@ -544,19 +544,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "$ref": "#/components/schemas/WasteBankResponse"
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteBankResponse"
                     }
-                  ]
+                  }
                 }
               }
             }
@@ -1486,7 +1478,7 @@
     "/api/customer/profiles/{user_id}": {
       "get": {
         "operationId": "GetCustomerProfile",
-        "tags": ["Customer"],
+        "tags": ["Customer - Profile"],
         "summary": "Get customer profile",
         "security": [
           {
@@ -1536,9 +1528,12 @@
             "$ref": "#/components/responses/NotFound"
           }
         }
-      },
+      }
+    },
+    "/api/customer/profiles/{id}": {
       "put": {
-        "tags": ["Customer"],
+        "operationId": "UpdateCustomerProfile",
+        "tags": ["Customer - Profile"],
         "summary": "Update customer profile",
         "security": [
           {
@@ -1547,7 +1542,7 @@
         ],
         "parameters": [
           {
-            "name": "user_id",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -1571,19 +1566,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "$ref": "#/components/schemas/CustomerResponse"
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerResponse"
                     }
-                  ]
+                  }
                 }
               }
             }
@@ -1606,7 +1593,7 @@
     "/api/customer/waste-drop-requests": {
       "post": {
         "operationId": "CreateWasteDropRequest",
-        "tags": ["Customer - Waste Drop Requests"],
+        "tags": ["Customer - Waste Drop Request"],
         "summary": "Create waste drop request",
         "security": [
           {
@@ -1629,6 +1616,66 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteDropRequestSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/waste-bank/profiles/{id}": {
+      "put": {
+        "operationId": "UpdateWasteBankProfile",
+        "tags": ["Waste Bank - Profile"],
+        "summary": "Update waste bank profile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWasteBankRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Waste bank profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
                   "allOf": [
                     {
                       "$ref": "#/components/schemas/WebResponse"
@@ -1637,7 +1684,7 @@
                       "type": "object",
                       "properties": {
                         "data": {
-                          "$ref": "#/components/schemas/WasteDropRequestSimpleResponse"
+                          "$ref": "#/components/schemas/WasteBankResponse"
                         }
                       }
                     }
@@ -1654,13 +1701,20 @@
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
     },
     "/api/waste-bank/batch-waste-type-prices": {
       "post": {
-        "tags": ["Waste Bank - Priced Types"],
+        "operationId": "CreateWasteTypePricesInBatch",
+        "tags": ["Waste Bank - Waste Prices"],
         "summary": "Create waste type prices in batch",
         "security": [
           {
@@ -1714,13 +1768,17 @@
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
     },
     "/api/waste-bank/waste-type-prices": {
       "post": {
-        "tags": ["Waste Bank - Priced Types"],
+        "operationId": "CreateWasteTypePrice",
+        "tags": ["Waste Bank - Waste Prices"],
         "summary": "Create waste type price",
         "security": [
           {
@@ -1743,19 +1801,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "$ref": "#/components/schemas/WasteBankPricedTypeResponse"
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteBankPricedTypeResponse"
                     }
-                  ]
+                  }
                 }
               }
             }
@@ -1774,7 +1824,8 @@
     },
     "/api/waste-bank/waste-type-prices/{id}": {
       "put": {
-        "tags": ["Waste Bank - Priced Types"],
+        "operationId": "UpdateWasteTypePrice",
+        "tags": ["Waste Bank - Waste Prices"],
         "summary": "Update waste type price",
         "security": [
           {
@@ -1807,19 +1858,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "$ref": "#/components/schemas/WasteBankPricedTypeResponse"
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteBankPricedTypeResponse"
                     }
-                  ]
+                  }
                 }
               }
             }
@@ -1839,7 +1882,8 @@
         }
       },
       "delete": {
-        "tags": ["Waste Bank - Priced Types"],
+        "operationId": "DeleteWasteTypePrice",
+        "tags": ["Waste Bank - Waste Prices"],
         "summary": "Delete waste type price",
         "security": [
           {
@@ -1862,19 +1906,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "$ref": "#/components/schemas/WasteBankPricedTypeResponse"
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteBankPricedTypeResponse"
                     }
-                  ]
+                  }
                 }
               }
             }
@@ -1891,8 +1927,348 @@
         }
       }
     },
+    "/api/waste-bank/waste-drop-requests/{id}": {
+      "put": {
+        "operationId": "UpdateWasteDropStatusRequest",
+        "tags": ["Waste Bank - Waste Drop Requests"],
+        "summary": "Update waste drop request",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Waste drop request updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteDropRequestSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/waste-bank/waste-drop-requests/{id}/assign-collector": {
+      "put": {
+        "operationId": "AssignWasteDropRequestToCollector",
+        "tags": ["Waste Bank - Waste Drop Requests"],
+        "summary": "Assign waste drop request to collector",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "collector_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Waste drop request assigned to collector successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteDropRequestSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/waste-bank/waste-transfer-requests": {
+      "post": {
+        "operationId": "CreateWasteTransferRequest",
+        "tags": ["Waste Bank - Waste Transfer Requests"],
+        "summary": "Create waste transfer request",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WasteTransferRequestRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Waste transfer request created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteTransferRequestSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/waste-bank/collector-management/{id}": {
+      "get": {
+        "operationId": "GetCollectorManagement",
+        "tags": ["Waste Bank - Collector Management"],
+        "summary": "Get collector management",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Collector management retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CollectorManagementResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "operationId": "UpdateCollectorManagement",
+        "tags": ["Waste Bank - Collector Management"],
+        "summary": "Update collector management",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCollectorManagementRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Collector management updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CollectorManagementSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "DeleteCollectorManagement",
+        "tags": ["Waste Bank - Collector Management"],
+        "summary": "Delete collector management",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Collector management deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CollectorManagementSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/api/waste-bank/collector-management": {
       "get": {
+        "operationId": "ListCollectorManagements",
         "tags": ["Waste Bank - Collector Management"],
         "summary": "List collector managements",
         "security": [
@@ -1980,6 +2356,7 @@
         }
       },
       "post": {
+        "operationId": "CreateCollectorManagement",
         "tags": ["Waste Bank - Collector Management"],
         "summary": "Create collector management",
         "security": [
@@ -2032,8 +2409,310 @@
         }
       }
     },
+    "/api/waste-bank/salary-transactions": {
+      "get": {
+        "operationId": "ListTransactions",
+        "tags": ["Waste Bank - Transactions"],
+        "summary": "List transactions",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sender_id",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "receiver_id",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "transaction_type",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "notes",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transactions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/WebResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/TransactionSimpleResponse"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "CreateTransaction",
+        "tags": ["Waste Bank - Transactions"],
+        "summary": "Create transaction",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TransactionSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/waste-bank/salary-transactions/{id}": {
+      "get": {
+        "operationId": "GetTransaction",
+        "tags": ["Waste Bank - Transactions"],
+        "summary": "Get transaction",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TransactionResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/waste-collector/profiles/{user_id}": {
+      "get": {
+        "operationId": "GetWasteCollectorProfile",
+        "tags": ["User - Waste Collector"],
+        "summary": "Get waste collector profile",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Waste collector profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteCollectorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/waste-collector/profiles/{id}": {
+      "put": {
+        "operationId": "UpdateWasteCollectorProfile",
+        "tags": ["User - Waste Collector"],
+        "summary": "Update waste collector profile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWasteCollectorRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Waste collector profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteCollectorSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/api/waste-collector/waste-drop-requests/{id}/complete": {
       "put": {
+        "operationId": "CompleteWasteDropRequest",
         "tags": ["Waste Collector - Waste Drop Requests"],
         "summary": "Complete waste drop request",
         "security": [
@@ -2056,7 +2735,11 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CompleteWasteDropRequestItems"
+                "properties": {
+                  "items": {
+                    "$ref": "#/components/schemas/CompleteWasteDropRequestItems"
+                  }
+                }
               }
             }
           }
@@ -2067,19 +2750,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "$ref": "#/components/schemas/WasteDropRequestSimpleResponse"
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteDropRequestSimpleResponse"
                     }
-                  ]
+                  }
                 }
               }
             }
@@ -2099,8 +2774,329 @@
         }
       }
     },
+    "/api/industry/profiles/{user_id}": {
+      "get": {
+        "operationId": "GetIndustryProfile",
+        "tags": ["Industry - Profile"],
+        "summary": "Get industry profile",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Industry profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/IndustryResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/industry/profiles/{id}": {
+      "put": {
+        "operationId": "UpdateIndustryProfile",
+        "tags": ["Industry - Profile"],
+        "summary": "Update industry profile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateIndustryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Industry profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/IndustryResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/admin/customer/profiles/{id}": {
+      "delete": {
+        "operationId": "DeleteCustomerProfile",
+        "tags": ["Admin - Customer Profiles"],
+        "summary": "Delete customer profile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer profile deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/admin/waste-bank/profiles/{id}": {
+      "delete": {
+        "operationId": "DeleteWasteBankProfile",
+        "tags": ["Admin - Waste Bank Profiles"],
+        "summary": "Delete waste bank profile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Waste bank profile deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteBankResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/admin/waste-collector/profiles/{id}": {
+      "delete": {
+        "operationId": "DeleteWasteCollectorProfile",
+        "tags": ["Admin - Waste Collector Profiles"],
+        "summary": "Delete waste collector profile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Waste collector profile deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteCollectorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "api/admin/industry/profiles/{id}": {
+      "delete": {
+        "operationId": "DeleteIndustryProfile",
+        "tags": ["Admin - Industry Profiles"],
+        "summary": "Delete industry profile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Industry profile deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/IndustryResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/api/admin/waste-categories": {
       "post": {
+        "operationId": "CreateWasteCategory",
         "tags": ["Admin - Waste Categories"],
         "summary": "Create waste category",
         "security": [
@@ -2124,19 +3120,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "$ref": "#/components/schemas/WasteCategoryResponse"
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteCategoryResponse"
                     }
-                  ]
+                  }
                 }
               }
             }
@@ -2155,6 +3143,7 @@
     },
     "/api/admin/waste-categories/{id}": {
       "put": {
+        "operationId": "UpdateWasteCategory",
         "tags": ["Admin - Waste Categories"],
         "summary": "Update waste category",
         "security": [
@@ -2188,19 +3177,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "$ref": "#/components/schemas/WasteCategoryResponse"
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteCategoryResponse"
                     }
-                  ]
+                  }
                 }
               }
             }
@@ -2220,6 +3201,7 @@
         }
       },
       "delete": {
+        "operationId": "DeleteWasteCategory",
         "tags": ["Admin - Waste Categories"],
         "summary": "Delete waste category",
         "security": [
@@ -2243,19 +3225,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "$ref": "#/components/schemas/WasteCategoryResponse"
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteCategoryResponse"
                     }
-                  ]
+                  }
                 }
               }
             }
@@ -2272,11 +3246,64 @@
         }
       }
     },
-    "/api/waste-bank/profiles/{id}": {
+    "/api/admin/waste-types": {
+      "post": {
+        "operationId": "CreateWasteType",
+        "tags": ["Admin - Waste Types"],
+        "summary": "Create waste type",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WasteTypeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Waste type created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteTypeResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/admin/waste-types/{id}": {
       "put": {
-        "operationId": "UpdateWasteBankProfile",
-        "tags": ["Waste Bank"],
-        "summary": "Update waste bank profile",
+        "operationId": "UpdateWasteType",
+        "tags": ["Admin - Waste Types"],
+        "summary": "Update waste type",
         "security": [
           {
             "bearerAuth": []
@@ -2297,36 +3324,231 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateWasteBankRequest"
+                "$ref": "#/components/schemas/UpdateWasteTypeRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Waste bank profile updated successfully",
+            "description": "Waste type updated successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "$ref": "#/components/schemas/WasteBankResponse"
-                        }
-                      }
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteTypeResponse"
                     }
-                  ]
+                  }
                 }
               }
             }
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "DeleteWasteType",
+        "tags": ["Admin - Waste Types"],
+        "summary": "Delete waste type",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Waste type deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteTypeResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/admin/waste-drop-requests/{id}": {
+      "put": {
+        "operationId": "UpdateWasteDropRequest",
+        "tags": ["Admin - Waste Drop Requests"],
+        "summary": "Update waste drop request",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWasteDropRequestRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Waste drop request updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteDropRequestSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "DeleteWasteDropRequest",
+        "tags": ["Admin - Waste Drop Requests"],
+        "summary": "Delete waste drop request",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Waste drop request deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WasteDropRequestSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/admin/salary-transactions/{id}": {
+      "delete": {
+        "operationId": "DeleteTransaction",
+        "tags": ["Admin - Transactions"],
+        "summary": "Delete transaction",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TransactionSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -2827,6 +4049,22 @@
           }
         }
       },
+      "WasteCollectorSimpleResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "total_waste_weight": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": ["id", "user_id", "total_waste_weight"]
+      },
       "WasteCollectorResponse": {
         "type": "object",
         "properties": {
@@ -2845,6 +4083,15 @@
           }
         },
         "required": ["id", "user_id", "total_waste_weight"]
+      },
+      "UpdateWasteCollectorRequest": {
+        "type": "object",
+        "properties": {
+          "total_waste_weight": {
+            "type": "number",
+            "format": "double"
+          }
+        }
       },
       "IndustryResponse": {
         "type": "object",
@@ -2873,6 +4120,19 @@
           "total_waste_weight",
           "total_recycled_weight"
         ]
+      },
+      "UpdateIndustryRequest": {
+        "type": "object",
+        "properties": {
+          "total_waste_weight": {
+            "type": "number",
+            "format": "double"
+          },
+          "total_recycled_weight": {
+            "type": "number",
+            "format": "double"
+          }
+        }
       },
       "WasteCategoryResponse": {
         "type": "object",
@@ -2932,6 +4192,32 @@
           }
         },
         "required": ["id", "category_id", "name", "description"]
+      },
+      "WasteTypeRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category_id": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "category_id"]
+      },
+      "UpdateWasteTypeRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
       },
       "WasteBankPricedTypeSimpleResponse": {
         "type": "object",
@@ -3217,6 +4503,21 @@
           "status"
         ]
       },
+      "UpdateWasteDropRequestRequest": {
+        "type": "object",
+        "properties": {
+          "delivery_type": {
+            "type": "string"
+          },
+          "assigned_collector_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "delivery_type", "status"]
+      },
       "WasteDropRequestRequest": {
         "type": "object",
         "properties": {
@@ -3357,24 +4658,6 @@
           "verified_subtotal"
         ]
       },
-      "CollectorManagementSimpleResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "waste_bank_id": {
-            "type": "string"
-          },
-          "collector_id": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          }
-        },
-        "required": ["id", "waste_bank_id", "collector_id", "status"]
-      },
       "WasteTransferItemOfferingSimpleResponse": {
         "type": "object",
         "properties": {
@@ -3441,6 +4724,178 @@
           }
         }
       },
+      "UpdateCollectorManagementRequest": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "CollectorManagementSimpleResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "waste_bank_id": {
+            "type": "string"
+          },
+          "collector_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "waste_bank_id", "collector_id", "status"]
+      },
+      "CollectorManagementResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "waste_bank_id": {
+            "type": "string"
+          },
+          "waste_bank": {
+            "$ref": "#/components/schemas/UserResponse"
+          },
+          "collector_id": {
+            "type": "string"
+          },
+          "collector": {
+            "$ref": "#/components/schemas/UserResponse"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "waste_bank_id", "collector_id", "status"]
+      },
+      "CollectorManagementRequest": {
+        "type": "object",
+        "properties": {
+          "collector_id": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": ["collector_id"]
+      },
+      "TransactionSimpleResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "sender_id": { "type": "string" },
+          "receiver_id": { "type": "string" },
+          "transaction_type": { "type": "string" },
+          "amount": { "type": "integer", "format": "int64" },
+          "created_at": { "type": "string" },
+          "status": { "type": "string" },
+          "notes": { "type": "string" }
+        },
+        "required": [
+          "id",
+          "sender_id",
+          "receiver_id",
+          "transaction_type",
+          "amount",
+          "created_at",
+          "status",
+          "notes"
+        ]
+      },
+
+      "TransactionResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "sender_id": { "type": "string" },
+          "receiver_id": { "type": "string" },
+          "transaction_type": { "type": "string" },
+          "amount": { "type": "integer", "format": "int64" },
+          "created_at": { "type": "string" },
+          "status": { "type": "string" },
+          "notes": { "type": "string" },
+          "sender": { "$ref": "#/components/schemas/UserResponse" },
+          "receiver": { "$ref": "#/components/schemas/UserResponse" }
+        },
+        "required": [
+          "id",
+          "sender_id",
+          "receiver_id",
+          "transaction_type",
+          "amount",
+          "created_at",
+          "status",
+          "notes"
+        ]
+      },
+
+      "TransactionRequest": {
+        "type": "object",
+        "properties": {
+          "receiver_id": { "type": "string" },
+          "transaction_type": { "type": "string" },
+          "amount": { "type": "integer", "format": "int64" },
+          "status": { "type": "string" },
+          "notes": { "type": "string" }
+        },
+        "required": [
+          "receiver_id",
+          "transaction_type",
+          "amount",
+          "status",
+          "notes"
+        ]
+      },
+
+      "UpdateTransactionRequest": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "transaction_type": { "type": "string" },
+          "status": { "type": "string" },
+          "notes": { "type": "string" }
+        },
+        "required": ["id"]
+      },
+
+      "WasteTransferRequestItems": {
+        "type": "object",
+        "required": [
+          "waste_type_ids",
+          "offering_weights",
+          "offering_prices_per_kgs"
+        ],
+        "properties": {
+          "waste_type_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "offering_weights": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          "offering_prices_per_kgs": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "float"
+            }
+          }
+        }
+      },
       "WasteTransferItemOfferingRequest": {
         "type": "object",
         "required": [
@@ -3487,73 +4942,6 @@
           },
           "accepted_price_per_kgs": {
             "type": "number"
-          }
-        }
-      },
-      "CollectorManagementResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "waste_bank_id": {
-            "type": "string"
-          },
-          "waste_bank": {
-            "$ref": "#/components/schemas/UserResponse"
-          },
-          "collector_id": {
-            "type": "string"
-          },
-          "collector": {
-            "$ref": "#/components/schemas/UserResponse"
-          },
-          "status": {
-            "type": "string"
-          }
-        },
-        "required": ["id", "waste_bank_id", "collector_id", "status"]
-      },
-      "CollectorManagementRequest": {
-        "type": "object",
-        "properties": {
-          "collector_id": {
-            "type": "string",
-            "maxLength": 100
-          },
-          "status": {
-            "type": "string"
-          }
-        },
-        "required": ["collector_id"]
-      },
-      "WasteTransferRequestItems": {
-        "type": "object",
-        "required": [
-          "waste_type_ids",
-          "offering_weights",
-          "offering_prices_per_kgs"
-        ],
-        "properties": {
-          "waste_type_ids": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "offering_weights": {
-            "type": "array",
-            "items": {
-              "type": "number",
-              "format": "float"
-            }
-          },
-          "offering_prices_per_kgs": {
-            "type": "array",
-            "items": {
-              "type": "number",
-              "format": "float"
-            }
           }
         }
       },
