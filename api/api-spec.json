@@ -961,14 +961,16 @@
             "name": "appointment_start_time",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "09:00:00"
             }
           },
           {
             "name": "appointment_end_time",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "10:00:00"
             }
           },
           {
@@ -1245,7 +1247,8 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "format": "time"
+              "format": "time",
+              "example": "08:00:00"
             }
           },
           {
@@ -1253,7 +1256,8 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "format": "time"
+              "format": "time",
+              "example": "09:00:00"
             }
           },
           {
@@ -3918,11 +3922,12 @@
           },
           "created_at": {
             "type": "string",
-            "format": "date-time"
+            "example": "2023-08-02T10:00:00.000Z"
           },
           "updated_at": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "example": "2023-08-02T10:00:00.000Z"
           }
         },
         "required": [
@@ -4042,10 +4047,12 @@
             "format": "int64"
           },
           "open_time": {
-            "type": "string"
+            "type": "string",
+            "example":"09:00:00+07:00"
           },
           "close_time": {
-            "type": "string"
+            "type": "string",
+            "example":"11:00:00+07:00"
           }
         }
       },
@@ -4395,13 +4402,16 @@
             "$ref": "#/components/schemas/LocationResponse"
           },
           "appointment_date": {
-            "type": "string"
+            "type": "string",
+            "example": "2022-12-31"
           },
           "appointment_start_time": {
-            "type": "string"
+            "type": "string",
+            "example": "09:00:00+07:00"
           },
           "appointment_end_time": {
-            "type": "string"
+            "type": "string",
+            "example": "10:00:00+07:00"
           },
           "notes": {
             "type": "string"
@@ -4462,13 +4472,16 @@
             "$ref": "#/components/schemas/LocationResponse"
           },
           "appointment_date": {
-            "type": "string"
+            "type": "string",
+            "example": "2022-12-31"
           },
           "appointment_start_time": {
-            "type": "string"
+            "type": "string",
+            "example":"09:00:00+07:00"
           },
           "appointment_end_time": {
-            "type": "string"
+            "type": "string",
+            "example":"10:00:00+07:00"
           },
           "notes": {
             "type": "string"
@@ -4479,7 +4492,7 @@
           },
           "created_at": {
             "type": "string",
-            "format": "date-time"
+            "format": "timestamp"
           },
           "updated_at": {
             "type": "string",
@@ -4549,13 +4562,16 @@
             "$ref": "#/components/schemas/LocationRequest"
           },
           "appointment_date": {
-            "type": "string"
+            "type": "string",
+            "example": "2022-12-31"
           },
           "appointment_start_time": {
-            "type": "string"
+            "type": "string",
+            "example": "09:00:00+07:00"
           },
           "appointment_end_time": {
-            "type": "string"
+            "type": "string",
+            "example": "10:00:00+07:00"
           },
           "notes": {
             "type": "string"
@@ -5120,7 +5136,8 @@
             "format": "date"
           },
           "appointment_start_time": {
-            "type": "string"
+            "type": "string",
+            "example": "08:00:00+07:00"
           },
           "appointment_end_time": {
             "type": "string"
