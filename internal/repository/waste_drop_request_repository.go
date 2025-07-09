@@ -105,7 +105,7 @@ func (r *WasteDropRequestRepository) FindByIDWithDistance(db *gorm.DB, wasteDrop
 					ST_Distance(
 						appointment_location, 
 						ST_SetSRID(ST_MakePoint(%f, %f), 4326)
-					) / 1000.0
+					)
 				ELSE NULL 
 			END as distance`,
 			*lng, *lat)

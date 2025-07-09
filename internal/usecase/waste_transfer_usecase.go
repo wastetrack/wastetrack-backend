@@ -142,11 +142,20 @@ func (c *WasteTransferRequestUsecase) Create(ctx context.Context, request *model
 		TotalWeight:            0, // Will be calculated from items
 		TotalPrice:             0, // Will be calculated from items
 		Status:                 "pending",
+		ImageURL:               request.ImageURL,
+		Notes:                  request.Notes,
 		SourcePhoneNumber:      request.SourcePhoneNumber,
 		DestinationPhoneNumber: request.DestinationPhoneNumber,
 		AppointmentDate:        appointmentDate,
 		AppointmentStartTime:   appointmentStartTime,
 		AppointmentEndTime:     appointmentEndTime,
+	}
+	// Handle appointment location if provided
+	if request.AppointmentLocation != nil {
+		wasteTransferRequest.AppointmentLocation = &types.Point{
+			Lat: request.AppointmentLocation.Latitude,
+			Lng: request.AppointmentLocation.Longitude,
+		}
 	}
 
 	if err := c.WasteTransferRequestRepository.Create(tx, wasteTransferRequest); err != nil {
@@ -207,9 +216,18 @@ func (c *WasteTransferRequestUsecase) Get(ctx context.Context, request *model.Ge
 	}
 
 	wasteTransferRequest := new(entity.WasteTransferRequest)
-	if err := c.WasteTransferRequestRepository.FindByID(tx, wasteTransferRequest, request.ID); err != nil {
-		c.Log.Warnf("Failed to find waste transfer request by ID: %+v", err)
-		return nil, fiber.ErrNotFound
+
+	// Use FindByIDWithDistance if coordinates are provided, otherwise use FindByID
+	if request.Latitude != nil && request.Longitude != nil {
+		if err := c.WasteTransferRequestRepository.FindByIDWithDistance(tx, wasteTransferRequest, request.ID, request.Latitude, request.Longitude); err != nil {
+			c.Log.Warnf("Failed to find waste transfer request by ID with distance: %+v", err)
+			return nil, fiber.ErrNotFound
+		}
+	} else {
+		if err := c.WasteTransferRequestRepository.FindByID(tx, wasteTransferRequest, request.ID); err != nil {
+			c.Log.Warnf("Failed to find waste transfer request by ID: %+v", err)
+			return nil, fiber.ErrNotFound
+		}
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -289,6 +307,16 @@ func (c *WasteTransferRequestUsecase) Search(ctx context.Context, request *model
 		return nil, 0, fiber.ErrBadRequest
 	}
 
+	// Set default pagination values if not provided
+	if request.Page <= 0 {
+		request.Page = 1
+	}
+	if request.Size <= 0 {
+		request.Size = 10
+	}
+
+	// The repository Search method already handles distance calculation and sorting
+	// if Latitude and Longitude are provided in the request
 	wasteTransferRequests, total, err := c.WasteTransferRequestRepository.Search(tx, request)
 	if err != nil {
 		c.Log.WithError(err).Warn("Failed to search waste transfer requests")

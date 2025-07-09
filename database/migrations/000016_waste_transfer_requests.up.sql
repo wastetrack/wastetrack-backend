@@ -35,11 +35,14 @@ CREATE TABLE IF NOT EXISTS waste_transfer_requests (
     total_weight DECIMAL DEFAULT 0,
     total_price BIGINT DEFAULT 0,
     status waste_transfer_status DEFAULT 'pending',
+    image_url TEXT,
+    notes TEXT,
     source_phone_number TEXT,
     destination_phone_number TEXT,
     appointment_date DATE,
     appointment_start_time TIMETZ,
     appointment_end_time TIMETZ,
+    appointment_location GEOGRAPHY(Point, 4326),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

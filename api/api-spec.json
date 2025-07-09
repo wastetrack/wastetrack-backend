@@ -4986,6 +4986,12 @@
           "status": {
             "type": "string"
           },
+          "image_url": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
           "source_phone_number": {
             "type": "string",
             "maxLength": 100
@@ -5003,6 +5009,9 @@
           },
           "appointment_end_time": {
             "type": "string"
+          },
+                    "appointment_location": {
+            "$ref": "#/components/schemas/LocationResponse"
           },
           "items": {
             "$ref": "#/components/schemas/WasteTransferRequestItems"
@@ -5033,6 +5042,12 @@
           "status": {
             "type": "string"
           },
+          "image_url": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
           "source_phone_number": {
             "type": "string"
           },
@@ -5049,6 +5064,9 @@
           "appointment_end_time": {
             "type": "string"
           },
+                    "appointment_location": {
+            "$ref": "#/components/schemas/LocationResponse"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time"
@@ -5056,6 +5074,11 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "distance": {
+            "type": "number",
+            "format": "float",
+            "example": 0
           }
         }
       },
@@ -5083,6 +5106,12 @@
           "status": {
             "type": "string"
           },
+          "image_url": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
           "source_phone_number": {
             "type": "string"
           },
@@ -5098,6 +5127,9 @@
           },
           "appointment_end_time": {
             "type": "string"
+          },
+                    "appointment_location": {
+            "$ref": "#/components/schemas/LocationResponse"
           },
           "created_at": {
             "type": "string",
@@ -5118,6 +5150,11 @@
             "items": {
               "$ref": "#/components/schemas/WasteTransferItemOfferingResponse"
             }
+          },
+                    "distance": {
+            "type": "number",
+            "format": "float",
+            "example": 0
           }
         }
       },

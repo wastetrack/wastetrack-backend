@@ -17,12 +17,16 @@ type WasteTransferRequest struct {
 	TotalWeight            int64                       `gorm:"column:total_weight;default:0"`
 	TotalPrice             int64                       `gorm:"column:total_price;default:0"`
 	Status                 string                      `gorm:"column:status;default:'pending'"`
+	ImageURL               string                      `gorm:"column:image_url"`
+	Notes                  string                      `gorm:"column:notes"`
 	SourcePhoneNumber      string                      `gorm:"column:source_phone_number"`
 	DestinationPhoneNumber string                      `gorm:"column:destination_phone_number"`
 	AppointmentDate        time.Time                   `gorm:"column:appointment_date;type:date"`
 	AppointmentStartTime   types.TimeOnly              `gorm:"column:appointment_start_time;type:timetz"`
 	AppointmentEndTime     types.TimeOnly              `gorm:"column:appointment_end_time;type:timetz"`
+	AppointmentLocation    *types.Point                `gorm:"type:geography(POINT,4326);"`
 	CreatedAt              time.Time                   `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt              time.Time                   `gorm:"column:updated_at;autoUpdateTime"`
 	Items                  []WasteTransferItemOffering `gorm:"foreignKey:TransferFormID"`
+	Distance               *float64                    `gorm:"->" json:"-"`
 }

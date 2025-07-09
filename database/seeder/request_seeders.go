@@ -54,7 +54,7 @@ func SeedWasteDropRequests(db *gorm.DB) error {
 			WasteBankID:          &wasteBanks[0].ID,
 			AssignedCollectorID:  assignedCollectorID,
 			TotalPrice:           45000,
-			Status:               "pending",
+			Status:               "assigned",
 			AppointmentLocation:  &types.Point{Lat: -7.2504, Lng: 112.7688},
 			AppointmentDate:      tomorrow,
 			AppointmentStartTime: createTimeOnly(10, 0),
@@ -71,7 +71,7 @@ func SeedWasteDropRequests(db *gorm.DB) error {
 			UserPhoneNumber:      customers[1].PhoneNumber,
 			WasteBankID:          &wasteBanks[1].ID,
 			TotalPrice:           62000,
-			Status:               "completed",
+			Status:               "pending",
 			AppointmentLocation:  &types.Point{Lat: -7.2456, Lng: 112.7378},
 			AppointmentDate:      time.Now().AddDate(0, 0, -2),
 			AppointmentStartTime: createTimeOnly(14, 0),
@@ -227,7 +227,7 @@ func SeedWasteTransferRequests(db *gorm.DB) error {
 
 	var transfers []entity.WasteTransferRequest
 
-	// Bank to bank transfer (if we have at least 2 waste banks)
+	// Bank to bank
 	if len(wasteBanks) >= 2 {
 		transfers = append(transfers, entity.WasteTransferRequest{
 			ID:                     uuid.New(),
@@ -242,14 +242,17 @@ func SeedWasteTransferRequests(db *gorm.DB) error {
 			AppointmentDate:        nextWeek,
 			AppointmentStartTime:   createTimeOnly(10, 0),
 			AppointmentEndTime:     createTimeOnly(12, 0),
+			ImageURL:               "https://example.com/images/transfer1.jpg",
+			Notes:                  "Weekly redistribution of collected recyclables",
+			AppointmentLocation:    &types.Point{Lat: -6.200000, Lng: 106.816666}, // Jakarta
 		})
 	}
 
-	// Bank to industry transfer (if we have both)
+	// Bank to industry
 	if len(wasteBanks) >= 1 && len(industries) >= 1 {
 		bankIndex := 0
 		if len(wasteBanks) >= 2 {
-			bankIndex = 1 // Use second bank if available
+			bankIndex = 1
 		}
 
 		transfers = append(transfers, entity.WasteTransferRequest{
@@ -265,19 +268,22 @@ func SeedWasteTransferRequests(db *gorm.DB) error {
 			AppointmentDate:        nextMonth,
 			AppointmentStartTime:   createTimeOnly(8, 0),
 			AppointmentEndTime:     createTimeOnly(10, 0),
+			ImageURL:               "https://example.com/images/transfer2.jpg",
+			Notes:                  "Plastic packaging and bottles from city collection",
+			AppointmentLocation:    &types.Point{Lat: -6.914744, Lng: 107.609810}, // Bandung
 		})
 	}
 
-	// Central bank to industry transfer (if we have central bank and industry)
+	// Central bank to industry
 	if len(wasteBanks) >= 3 && len(industries) >= 1 {
 		industryIndex := 0
 		if len(industries) >= 2 {
-			industryIndex = 1 // Use second industry if available
+			industryIndex = 1
 		}
 
 		transfers = append(transfers, entity.WasteTransferRequest{
 			ID:                     uuid.New(),
-			SourceUserID:           wasteBanks[2].ID, // Central bank
+			SourceUserID:           wasteBanks[2].ID,
 			DestinationUserID:      industries[industryIndex].ID,
 			FormType:               "waste_bank_request",
 			TotalWeight:            1000,
@@ -288,6 +294,9 @@ func SeedWasteTransferRequests(db *gorm.DB) error {
 			AppointmentDate:        nextMonth.AddDate(0, 0, 7),
 			AppointmentStartTime:   createTimeOnly(9, 0),
 			AppointmentEndTime:     createTimeOnly(12, 0),
+			ImageURL:               "https://example.com/images/transfer3.jpg",
+			Notes:                  "Bulk transfer for recycling plant processing",
+			AppointmentLocation:    &types.Point{Lat: -7.250445, Lng: 112.768845}, // Surabaya
 		})
 	}
 
