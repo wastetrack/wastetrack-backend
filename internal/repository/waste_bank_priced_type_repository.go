@@ -49,7 +49,7 @@ func (r *WasteBankPricedTypeRepository) Search(db *gorm.DB, req *model.SearchWas
 		return nil, 0, err
 	}
 
-	if err := query.Preload("WasteType").
+	if err := query.Preload("WasteType").Preload("WasteType.WasteCategory").
 		Offset((req.Page - 1) * req.Size).
 		Limit(req.Size).
 		Find(&result).Error; err != nil {
