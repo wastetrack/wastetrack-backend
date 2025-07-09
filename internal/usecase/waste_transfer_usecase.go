@@ -118,7 +118,7 @@ func (c *WasteTransferRequestUsecase) Create(ctx context.Context, request *model
 
 	var appointmentStartTime, appointmentEndTime types.TimeOnly
 	if request.AppointmentStartTime != "" {
-		startTime, err := time.Parse("15:04:05", request.AppointmentStartTime)
+		startTime, err := time.Parse("15:04:05Z07:00", request.AppointmentStartTime)
 		if err != nil {
 			c.Log.Warnf("Invalid appointment start time format: %+v", err)
 			return nil, fiber.ErrBadRequest
@@ -127,7 +127,7 @@ func (c *WasteTransferRequestUsecase) Create(ctx context.Context, request *model
 	}
 
 	if request.AppointmentEndTime != "" {
-		endTime, err := time.Parse("15:04:05", request.AppointmentEndTime)
+		endTime, err := time.Parse("15:04:05Z07:00", request.AppointmentEndTime)
 		if err != nil {
 			c.Log.Warnf("Invalid appointment end time format: %+v", err)
 			return nil, fiber.ErrBadRequest
@@ -251,7 +251,7 @@ func (c *WasteTransferRequestUsecase) Update(ctx context.Context, request *model
 		wasteTransferRequest.AppointmentDate = appointmentDate
 	}
 	if request.AppointmentStartTime != "" {
-		startTime, err := time.Parse("15:04:05", request.AppointmentStartTime)
+		startTime, err := time.Parse("15:04:05Z07:00", request.AppointmentStartTime)
 		if err != nil {
 			c.Log.Warnf("Invalid appointment start time format: %+v", err)
 			return nil, fiber.ErrBadRequest
@@ -259,7 +259,7 @@ func (c *WasteTransferRequestUsecase) Update(ctx context.Context, request *model
 		wasteTransferRequest.AppointmentStartTime = types.NewTimeOnly(startTime)
 	}
 	if request.AppointmentEndTime != "" {
-		endTime, err := time.Parse("15:04:05", request.AppointmentEndTime)
+		endTime, err := time.Parse("15:04:05Z07:00", request.AppointmentEndTime)
 		if err != nil {
 			c.Log.Warnf("Invalid appointment end time format: %+v", err)
 			return nil, fiber.ErrBadRequest

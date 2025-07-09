@@ -11,11 +11,11 @@ func WasteTransferRequestToSimpleResponse(request *entity.WasteTransferRequest) 
 	var startTime, endTime, appointmentDate string
 
 	if !request.AppointmentStartTime.IsZero() {
-		startTime = request.AppointmentStartTime.Format("15:04:05")
+		startTime = request.AppointmentStartTime.Format("15:04:05Z07:00")
 	}
 
 	if !request.AppointmentEndTime.IsZero() {
-		endTime = request.AppointmentEndTime.Format("15:04:05")
+		endTime = request.AppointmentEndTime.Format("15:04:05Z07:00")
 	}
 
 	if !request.AppointmentDate.IsZero() {
@@ -44,11 +44,11 @@ func WasteTransferRequestToResponse(request *entity.WasteTransferRequest) *model
 	var startTime, endTime, appointmentDate string
 
 	if !request.AppointmentStartTime.IsZero() {
-		startTime = request.AppointmentStartTime.Format("15:04:05")
+		startTime = request.AppointmentStartTime.Format("15:04:05Z07:00")
 	}
 
 	if !request.AppointmentEndTime.IsZero() {
-		endTime = request.AppointmentEndTime.Format("15:04:05")
+		endTime = request.AppointmentEndTime.Format("15:04:05Z07:00")
 	}
 
 	if !request.AppointmentDate.IsZero() {
