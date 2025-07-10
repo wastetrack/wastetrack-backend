@@ -6,15 +6,20 @@ migrate -database "postgres://user:password@localhost:5432/your_db?sslmode=disab
 
 # Rollback
 1. to undo migrations
+   ```
    migrate -database "postgres://user:password@localhost:5432/your_db?sslmode=disable" -path database/migrations down 1
+   ```
 
 2. to reset migrations
+   ```
    migrate -database "postgres://user:password@localhost:5432/your_db?sslmode=disable" -path database/migrations down
+   ```
 
 3. Force state
-  migrate -database "postgres://user:password@localhost:5432/your_db?sslmode=disable" -path database/migrations force 0
-  migrate -database "postgres://user:password@localhost:5432/your_db?sslmode=disable" -path database/migrations force 1
-
+   ```
+   migrate -database "postgres://user:password@localhost:5432/your_db?sslmode=disable" -path database/migrations force 0
+   migrate -database "postgres://user:password@localhost:5432/your_db?sslmode=disable" -path database/migrations force 1
+   ```
 
 # First time running
 ## Getting packages
