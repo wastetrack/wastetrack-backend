@@ -17,9 +17,7 @@ func main() {
 
 	// Add CORS middleware
 	app.Use(cors.New(cors.Config{
-		AllowOriginsFunc: func(origin string) bool {
-			return origin == "http://localhost:3000" || origin == "https://wastetrack-staging.netlify.app"
-		},
+		AllowOrigins:     "http://localhost:3000, https://wastetrack-staging.netlify.app",
 		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
 		AllowHeaders:     "Origin,Content-Type,Accept,Authorization,Access-Control-Request-Method,Access-Control-Request-Headers",
 		AllowCredentials: true,
