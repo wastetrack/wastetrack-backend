@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/wastetrack/wastetrack-backend/internal/entity"
 	"github.com/wastetrack/wastetrack-backend/internal/model"
@@ -25,6 +26,7 @@ func (r *WasteTransferRequestRepository) FindByID(db *gorm.DB, wasteTransferRequ
 	return db.Where("id = ?", id).
 		Preload("SourceUser").
 		Preload("DestinationUser").
+		Preload("AssignedCollector"). // NEW: Preload assigned collector
 		Preload("Items").
 		Preload("Items.WasteType").
 		First(wasteTransferRequest).Error
@@ -35,6 +37,7 @@ func (r *WasteTransferRequestRepository) FindByIDWithDistance(db *gorm.DB, waste
 	query := db.Where("id = ?", id).
 		Preload("SourceUser").
 		Preload("DestinationUser").
+		Preload("AssignedCollector"). // NEW: Preload assigned collector
 		Preload("Items").
 		Preload("Items.WasteType")
 	if lat != nil && lng != nil {
@@ -102,6 +105,10 @@ func (r *WasteTransferRequestRepository) FilterWasteTransferRequest(request *mod
 		if destinationUserID := request.DestinationUserID; destinationUserID != "" {
 			tx = tx.Where("destination_user_id = ?", destinationUserID)
 		}
+		// NEW: Filter by assigned collector
+		if assignedCollectorID := request.AssignedCollectorID; assignedCollectorID != "" {
+			tx = tx.Where("assigned_collector_id = ?", assignedCollectorID)
+		}
 		if formType := request.FormType; formType != "" {
 			tx = tx.Where("form_type = ?", formType)
 		}
@@ -126,4 +133,27 @@ func (r *WasteTransferRequestRepository) UpdateStatus(db *gorm.DB, id string, st
 	return db.Model(&entity.WasteTransferRequest{}).
 		Where("id = ?", id).
 		Update("status", status).Error
+}
+
+// NEW: AssignCollector assigns a collector to a waste transfer request and updates status to "assigned"
+func (r *WasteTransferRequestRepository) AssignCollector(db *gorm.DB, id string, collectorID uuid.UUID) error {
+	return db.Model(&entity.WasteTransferRequest{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"assigned_collector_id": collectorID,
+			"status":                "assigned",
+		}).Error
+}
+
+// NEW: FindByCollectorID finds all waste transfer requests assigned to a specific collector
+func (r *WasteTransferRequestRepository) FindByCollectorID(db *gorm.DB, collectorID string) ([]entity.WasteTransferRequest, error) {
+	var requests []entity.WasteTransferRequest
+	err := db.Where("assigned_collector_id = ?", collectorID).
+		Preload("SourceUser").
+		Preload("DestinationUser").
+		Preload("AssignedCollector").
+		Preload("Items").
+		Preload("Items.WasteType").
+		Find(&requests).Error
+	return requests, err
 }

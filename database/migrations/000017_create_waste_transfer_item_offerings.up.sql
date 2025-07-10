@@ -7,5 +7,5 @@ CREATE TABLE IF NOT EXISTS waste_transfer_items (
     offering_price_per_kgs BIGINT,
     accepted_weight DECIMAL,
     accepted_price_per_kgs BIGINT,
-    recycled_weight DECIMAL
+    recycled_weight DECIMAL 
 );

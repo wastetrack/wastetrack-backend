@@ -24,11 +24,24 @@ type WasteTransferRequestRequest struct {
 	Items                  *WasteTransferRequestItems `json:"items" validate:"required"`
 }
 
+type AssignCollectorByWasteTypeRequest struct {
+	ID                  string                            `json:"id" validate:"required,max=100"`
+	AssignedCollectorID string                            `json:"assigned_collector_id" validate:"required,max=100"`
+	WasteTypes          []AssignCollectorWasteTypeRequest `json:"items" validate:"required,min=1"`
+}
+
+type AssignCollectorWasteTypeRequest struct {
+	WasteTypeID         string  `json:"waste_type_id" validate:"required,max=100"`
+	AcceptedWeight      float64 `json:"accepted_weight" validate:"required,min=0"`
+	AcceptedPricePerKgs float64 `json:"accepted_price_per_kgs" validate:"required,min=0"`
+}
+
 // Response models
 type WasteTransferRequestSimpleResponse struct {
 	ID                     string            `json:"id"`
 	SourceUserID           string            `json:"source_user_id"`
 	DestinationUserID      string            `json:"destination_user_id"`
+	AssignedCollectorID    *string           `json:"assigned_collector_id,omitempty"` // NEW
 	FormType               string            `json:"form_type"`
 	TotalWeight            int64             `json:"total_weight"`
 	TotalPrice             int64             `json:"total_price"`
@@ -50,6 +63,7 @@ type WasteTransferRequestResponse struct {
 	ID                     string                              `json:"id"`
 	SourceUserID           string                              `json:"source_user_id"`
 	DestinationUserID      string                              `json:"destination_user_id"`
+	AssignedCollectorID    *string                             `json:"assigned_collector_id,omitempty"` // NEW
 	FormType               string                              `json:"form_type"`
 	TotalWeight            int64                               `json:"total_weight"`
 	TotalPrice             int64                               `json:"total_price"`
@@ -66,6 +80,7 @@ type WasteTransferRequestResponse struct {
 	UpdatedAt              *time.Time                          `json:"updated_at"`
 	SourceUser             *UserResponse                       `json:"source_user"`
 	DestinationUser        *UserResponse                       `json:"destination_user"`
+	AssignedCollector      *UserResponse                       `json:"assigned_collector,omitempty"` // NEW
 	Items                  []WasteTransferItemOfferingResponse `json:"items"`
 	Distance               *float64                            `json:"distance,omitempty"`
 }
@@ -74,6 +89,7 @@ type WasteTransferRequestResponse struct {
 type SearchWasteTransferRequest struct {
 	SourceUserID         string   `json:"source_user_id"`
 	DestinationUserID    string   `json:"destination_user_id"`
+	AssignedCollectorID  string   `json:"assigned_collector_id"` // NEW
 	FormType             string   `json:"form_type"`
 	Status               string   `json:"status"`
 	AppointmentDate      string   `json:"appointment_date,omitempty"`

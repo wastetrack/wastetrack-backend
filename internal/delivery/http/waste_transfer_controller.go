@@ -75,6 +75,7 @@ func (c *WasteTransferRequestController) List(ctx *fiber.Ctx) error {
 	request := &model.SearchWasteTransferRequest{
 		SourceUserID:         ctx.Query("source_user_id"),
 		DestinationUserID:    ctx.Query("destination_user_id"),
+		AssignedCollectorID:  ctx.Query("assigned_collector_id"), // NEW: Support filtering by assigned collector
 		FormType:             ctx.Query("form_type"),
 		Status:               ctx.Query("status"),
 		AppointmentDate:      ctx.Query("appointment_date"),
@@ -181,6 +182,27 @@ func (c *WasteTransferRequestController) UpdateStatus(ctx *fiber.Ctx) error {
 	response, err := c.WasteTransferRequestUsecase.Update(ctx.UserContext(), updateRequest)
 	if err != nil {
 		c.Log.Warnf("Failed to update waste transfer request status: %v", err)
+		return err
+	}
+
+	return ctx.JSON(model.WebResponse[*model.WasteTransferRequestSimpleResponse]{Data: response})
+}
+
+func (c *WasteTransferRequestController) AssignCollectorByWasteType(ctx *fiber.Ctx) error {
+	request := new(model.AssignCollectorByWasteTypeRequest)
+	request.ID = ctx.Params("id")
+
+	if err := ctx.BodyParser(request); err != nil {
+		c.Log.Warnf("Failed to parse request body: %v", err)
+		return fiber.ErrBadRequest
+	}
+
+	// Ensure the ID from params is used
+	request.ID = ctx.Params("id")
+
+	response, err := c.WasteTransferRequestUsecase.AssignCollectorByWasteType(ctx.UserContext(), request)
+	if err != nil {
+		c.Log.Warnf("Failed to assign collector by waste type: %v", err)
 		return err
 	}
 

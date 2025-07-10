@@ -99,6 +99,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	wasteBankOnly.Put("/waste-drop-requests/:id/assign-collector", c.WasteDropRequestController.AssignCollector)
 	// Waste Transfer
 	wasteBankOnly.Post("/waste-transfer-requests", c.WasteTransferController.Create)
+	wasteBankOnly.Put("/waste-transfer-requests/:id/assign-collector", c.WasteTransferController.AssignCollectorByWasteType)
 	// Collector Management
 	wasteBankOnly.Get("/collector-management", c.CollectorManagementController.List)
 	wasteBankOnly.Get("/collector-management/:id", c.CollectorManagementController.Get)

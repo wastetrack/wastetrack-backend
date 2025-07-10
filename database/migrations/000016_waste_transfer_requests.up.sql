@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS waste_transfer_requests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     source_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     destination_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    assigned_collector_id UUID REFERENCES users(id) ON DELETE SET NULL,
     form_type form_type,
     total_weight DECIMAL DEFAULT 0,
     total_price BIGINT DEFAULT 0,

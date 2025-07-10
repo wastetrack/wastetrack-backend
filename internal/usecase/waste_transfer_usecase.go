@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-playground/validator"
@@ -200,6 +201,94 @@ func (c *WasteTransferRequestUsecase) Create(ctx context.Context, request *model
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.WasteTransferRequestToSimpleResponse(wasteTransferRequest), nil
+}
+
+func (c *WasteTransferRequestUsecase) AssignCollectorByWasteType(ctx context.Context, request *model.AssignCollectorByWasteTypeRequest) (*model.WasteTransferRequestSimpleResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request body: %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	// Parse and validate collector UUID
+	collectorID, err := uuid.Parse(request.AssignedCollectorID)
+	if err != nil {
+		c.Log.Warnf("Invalid collector ID: %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	// Get transfer request
+	wasteTransferRequest := new(entity.WasteTransferRequest)
+	if err := c.WasteTransferRequestRepository.FindByID(tx, wasteTransferRequest, request.ID); err != nil {
+		c.Log.Warnf("Failed to find waste transfer request by ID: %+v", err)
+		return nil, fiber.ErrNotFound
+	}
+
+	// Validate status
+	if wasteTransferRequest.Status != "pending" {
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Can only assign collector to pending requests")
+	}
+
+	// Get current items
+	transferFormUUID, _ := uuid.Parse(request.ID)
+	currentItems, err := c.WasteTransferItemOfferingRepository.FindByTransferFormID(tx, transferFormUUID)
+	if err != nil {
+		return nil, fiber.ErrInternalServerError
+	}
+
+	// Create waste type pricing map
+	wasteTypePricing := make(map[uuid.UUID]model.AssignCollectorWasteTypeRequest)
+	for _, wt := range request.WasteTypes {
+		wasteTypeID, err := uuid.Parse(wt.WasteTypeID)
+		if err != nil {
+			return nil, fiber.ErrBadRequest
+		}
+		wasteTypePricing[wasteTypeID] = wt
+	}
+
+	// Update items based on waste type pricing
+	var totalAcceptedWeight float64
+	var totalAcceptedPrice float64
+
+	for _, item := range currentItems {
+		if pricing, exists := wasteTypePricing[item.WasteTypeID]; exists {
+			// Apply the waste type pricing to this item
+			item.AcceptedWeight = pricing.AcceptedWeight
+			item.AcceptedPricePerKgs = pricing.AcceptedPricePerKgs
+
+			if err := c.WasteTransferItemOfferingRepository.Update(tx, &item); err != nil {
+				return nil, fiber.ErrInternalServerError
+			}
+
+			totalAcceptedWeight += pricing.AcceptedWeight
+			totalAcceptedPrice += pricing.AcceptedWeight * pricing.AcceptedPricePerKgs
+		} else {
+			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Missing pricing for waste type: %s", item.WasteTypeID))
+		}
+	}
+
+	// Assign collector and update status
+	if err := c.WasteTransferRequestRepository.AssignCollector(tx, request.ID, collectorID); err != nil {
+		return nil, fiber.ErrInternalServerError
+	}
+
+	// Update totals
+	wasteTransferRequest.AssignedCollectorID = &collectorID
+	wasteTransferRequest.Status = "assigned"
+	wasteTransferRequest.TotalWeight = int64(totalAcceptedWeight)
+	wasteTransferRequest.TotalPrice = int64(totalAcceptedPrice)
+
+	if err := c.WasteTransferRequestRepository.Update(tx, wasteTransferRequest); err != nil {
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		return nil, fiber.ErrInternalServerError
 	}
 
