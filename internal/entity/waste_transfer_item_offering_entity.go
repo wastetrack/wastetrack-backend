@@ -20,6 +20,11 @@ type WasteTransferItemOffering struct {
 	// Accepted details (filled when collector is assigned)
 	AcceptedWeight      float64 `gorm:"column:accepted_weight;default:0"`        // DECIMAL - accepted weight
 	AcceptedPricePerKgs float64 `gorm:"column:accepted_price_per_kgs;default:0"` // DECIMAL - accepted price per kg
+
+	VerifiedWeight float64 `gorm:"column:verified_weight;default:0"` // DECIMAL - verified weight
+
+	// Recycling process
+	RecycledWeight float64 `gorm:"column:recycled_weight;default:0"` // DECIMAL - weight of actual recycled material
 }
 
 func (WasteTransferItemOffering) TableName() string {

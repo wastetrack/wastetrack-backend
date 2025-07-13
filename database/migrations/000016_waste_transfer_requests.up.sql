@@ -17,9 +17,7 @@ BEGIN
             'collecting', 
             'completed', 
             'cancelled',
-            'weighing_in',
             'recycling_in_process',
-            'weighing_out',
             'recycled',
             'recycle_cancelled'
         );

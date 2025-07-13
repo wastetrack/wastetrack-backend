@@ -262,7 +262,7 @@ func SeedWasteTransferRequests(db *gorm.DB) error {
 			FormType:               "industry_request",
 			TotalWeight:            500,
 			TotalPrice:             1500000,
-			Status:                 "weighing_in",
+			Status:                 "cancelled",
 			SourcePhoneNumber:      wasteBanks[bankIndex].PhoneNumber,
 			DestinationPhoneNumber: industries[0].PhoneNumber,
 			AppointmentDate:        nextMonth,

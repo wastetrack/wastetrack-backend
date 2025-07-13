@@ -11,8 +11,8 @@ type WasteTransferRequestItems struct {
 type WasteTransferRequestRequest struct {
 	SourceUserID           string                     `json:"source_user_id" validate:"required,max=100"`
 	DestinationUserID      string                     `json:"destination_user_id" validate:"required,max=100"`
-	FormType               string                     `json:"form_type"`
-	Status                 string                     `json:"status"`
+	FormType               string                     `json:"form_type" validate:"required,max=100"`
+	Status                 string                     `json:"status" `
 	ImageURL               string                     `json:"image_url,omitempty"`
 	Notes                  string                     `json:"notes,omitempty"`
 	SourcePhoneNumber      string                     `json:"source_phone_number" validate:"required,max=100"`
@@ -26,7 +26,7 @@ type WasteTransferRequestRequest struct {
 
 type AssignCollectorByWasteTypeRequest struct {
 	ID                  string                            `json:"id" validate:"required,max=100"`
-	AssignedCollectorID string                            `json:"assigned_collector_id" validate:"required,max=100"`
+	AssignedCollectorID string                            `json:"assigned_collector_id"`
 	WasteTypes          []AssignCollectorWasteTypeRequest `json:"items" validate:"required,min=1"`
 }
 
@@ -41,9 +41,9 @@ type WasteTransferRequestSimpleResponse struct {
 	ID                     string            `json:"id"`
 	SourceUserID           string            `json:"source_user_id"`
 	DestinationUserID      string            `json:"destination_user_id"`
-	AssignedCollectorID    *string           `json:"assigned_collector_id,omitempty"` // NEW
+	AssignedCollectorID    string            `json:"assigned_collector_id,omitempty"`
 	FormType               string            `json:"form_type"`
-	TotalWeight            int64             `json:"total_weight"`
+	TotalWeight            float64           `json:"total_weight"`
 	TotalPrice             int64             `json:"total_price"`
 	Status                 string            `json:"status"`
 	ImageURL               string            `json:"image_url,omitempty"`
@@ -63,9 +63,9 @@ type WasteTransferRequestResponse struct {
 	ID                     string                              `json:"id"`
 	SourceUserID           string                              `json:"source_user_id"`
 	DestinationUserID      string                              `json:"destination_user_id"`
-	AssignedCollectorID    *string                             `json:"assigned_collector_id,omitempty"` // NEW
+	AssignedCollectorID    string                              `json:"assigned_collector_id,omitempty"` // NEW
 	FormType               string                              `json:"form_type"`
-	TotalWeight            int64                               `json:"total_weight"`
+	TotalWeight            float64                             `json:"total_weight"`
 	TotalPrice             int64                               `json:"total_price"`
 	Status                 string                              `json:"status"`
 	ImageURL               string                              `json:"image_url,omitempty"`

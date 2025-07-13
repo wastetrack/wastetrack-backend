@@ -173,6 +173,10 @@ func (c *WasteTransferRequestController) UpdateStatus(ctx *fiber.Ctx) error {
 		c.Log.Warn("Status is required")
 		return fiber.ErrBadRequest
 	}
+	if request.Status != "collecting" && request.Status != "cancelled" {
+		c.Log.Warn("only collecting and cancelled are allowed")
+		return fiber.NewError(fiber.StatusBadRequest, "only collecting and cancelled status are allowed")
+	}
 
 	updateRequest := &model.UpdateWasteTransferRequest{
 		ID:     request.ID,

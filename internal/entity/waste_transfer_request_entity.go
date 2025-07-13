@@ -20,14 +20,14 @@ type WasteTransferRequest struct {
 	AssignedCollectorID *uuid.UUID `gorm:"column:assigned_collector_id"` // Nullable
 	AssignedCollector   *User      `gorm:"foreignKey:AssignedCollectorID"`
 
-	FormType               string `gorm:"column:form_type"`
-	TotalWeight            int64  `gorm:"column:total_weight;default:0"`
-	TotalPrice             int64  `gorm:"column:total_price;default:0"`
-	Status                 string `gorm:"type:request_status;default:'pending'"` // ENUM: pending, assigned, in_progress, completed, cancelled
-	ImageURL               string `gorm:"column:image_url"`
-	Notes                  string `gorm:"column:notes"`
-	SourcePhoneNumber      string `gorm:"column:source_phone_number"`
-	DestinationPhoneNumber string `gorm:"column:destination_phone_number"`
+	FormType               string  `gorm:"column:form_type"`
+	TotalWeight            float64 `gorm:"column:total_weight;default:0"`
+	TotalPrice             int64   `gorm:"column:total_price;default:0"`
+	Status                 string  `gorm:"type:request_status;default:'pending'"` // ENUM: pending, assigned, in_progress, completed, cancelled
+	ImageURL               string  `gorm:"column:image_url"`
+	Notes                  string  `gorm:"column:notes"`
+	SourcePhoneNumber      string  `gorm:"column:source_phone_number"`
+	DestinationPhoneNumber string  `gorm:"column:destination_phone_number"`
 
 	AppointmentDate      time.Time      `gorm:"type:date"`
 	AppointmentStartTime types.TimeOnly `gorm:"type:timetz"`
