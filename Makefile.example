@@ -1,0 +1,58 @@
+
+# Setup local project environment
+
+DB_URL_LOCAL=postgres://user:password@localhost:5432/your_db?sslmode=disable
+MIGRATION_DIR=database/migrations
+SEEDER_CMD=go run ./database/cmd/seeder/main.go
+MAIN_APP=cmd/web/main.go
+
+# Migration tool
+
+create-migration:
+	@read -p "Migration name: " name; \
+	migrate create -ext sql -dir $(MIGRATION_DIR) -seq $$name
+
+migrate-up:
+	migrate -database "$(DB_URL_LOCAL)" -path $(MIGRATION_DIR) up
+
+migrate-down:
+	migrate -database "$(DB_URL_LOCAL)" -path $(MIGRATION_DIR) down 1
+
+migrate-reset:
+	migrate -database "$(DB_URL_LOCAL)" -path $(MIGRATION_DIR) down
+
+migrate-force:
+	@read -p "Force version number: " version; \
+	migrate -database "$(DB_URL_LOCAL)" -path $(MIGRATION_DIR) force $$version
+
+# Setup Go environment
+
+deps:
+	go get ./...
+	go mod tidy
+
+# Seeder
+
+seed:
+	$(SEEDER_CMD) -db "$(DB_URL_LOCAL)"
+
+seed-clear:
+	$(SEEDER_CMD) -db "$(DB_URL_LOCAL)" -clear
+
+seed-help:
+	$(SEEDER_CMD) -help
+
+# Run Application
+
+run-local:
+	go run $(MAIN_APP)
+
+run-vps:
+	nohup go run $(MAIN_APP) > app.log 2>&1 & echo $$! > go.pid && echo "App running in background with PID $$!"
+
+stop-vps:
+	@if [ -f go.pid ]; then \
+		echo "Stopping app with PID `cat go.pid`..." && kill -9 `cat go.pid` && rm go.pid; \
+	else \
+		echo "No go.pid file found."; \
+	fi
