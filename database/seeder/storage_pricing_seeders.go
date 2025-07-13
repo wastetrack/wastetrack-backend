@@ -197,7 +197,7 @@ func SeedStorageItems(db *gorm.DB) error {
 		}
 
 		storageItem := entity.StorageItem{
-			StorageID:   storages[item.StorageIndex].ID,
+			StorageID:   uuid.New(),
 			WasteTypeID: wasteType.ID,
 			QuantityKgs: item.QuantityKgs,
 		}

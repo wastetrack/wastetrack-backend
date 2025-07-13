@@ -36,6 +36,26 @@ type AssignCollectorWasteTypeRequest struct {
 	AcceptedPricePerKgs float64 `json:"accepted_price_per_kgs" validate:"required,min=0"`
 }
 
+type CompleteWasteTransferRequestItems struct {
+	WasteTypeIDs []string  `json:"waste_type_ids" validate:"required,min=1"`
+	Weights      []float64 `json:"weights" validate:"required,min=1"`
+}
+
+type CompleteWasteTransferRequest struct {
+	ID    string                             `json:"id" validate:"required,max=100"`
+	Items *CompleteWasteTransferRequestItems `json:"items" validate:"required"`
+}
+
+type RecycleWasteTransferRequestItems struct {
+	WasteTypeIDs []string  `json:"waste_type_ids" validate:"required,min=1"`
+	Weights      []float64 `json:"weights" validate:"required,min=1"`
+}
+
+type RecycleWasteTransferRequest struct {
+	ID    string                            `json:"id" validate:"required,max=100"`
+	Items *RecycleWasteTransferRequestItems `json:"items" validate:"required"`
+}
+
 // Response models
 type WasteTransferRequestSimpleResponse struct {
 	ID                     string            `json:"id"`

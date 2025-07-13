@@ -207,6 +207,37 @@ func (c *WasteTransferRequestUsecase) Create(ctx context.Context, request *model
 
 	return converter.WasteTransferRequestToSimpleResponse(wasteTransferRequest), nil
 }
+func (c *WasteTransferRequestUsecase) Get(ctx context.Context, request *model.GetWasteTransferRequest) (*model.WasteTransferRequestResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request body: %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	wasteTransferRequest := new(entity.WasteTransferRequest)
+
+	// Use FindByIDWithDistance if coordinates are provided, otherwise use FindByID
+	if request.Latitude != nil && request.Longitude != nil {
+		if err := c.WasteTransferRequestRepository.FindByIDWithDistance(tx, wasteTransferRequest, request.ID, request.Latitude, request.Longitude); err != nil {
+			c.Log.Warnf("Failed to find waste transfer request by ID with distance: %+v", err)
+			return nil, fiber.ErrNotFound
+		}
+	} else {
+		if err := c.WasteTransferRequestRepository.FindByID(tx, wasteTransferRequest, request.ID); err != nil {
+			c.Log.Warnf("Failed to find waste transfer request by ID: %+v", err)
+			return nil, fiber.ErrNotFound
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed to commit transaction: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.WasteTransferRequestToResponse(wasteTransferRequest), nil
+}
 
 func (c *WasteTransferRequestUsecase) AssignCollectorByWasteType(ctx context.Context, request *model.AssignCollectorByWasteTypeRequest) (*model.WasteTransferRequestSimpleResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
@@ -340,38 +371,6 @@ func (c *WasteTransferRequestUsecase) AssignCollectorByWasteType(ctx context.Con
 	return converter.WasteTransferRequestToSimpleResponse(wasteTransferRequest), nil
 }
 
-func (c *WasteTransferRequestUsecase) Get(ctx context.Context, request *model.GetWasteTransferRequest) (*model.WasteTransferRequestResponse, error) {
-	tx := c.DB.WithContext(ctx).Begin()
-	defer tx.Rollback()
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body: %+v", err)
-		return nil, fiber.ErrBadRequest
-	}
-
-	wasteTransferRequest := new(entity.WasteTransferRequest)
-
-	// Use FindByIDWithDistance if coordinates are provided, otherwise use FindByID
-	if request.Latitude != nil && request.Longitude != nil {
-		if err := c.WasteTransferRequestRepository.FindByIDWithDistance(tx, wasteTransferRequest, request.ID, request.Latitude, request.Longitude); err != nil {
-			c.Log.Warnf("Failed to find waste transfer request by ID with distance: %+v", err)
-			return nil, fiber.ErrNotFound
-		}
-	} else {
-		if err := c.WasteTransferRequestRepository.FindByID(tx, wasteTransferRequest, request.ID); err != nil {
-			c.Log.Warnf("Failed to find waste transfer request by ID: %+v", err)
-			return nil, fiber.ErrNotFound
-		}
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction: %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-
-	return converter.WasteTransferRequestToResponse(wasteTransferRequest), nil
-}
-
 func (c *WasteTransferRequestUsecase) Update(ctx context.Context, request *model.UpdateWasteTransferRequest) (*model.WasteTransferRequestSimpleResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -418,6 +417,266 @@ func (c *WasteTransferRequestUsecase) Update(ctx context.Context, request *model
 		}
 		wasteTransferRequest.AppointmentEndTime = types.NewTimeOnly(endTime)
 	}
+
+	if err := c.WasteTransferRequestRepository.Update(tx, wasteTransferRequest); err != nil {
+		c.Log.Warnf("Failed to update waste transfer request: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed to commit transaction: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.WasteTransferRequestToSimpleResponse(wasteTransferRequest), nil
+}
+func (c *WasteTransferRequestUsecase) CompleteRequest(ctx context.Context, request *model.CompleteWasteTransferRequest) (*model.WasteTransferRequestSimpleResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request body: %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	// Validate items arrays have same length
+	if len(request.Items.WasteTypeIDs) != len(request.Items.Weights) {
+		c.Log.Warnf("WasteTypeIDs and Weights arrays must have same length")
+		return nil, fiber.ErrBadRequest
+	}
+
+	// Parse and validate the transfer request ID
+	transferFormUUID, err := uuid.Parse(request.ID)
+	if err != nil {
+		c.Log.Warnf("Invalid transfer request ID: %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	// Get transfer request
+	wasteTransferRequest := new(entity.WasteTransferRequest)
+	if err := c.WasteTransferRequestRepository.FindByID(tx, wasteTransferRequest, request.ID); err != nil {
+		c.Log.Warnf("Failed to find waste transfer request by ID: %+v", err)
+		return nil, fiber.ErrNotFound
+	}
+
+	// Validate status - can only complete assigned or in_progress requests
+	if wasteTransferRequest.Status != "assigned" && wasteTransferRequest.Status != "in_progress" {
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Can only complete assigned or in_progress requests")
+	}
+
+	// Get current items
+	currentItems, err := c.WasteTransferItemOfferingRepository.FindByTransferFormID(tx, transferFormUUID)
+	if err != nil {
+		c.Log.Warnf("Failed to find waste transfer items: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if len(currentItems) == 0 {
+		return nil, fiber.NewError(fiber.StatusBadRequest, "No items found for this transfer request")
+	}
+
+	// Parse waste type IDs and validate
+	wasteTypeUUIDs := make([]uuid.UUID, len(request.Items.WasteTypeIDs))
+	for i, wasteTypeIDStr := range request.Items.WasteTypeIDs {
+		wasteTypeID, err := uuid.Parse(wasteTypeIDStr)
+		if err != nil {
+			c.Log.Warnf("Invalid waste type ID: %+v", err)
+			return nil, fiber.ErrBadRequest
+		}
+		wasteTypeUUIDs[i] = wasteTypeID
+	}
+
+	// Validate all weights are non-negative
+	for i, weight := range request.Items.Weights {
+		if weight < 0 {
+			return nil, fiber.NewError(fiber.StatusBadRequest,
+				fmt.Sprintf("Weight at index %d must be non-negative", i))
+		}
+	}
+
+	// Create waste type weight mapping
+	wasteTypeWeights := make(map[uuid.UUID]float64)
+	for i, wasteTypeID := range wasteTypeUUIDs {
+		wasteTypeWeights[wasteTypeID] = request.Items.Weights[i]
+	}
+
+	// Update items with verified weights
+	var totalVerifiedWeight float64
+	var totalVerifiedPrice float64
+	updatedItemsCount := 0
+
+	for _, item := range currentItems {
+		if verifiedWeight, exists := wasteTypeWeights[item.WasteTypeID]; exists {
+			// Validate verified weight doesn't exceed accepted weight (if accepted weight is set)
+			if item.AcceptedWeight > 0 && verifiedWeight > item.AcceptedWeight {
+				return nil, fiber.NewError(fiber.StatusBadRequest,
+					fmt.Sprintf("Verified weight (%.2f) cannot exceed accepted weight (%.2f) for waste type: %s",
+						verifiedWeight, item.AcceptedWeight, item.WasteTypeID))
+			}
+
+			// Update the verified weight
+			item.VerifiedWeight = verifiedWeight
+
+			if err := c.WasteTransferItemOfferingRepository.Update(tx, &item); err != nil {
+				c.Log.Warnf("Failed to update waste transfer item: %+v", err)
+				return nil, fiber.ErrInternalServerError
+			}
+
+			totalVerifiedWeight += verifiedWeight
+			// Use accepted price per kg for calculation, fallback to offering price if not set
+			pricePerKg := item.AcceptedPricePerKgs
+			if pricePerKg == 0 {
+				pricePerKg = item.OfferingPricePerKgs
+			}
+			totalVerifiedPrice += verifiedWeight * pricePerKg
+			updatedItemsCount++
+		}
+	}
+
+	// Ensure all provided waste types were found and updated
+	if updatedItemsCount != len(request.Items.WasteTypeIDs) {
+		return nil, fiber.NewError(fiber.StatusBadRequest,
+			"Some waste types not found in this transfer request")
+	}
+
+	// Update the waste transfer request
+	wasteTransferRequest.Status = "completed"
+	wasteTransferRequest.TotalWeight = totalVerifiedWeight
+	wasteTransferRequest.TotalPrice = int64(math.Round(totalVerifiedPrice))
+
+	if err := c.WasteTransferRequestRepository.Update(tx, wasteTransferRequest); err != nil {
+		c.Log.Warnf("Failed to update waste transfer request: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed to commit transaction: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.WasteTransferRequestToSimpleResponse(wasteTransferRequest), nil
+}
+func (c *WasteTransferRequestUsecase) RecycleRequest(ctx context.Context, request *model.RecycleWasteTransferRequest) (*model.WasteTransferRequestSimpleResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request body: %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	// Validate items arrays have same length
+	if len(request.Items.WasteTypeIDs) != len(request.Items.Weights) {
+		c.Log.Warnf("WasteTypeIDs and Weights arrays must have same length")
+		return nil, fiber.ErrBadRequest
+	}
+
+	// Parse and validate the transfer request ID
+	transferFormUUID, err := uuid.Parse(request.ID)
+	if err != nil {
+		c.Log.Warnf("Invalid transfer request ID: %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	// Get transfer request
+	wasteTransferRequest := new(entity.WasteTransferRequest)
+	if err := c.WasteTransferRequestRepository.FindByID(tx, wasteTransferRequest, request.ID); err != nil {
+		c.Log.Warnf("Failed to find waste transfer request by ID: %+v", err)
+		return nil, fiber.ErrNotFound
+	}
+
+	// Validate status - can only recycle completed requests
+	if wasteTransferRequest.Status != "completed" && wasteTransferRequest.Status != "recycling_in_process" {
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Can only recycle completed or recycling in process requests")
+	}
+
+	// Get current items
+	currentItems, err := c.WasteTransferItemOfferingRepository.FindByTransferFormID(tx, transferFormUUID)
+	if err != nil {
+		c.Log.Warnf("Failed to find waste transfer items: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if len(currentItems) == 0 {
+		return nil, fiber.NewError(fiber.StatusBadRequest, "No items found for this transfer request")
+	}
+
+	// Parse waste type IDs and validate
+	wasteTypeUUIDs := make([]uuid.UUID, len(request.Items.WasteTypeIDs))
+	for i, wasteTypeIDStr := range request.Items.WasteTypeIDs {
+		wasteTypeID, err := uuid.Parse(wasteTypeIDStr)
+		if err != nil {
+			c.Log.Warnf("Invalid waste type ID: %+v", err)
+			return nil, fiber.ErrBadRequest
+		}
+		wasteTypeUUIDs[i] = wasteTypeID
+	}
+
+	// Validate all weights are non-negative
+	for i, weight := range request.Items.Weights {
+		if weight < 0 {
+			return nil, fiber.NewError(fiber.StatusBadRequest,
+				fmt.Sprintf("Weight at index %d must be non-negative", i))
+		}
+	}
+
+	// Create waste type weight mapping
+	wasteTypeWeights := make(map[uuid.UUID]float64)
+	for i, wasteTypeID := range wasteTypeUUIDs {
+		wasteTypeWeights[wasteTypeID] = request.Items.Weights[i]
+	}
+
+	// Update items with recycled weights
+	var totalRecycledWeight float64
+	var totalRecycledPrice float64
+	updatedItemsCount := 0
+
+	for _, item := range currentItems {
+		if recycledWeight, exists := wasteTypeWeights[item.WasteTypeID]; exists {
+			// Validate recycled weight doesn't exceed verified weight
+			if item.VerifiedWeight > 0 && recycledWeight > item.VerifiedWeight {
+				return nil, fiber.NewError(fiber.StatusBadRequest,
+					fmt.Sprintf("Recycled weight (%.2f) cannot exceed verified weight (%.2f) for waste type: %s",
+						recycledWeight, item.VerifiedWeight, item.WasteTypeID))
+			}
+
+			// Update the recycled weight
+			item.RecycledWeight = recycledWeight
+
+			if err := c.WasteTransferItemOfferingRepository.Update(tx, &item); err != nil {
+				c.Log.Warnf("Failed to update waste transfer item: %+v", err)
+				return nil, fiber.ErrInternalServerError
+			}
+
+			totalRecycledWeight += recycledWeight
+			// Use accepted price per kg for calculation, fallback to offering price if not set
+			pricePerKg := item.AcceptedPricePerKgs
+			if pricePerKg == 0 {
+				pricePerKg = item.OfferingPricePerKgs
+			}
+			totalRecycledPrice += recycledWeight * pricePerKg
+			updatedItemsCount++
+		}
+	}
+
+	// Ensure all provided waste types were found and updated
+	if updatedItemsCount != len(request.Items.WasteTypeIDs) {
+		return nil, fiber.NewError(fiber.StatusBadRequest,
+			"Some waste types not found in this transfer request")
+	}
+
+	// Check that ALL items in the request now have recycled_weight > 0
+	// This ensures the entire request is properly recycled before changing status
+	// for _, item := range currentItems {
+	// 	if item.RecycledWeight <= 0 {
+	// 		return nil, fiber.NewError(fiber.StatusBadRequest,
+	// 			fmt.Sprintf("All items must have recycled weight > 0. Item with waste type %s has recycled weight: %.2f",
+	// 				item.WasteTypeID, item.RecycledWeight))
+	// 	}
+	// }
+
+	// Update the waste transfer request
+	wasteTransferRequest.Status = "recycled"
 
 	if err := c.WasteTransferRequestRepository.Update(tx, wasteTransferRequest); err != nil {
 		c.Log.Warnf("Failed to update waste transfer request: %+v", err)

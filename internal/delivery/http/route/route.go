@@ -101,6 +101,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	wasteBankOnly.Post("/waste-transfer-requests", c.WasteTransferController.Create)
 	wasteBankOnly.Put("/waste-transfer-requests/:id/assign-collector", c.WasteTransferController.AssignCollectorByWasteType)
 	wasteBankOnly.Put("/waste-transfer-requests/:id", c.WasteTransferController.UpdateStatus)
+	wasteBankOnly.Put("/waste-transfer-requests/:id/complete", c.WasteTransferController.CompleteRequest)
 	// Collector Management
 	wasteBankOnly.Get("/collector-management", c.CollectorManagementController.List)
 	wasteBankOnly.Get("/collector-management/:id", c.CollectorManagementController.Get)
@@ -126,6 +127,9 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Profiles
 	industryOnly.Get("/profiles/:user_id", c.IndustryController.Get)
 	industryOnly.Put("/profiles/:id", c.IndustryController.Update)
+	// Recycle Waste Transfer
+	industryOnly.Put("/waste-transfer-requests/:id", c.WasteTransferController.UpdateStatusRecycle)
+	industryOnly.Put("/waste-transfer-requests/:id/recycle", c.WasteTransferController.RecycleRequest)
 
 	// Admin endpoints
 	adminOnly := c.App.Group("/api/admin", c.AuthMiddleware, middleware.RequireRoles("admin"))

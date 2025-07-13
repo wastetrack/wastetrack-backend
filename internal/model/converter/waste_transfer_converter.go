@@ -6,7 +6,6 @@ import (
 	"github.com/wastetrack/wastetrack-backend/internal/model"
 )
 
-// WasteTransferRequest converters
 func WasteTransferRequestToSimpleResponse(request *entity.WasteTransferRequest) *model.WasteTransferRequestSimpleResponse {
 	var startTime, endTime, appointmentDate string
 
@@ -21,6 +20,7 @@ func WasteTransferRequestToSimpleResponse(request *entity.WasteTransferRequest) 
 	if !request.AppointmentDate.IsZero() {
 		appointmentDate = request.AppointmentDate.Format("2006-01-02")
 	}
+
 	var location *model.LocationResponse
 	if request.AppointmentLocation != nil {
 		location = &model.LocationResponse{
@@ -28,11 +28,18 @@ func WasteTransferRequestToSimpleResponse(request *entity.WasteTransferRequest) 
 			Longitude: request.AppointmentLocation.Lng,
 		}
 	}
+
+	// Fix: Handle nil AssignedCollectorID
+	var assignedCollectorID string
+	if request.AssignedCollectorID != nil {
+		assignedCollectorID = request.AssignedCollectorID.String()
+	}
+
 	return &model.WasteTransferRequestSimpleResponse{
 		ID:                     request.ID.String(),
 		SourceUserID:           request.SourceUserID.String(),
 		DestinationUserID:      request.DestinationUserID.String(),
-		AssignedCollectorID:    request.AssignedCollectorID.String(),
+		AssignedCollectorID:    assignedCollectorID, // Use the safely handled string
 		FormType:               request.FormType,
 		TotalWeight:            request.TotalWeight,
 		TotalPrice:             request.TotalPrice,
@@ -75,6 +82,13 @@ func WasteTransferRequestToResponse(request *entity.WasteTransferRequest) *model
 	if request.DestinationUser.ID != uuid.Nil {
 		destinationUser = UserToResponse(&request.DestinationUser)
 	}
+
+	// Fix: Handle nil AssignedCollector
+	var assignedCollector *model.UserResponse
+	if request.AssignedCollector != nil && request.AssignedCollector.ID != uuid.Nil {
+		assignedCollector = UserToResponse(request.AssignedCollector)
+	}
+
 	var location *model.LocationResponse
 	if request.AppointmentLocation != nil {
 		location = &model.LocationResponse{
@@ -82,6 +96,13 @@ func WasteTransferRequestToResponse(request *entity.WasteTransferRequest) *model
 			Longitude: request.AppointmentLocation.Lng,
 		}
 	}
+
+	// Fix: Handle nil AssignedCollectorID
+	var assignedCollectorID string
+	if request.AssignedCollectorID != nil {
+		assignedCollectorID = request.AssignedCollectorID.String()
+	}
+
 	// Convert items
 	var items []model.WasteTransferItemOfferingResponse
 	for _, item := range request.Items {
@@ -92,7 +113,7 @@ func WasteTransferRequestToResponse(request *entity.WasteTransferRequest) *model
 		ID:                     request.ID.String(),
 		SourceUserID:           request.SourceUserID.String(),
 		DestinationUserID:      request.DestinationUserID.String(),
-		AssignedCollectorID:    request.AssignedCollectorID.String(),
+		AssignedCollectorID:    assignedCollectorID, // Use the safely handled string
 		FormType:               request.FormType,
 		TotalWeight:            request.TotalWeight,
 		TotalPrice:             request.TotalPrice,
@@ -109,6 +130,7 @@ func WasteTransferRequestToResponse(request *entity.WasteTransferRequest) *model
 		UpdatedAt:              &request.UpdatedAt,
 		SourceUser:             sourceUser,
 		DestinationUser:        destinationUser,
+		AssignedCollector:      assignedCollector, // Use the safely handled user
 		Items:                  items,
 		Distance:               request.Distance,
 	}

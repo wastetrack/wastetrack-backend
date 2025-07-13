@@ -7,8 +7,8 @@ import (
 )
 
 type StorageItem struct {
-	ID          int64     `gorm:"primaryKey;autoIncrement"`
-	StorageID   int64     `gorm:"column:storage_id;not null"`
+	ID          uuid.UUID `gorm:"primaryKey;autoIncrement"`
+	StorageID   uuid.UUID `gorm:"column:storage_id;not null"`
 	Storage     Storage   `gorm:"foreignKey:StorageID"`
 	WasteTypeID uuid.UUID `gorm:"column:waste_type_id;not null"`
 	WasteType   WasteType `gorm:"foreignKey:WasteTypeID"`

@@ -28,6 +28,7 @@ type UserUseCase struct {
 	WasteCollectorRepository      *repository.WasteCollectorRepository
 	IndustryRepository            *repository.IndustryRepository
 	CollectorManagementRepository *repository.CollectorManagementRepository
+	StorageRepository             *repository.StorageRepository
 	JWTHelper                     *helper.JWTHelper
 	EmailHelper                   *helper.EmailHelper
 	BaseURL                       string
@@ -43,6 +44,7 @@ func NewUserUseCase(
 	wasteCollectorRepository *repository.WasteCollectorRepository,
 	industryRepository *repository.IndustryRepository,
 	collectorManagementRepository *repository.CollectorManagementRepository,
+	storageRepository *repository.StorageRepository,
 	jwtHelper *helper.JWTHelper,
 	emailHelper *helper.EmailHelper,
 	baseURL string,
@@ -57,6 +59,7 @@ func NewUserUseCase(
 		WasteCollectorRepository:      wasteCollectorRepository,
 		IndustryRepository:            industryRepository,
 		CollectorManagementRepository: collectorManagementRepository,
+		StorageRepository:             storageRepository,
 		JWTHelper:                     jwtHelper,
 		EmailHelper:                   emailHelper,
 		BaseURL:                       baseURL,
@@ -146,6 +149,17 @@ func (c *UserUseCase) Register(ctx context.Context, request *model.RegisterUserR
 			c.Log.Warnf("Failed to create waste bank profile: %v", err)
 			return nil, fiber.ErrInternalServerError
 		}
+		storage := &entity.Storage{
+			UserID: user.ID,
+			Length: 0,
+			Width:  0,
+			Height: 0,
+		}
+
+		if err := c.StorageRepository.Create(tx, storage); err != nil {
+			c.Log.Warnf("Failed to create storage: %v", err)
+			return nil, fiber.ErrInternalServerError
+		}
 	}
 	if user.Role == "waste_collector_unit" || user.Role == "waste_collector_central" {
 		// Create waste collector profile
@@ -186,6 +200,17 @@ func (c *UserUseCase) Register(ctx context.Context, request *model.RegisterUserR
 
 		if err := c.IndustryRepository.Create(tx, industry); err != nil {
 			c.Log.Warnf("Failed to create industry profile: %v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+		storage := &entity.Storage{
+			UserID: user.ID,
+			Length: 0,
+			Width:  0,
+			Height: 0,
+		}
+
+		if err := c.StorageRepository.Create(tx, storage); err != nil {
+			c.Log.Warnf("Failed to create storage: %v", err)
 			return nil, fiber.ErrInternalServerError
 		}
 	}
