@@ -46,3 +46,4 @@ Thumbs.db
 # daemon files
 *.pid
 *.log
+Makefile
