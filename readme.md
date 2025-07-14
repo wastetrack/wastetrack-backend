@@ -75,4 +75,5 @@ go run cmd/web/main.go
 
    make run-vps              # run the server on VPS (background)
    make stop-vps             # stop the VPS server
+   make status-port          # Check port status
    ```
