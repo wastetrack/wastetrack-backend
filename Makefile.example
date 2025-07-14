@@ -1,0 +1,66 @@
+
+# Setup local project environment
+
+DB_URL_LOCAL=postgres://wastetrack:waste.track@a.nafkhanzam.com:5433/wastetrack-dev?sslmode=disable
+MIGRATION_DIR=database/migrations
+SEEDER_CMD=go run ./database/cmd/seeder/main.go
+MAIN_APP=cmd/web/main.go
+APP_PORT=32889
+
+# Migration tool
+
+create-migration:
+	@read -p "Migration name: " name; \
+	migrate create -ext sql -dir $(MIGRATION_DIR) -seq $$name
+
+migrate-up:
+	migrate -database "$(DB_URL_LOCAL)" -path $(MIGRATION_DIR) up
+
+migrate-down:
+	migrate -database "$(DB_URL_LOCAL)" -path $(MIGRATION_DIR) down 1
+
+migrate-reset:
+	migrate -database "$(DB_URL_LOCAL)" -path $(MIGRATION_DIR) down
+
+migrate-force:
+	@read -p "Force version number: " version; \
+	migrate -database "$(DB_URL_LOCAL)" -path $(MIGRATION_DIR) force $$version
+
+# Setup Go environment
+
+deps:
+	go get ./...
+	go mod tidy
+
+# Seeder
+
+seed:
+	$(SEEDER_CMD) -db "$(DB_URL_LOCAL)"
+
+seed-clear:
+	$(SEEDER_CMD) -db "$(DB_URL_LOCAL)" -clear
+
+seed-help:
+	$(SEEDER_CMD) -help
+
+# Run Application
+
+run-local:
+	go run $(MAIN_APP)
+
+run-vps:
+	nohup go run $(MAIN_APP) > app.log 2>&1 &
+
+stop-vps:
+	@echo "Searching for processes using a port $(APP_PORT)..."
+	@PID=$$(ss -tulpn | grep ":$(APP_PORT)" | awk '{print $$NF}' | sed 's/.*pid=\([0-9]*\),.*/\1/'); \
+	if [ -n "$$PID" ]; then \
+		echo "Stopping a process by PID $$PID..."; \
+		kill -9 $$PID && echo "Successfully stopped"; \
+	else \
+		echo "No processes found using the port $(APP_PORT)."; \
+	fi
+
+
+status-port:
+	@ss -tulpn | grep $(APP_PORT) || echo "Port 32889 is not currently in use"
