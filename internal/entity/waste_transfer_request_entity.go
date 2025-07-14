@@ -21,6 +21,7 @@ type WasteTransferRequest struct {
 	AssignedCollector   *User      `gorm:"foreignKey:AssignedCollectorID"`
 
 	FormType               string  `gorm:"column:form_type"`
+	IsPaid                 bool    `gorm:"column:is_paid;default:false"`
 	TotalWeight            float64 `gorm:"column:total_weight;default:0"`
 	TotalPrice             int64   `gorm:"column:total_price;default:0"`
 	Status                 string  `gorm:"type:request_status;default:'pending'"` // ENUM: pending, assigned, in_progress, completed, cancelled

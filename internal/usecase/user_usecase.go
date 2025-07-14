@@ -203,13 +203,26 @@ func (c *UserUseCase) Register(ctx context.Context, request *model.RegisterUserR
 			return nil, fiber.ErrInternalServerError
 		}
 		storage := &entity.Storage{
-			UserID: user.ID,
-			Length: 0,
-			Width:  0,
-			Height: 0,
+			UserID:                user.ID,
+			Length:                0,
+			Width:                 0,
+			Height:                0,
+			IsForRecycledMaterial: false,
 		}
 
 		if err := c.StorageRepository.Create(tx, storage); err != nil {
+			c.Log.Warnf("Failed to create storage: %v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+		recycleStorage := &entity.Storage{
+			UserID:                user.ID,
+			Length:                0,
+			Width:                 0,
+			Height:                0,
+			IsForRecycledMaterial: true,
+		}
+
+		if err := c.StorageRepository.Create(tx, recycleStorage); err != nil {
 			c.Log.Warnf("Failed to create storage: %v", err)
 			return nil, fiber.ErrInternalServerError
 		}

@@ -3,5 +3,6 @@ CREATE TABLE IF NOT EXISTS storage (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     length DECIMAL,
     width DECIMAL,
-    height DECIMAL
+    height DECIMAL,
+    is_for_recycled_material BOOLEAN DEFAULT FALSE
 );

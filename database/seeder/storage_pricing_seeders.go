@@ -102,10 +102,11 @@ func SeedStorages(db *gorm.DB) error {
 			Height: 400,  // 4m
 		},
 		{
-			UserID: allUsers[0].ID,
-			Length: 600, // 6m
-			Width:  600, // 6m
-			Height: 300, // 3m
+			UserID:                allUsers[0].ID,
+			Length:                600, // 6m
+			Width:                 600, // 6m
+			Height:                300, // 3m
+			IsForRecycledMaterial: true,
 		},
 	}
 
@@ -197,9 +198,9 @@ func SeedStorageItems(db *gorm.DB) error {
 		}
 
 		storageItem := entity.StorageItem{
-			StorageID:   uuid.New(),
+			StorageID:   storages[item.StorageIndex].ID,
 			WasteTypeID: wasteType.ID,
-			QuantityKgs: item.QuantityKgs,
+			WeightKgs:   item.QuantityKgs,
 		}
 
 		var existing entity.StorageItem

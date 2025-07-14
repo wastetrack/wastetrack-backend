@@ -12,7 +12,7 @@ type StorageItem struct {
 	Storage     Storage   `gorm:"foreignKey:StorageID"`
 	WasteTypeID uuid.UUID `gorm:"column:waste_type_id;not null"`
 	WasteType   WasteType `gorm:"foreignKey:WasteTypeID"`
-	QuantityKgs float64   `gorm:"column:quantity_kgs"`
+	WeightKgs   float64   `gorm:"column:weight_kgs"`
 	CreatedAt   time.Time `gorm:"column:created_at;default:now()"`
 	UpdatedAt   time.Time `gorm:"column:updated_at;default:now()"`
 }

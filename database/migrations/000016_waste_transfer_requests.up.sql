@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS waste_transfer_requests (
     destination_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     assigned_collector_id UUID REFERENCES users(id) ON DELETE SET NULL,
     form_type form_type,
+    is_paid BOOLEAN DEFAULT FALSE,
     total_weight DECIMAL DEFAULT 0,
     total_price BIGINT DEFAULT 0,
     status waste_transfer_status DEFAULT 'pending',
