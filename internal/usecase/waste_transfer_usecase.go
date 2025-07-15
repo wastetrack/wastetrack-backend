@@ -26,6 +26,12 @@ type WasteTransferRequestUsecase struct {
 	WasteTransferItemOfferingRepository *repository.WasteTransferItemOfferingRepository
 	UserRepository                      *repository.UserRepository
 	WasteTypeRepository                 *repository.WasteTypeRepository
+	// Storage repositories
+	StorageRepository     *repository.StorageRepository
+	StorageItemRepository *repository.StorageItemRepository
+	// NEW: Profile repositories
+	IndustryRepository  *repository.IndustryRepository
+	WasteBankRepository *repository.WasteBankRepository
 }
 
 func NewWasteTransferRequestUsecase(
@@ -36,6 +42,12 @@ func NewWasteTransferRequestUsecase(
 	wasteTransferItemOfferingRepository *repository.WasteTransferItemOfferingRepository,
 	userRepository *repository.UserRepository,
 	wasteTypeRepository *repository.WasteTypeRepository,
+	// Storage repository parameters
+	storageRepository *repository.StorageRepository,
+	storageItemRepository *repository.StorageItemRepository,
+	// NEW: Profile repository parameters
+	industryRepository *repository.IndustryRepository,
+	wasteBankRepository *repository.WasteBankRepository,
 ) *WasteTransferRequestUsecase {
 	return &WasteTransferRequestUsecase{
 		DB:                                  db,
@@ -45,7 +57,166 @@ func NewWasteTransferRequestUsecase(
 		WasteTransferItemOfferingRepository: wasteTransferItemOfferingRepository,
 		UserRepository:                      userRepository,
 		WasteTypeRepository:                 wasteTypeRepository,
+		StorageRepository:                   storageRepository,
+		StorageItemRepository:               storageItemRepository,
+		IndustryRepository:                  industryRepository,
+		WasteBankRepository:                 wasteBankRepository,
 	}
+}
+
+// NEW: Helper method to find or create storage for raw materials (not recycled)
+func (c *WasteTransferRequestUsecase) findOrCreateRawMaterialStorage(tx *gorm.DB, userID uuid.UUID) (*entity.Storage, error) {
+	c.Log.Infof("Finding or creating raw material storage for user ID: %s", userID.String())
+
+	// Try to find existing storage for raw materials (not recycled)
+	searchReq := &model.SearchStorageRequest{
+		UserID:                userID.String(),
+		IsForRecycledMaterial: &[]bool{false}[0], // Pointer to false
+		Page:                  1,
+		Size:                  1,
+	}
+
+	storages, _, err := c.StorageRepository.Search(tx, searchReq)
+	if err != nil {
+		c.Log.Warnf("Failed to search storage: %+v", err)
+		return nil, err
+	}
+
+	// If storage exists, return the first one
+	if len(storages) > 0 {
+		c.Log.Infof("Found existing raw material storage ID: %s", storages[0].ID.String())
+		return &storages[0], nil
+	}
+
+	// Create new storage if none exists
+	c.Log.Infof("Creating new raw material storage for user")
+	storage := &entity.Storage{
+		UserID:                userID,
+		Length:                10.0, // Default dimensions - you might want to make these configurable
+		Width:                 10.0,
+		Height:                3.0,
+		IsForRecycledMaterial: false, // Raw materials storage
+	}
+
+	if err := c.StorageRepository.Create(tx, storage); err != nil {
+		c.Log.Warnf("Failed to create storage: %+v", err)
+		return nil, err
+	}
+
+	c.Log.Infof("Successfully created new raw material storage ID: %s", storage.ID.String())
+	return storage, nil
+}
+
+// NEW: Helper method to subtract items from source storage
+func (c *WasteTransferRequestUsecase) subtractFromSourceStorage(tx *gorm.DB, storageID uuid.UUID, items []entity.WasteTransferItemOffering) error {
+	c.Log.Infof("Subtracting %d items from source storage ID: %s", len(items), storageID.String())
+
+	for _, item := range items {
+		if item.AcceptedWeight <= 0 {
+			c.Log.Warnf("Skipping item with zero or negative accepted weight: %f", item.AcceptedWeight)
+			continue
+		}
+
+		// Check if storage item exists for this waste type
+		var existingStorageItem entity.StorageItem
+		err := tx.Where("storage_id = ? AND waste_type_id = ?", storageID, item.WasteTypeID).
+			First(&existingStorageItem).Error
+
+		if err == nil {
+			// Storage item exists, subtract from existing weight
+			c.Log.Infof("Subtracting from existing storage item for waste type %s: removing %f kg from existing %f kg",
+				item.WasteTypeID.String(), item.AcceptedWeight, existingStorageItem.WeightKgs)
+
+			if existingStorageItem.WeightKgs < item.AcceptedWeight {
+				return fmt.Errorf("insufficient stock in storage for waste type %s: available %f kg, requested %f kg",
+					item.WasteTypeID.String(), existingStorageItem.WeightKgs, item.AcceptedWeight)
+			}
+
+			existingStorageItem.WeightKgs -= item.AcceptedWeight
+			existingStorageItem.UpdatedAt = time.Now()
+
+			// If weight becomes zero or negative, delete the storage item
+			if existingStorageItem.WeightKgs <= 0 {
+				c.Log.Infof("Deleting storage item for waste type %s as weight is now %f kg",
+					item.WasteTypeID.String(), existingStorageItem.WeightKgs)
+
+				if err := c.StorageItemRepository.Delete(tx, &existingStorageItem); err != nil {
+					c.Log.Warnf("Failed to delete storage item: %+v", err)
+					return err
+				}
+			} else {
+				if err := c.StorageItemRepository.Update(tx, &existingStorageItem); err != nil {
+					c.Log.Warnf("Failed to update existing storage item: %+v", err)
+					return err
+				}
+			}
+		} else if err == gorm.ErrRecordNotFound {
+			// Storage item doesn't exist - this is an error for subtraction
+			return fmt.Errorf("cannot subtract waste type %s: not found in source storage", item.WasteTypeID.String())
+		} else {
+			// Database error
+			c.Log.Warnf("Database error while checking storage item: %+v", err)
+			return err
+		}
+	}
+
+	c.Log.Infof("Successfully subtracted all items from source storage")
+	return nil
+}
+
+// NEW: Helper method to add items to destination storage
+func (c *WasteTransferRequestUsecase) addToDestinationStorage(tx *gorm.DB, storageID uuid.UUID, items []entity.WasteTransferItemOffering) error {
+	c.Log.Infof("Adding %d items to destination storage ID: %s", len(items), storageID.String())
+
+	for _, item := range items {
+		if item.VerifiedWeight <= 0 {
+			c.Log.Warnf("Skipping item with zero or negative verified weight: %f", item.VerifiedWeight)
+			continue
+		}
+
+		// Check if storage item already exists for this waste type
+		var existingStorageItem entity.StorageItem
+		err := tx.Where("storage_id = ? AND waste_type_id = ?", storageID, item.WasteTypeID).
+			First(&existingStorageItem).Error
+
+		if err == nil {
+			// Storage item exists, add to existing weight
+			c.Log.Infof("Updating existing storage item for waste type %s: adding %f kg to existing %f kg",
+				item.WasteTypeID.String(), item.VerifiedWeight, existingStorageItem.WeightKgs)
+
+			existingStorageItem.WeightKgs += item.VerifiedWeight
+			existingStorageItem.UpdatedAt = time.Now()
+
+			if err := c.StorageItemRepository.Update(tx, &existingStorageItem); err != nil {
+				c.Log.Warnf("Failed to update existing storage item: %+v", err)
+				return err
+			}
+		} else if err == gorm.ErrRecordNotFound {
+			// Storage item doesn't exist, create new one
+			c.Log.Infof("Creating new storage item for waste type %s with weight %f kg",
+				item.WasteTypeID.String(), item.VerifiedWeight)
+
+			newStorageItem := &entity.StorageItem{
+				StorageID:   storageID,
+				WasteTypeID: item.WasteTypeID,
+				WeightKgs:   item.VerifiedWeight,
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
+			}
+
+			if err := c.StorageItemRepository.Create(tx, newStorageItem); err != nil {
+				c.Log.Warnf("Failed to create new storage item: %+v", err)
+				return err
+			}
+		} else {
+			// Database error
+			c.Log.Warnf("Database error while checking storage item: %+v", err)
+			return err
+		}
+	}
+
+	c.Log.Infof("Successfully processed all items for destination storage")
+	return nil
 }
 
 func (c *WasteTransferRequestUsecase) Create(ctx context.Context, request *model.WasteTransferRequestRequest) (*model.WasteTransferRequestSimpleResponse, error) {
@@ -505,28 +676,28 @@ func (c *WasteTransferRequestUsecase) CompleteRequest(ctx context.Context, reque
 	var totalVerifiedPrice float64
 	updatedItemsCount := 0
 
-	for _, item := range currentItems {
-		if verifiedWeight, exists := wasteTypeWeights[item.WasteTypeID]; exists {
+	for i := range currentItems {
+		if verifiedWeight, exists := wasteTypeWeights[currentItems[i].WasteTypeID]; exists {
 			// Validate verified weight doesn't exceed accepted weight (if accepted weight is set)
-			if item.AcceptedWeight > 0 && verifiedWeight > item.AcceptedWeight {
+			if currentItems[i].AcceptedWeight > 0 && verifiedWeight > currentItems[i].AcceptedWeight {
 				return nil, fiber.NewError(fiber.StatusBadRequest,
 					fmt.Sprintf("Verified weight (%.2f) cannot exceed accepted weight (%.2f) for waste type: %s",
-						verifiedWeight, item.AcceptedWeight, item.WasteTypeID))
+						verifiedWeight, currentItems[i].AcceptedWeight, currentItems[i].WasteTypeID))
 			}
 
 			// Update the verified weight
-			item.VerifiedWeight = verifiedWeight
+			currentItems[i].VerifiedWeight = verifiedWeight
 
-			if err := c.WasteTransferItemOfferingRepository.Update(tx, &item); err != nil {
+			if err := c.WasteTransferItemOfferingRepository.Update(tx, &currentItems[i]); err != nil {
 				c.Log.Warnf("Failed to update waste transfer item: %+v", err)
 				return nil, fiber.ErrInternalServerError
 			}
 
 			totalVerifiedWeight += verifiedWeight
 			// Use accepted price per kg for calculation, fallback to offering price if not set
-			pricePerKg := item.AcceptedPricePerKgs
+			pricePerKg := currentItems[i].AcceptedPricePerKgs
 			if pricePerKg == 0 {
-				pricePerKg = item.OfferingPricePerKgs
+				pricePerKg = currentItems[i].OfferingPricePerKgs
 			}
 			totalVerifiedPrice += verifiedWeight * pricePerKg
 			updatedItemsCount++
@@ -537,6 +708,44 @@ func (c *WasteTransferRequestUsecase) CompleteRequest(ctx context.Context, reque
 	if updatedItemsCount != len(request.Items.WasteTypeIDs) {
 		return nil, fiber.NewError(fiber.StatusBadRequest,
 			"Some waste types not found in this transfer request")
+	}
+
+	// NEW: Handle storage operations
+	c.Log.Infof("Starting storage operations for waste transfer completion")
+
+	// Find or create source storage (raw materials)
+	sourceStorage, err := c.findOrCreateRawMaterialStorage(tx, wasteTransferRequest.SourceUserID)
+	if err != nil {
+		c.Log.Warnf("Failed to find or create source storage: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	// Find or create destination storage (raw materials)
+	destinationStorage, err := c.findOrCreateRawMaterialStorage(tx, wasteTransferRequest.DestinationUserID)
+	if err != nil {
+		c.Log.Warnf("Failed to find or create destination storage: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	// Subtract from source storage using accepted weights
+	if err := c.subtractFromSourceStorage(tx, sourceStorage.ID, currentItems); err != nil {
+		c.Log.Warnf("Failed to subtract from source storage: %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Storage operation failed: %v", err))
+	}
+
+	// Add to destination storage using verified weights
+	if err := c.addToDestinationStorage(tx, destinationStorage.ID, currentItems); err != nil {
+		c.Log.Warnf("Failed to add to destination storage: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	c.Log.Infof("Successfully completed storage operations: subtracted from source storage %s, added to destination storage %s",
+		sourceStorage.ID.String(), destinationStorage.ID.String())
+
+	// NEW: Update destination user profile
+	if err := c.updateDestinationUserProfile(tx, wasteTransferRequest.DestinationUserID, totalVerifiedWeight); err != nil {
+		c.Log.Warnf("Failed to update destination user profile: %+v", err)
+		return nil, fiber.ErrInternalServerError
 	}
 
 	// Update the waste transfer request
@@ -554,8 +763,11 @@ func (c *WasteTransferRequestUsecase) CompleteRequest(ctx context.Context, reque
 		return nil, fiber.ErrInternalServerError
 	}
 
+	c.Log.Infof("Successfully completed waste transfer request with storage integration")
 	return converter.WasteTransferRequestToSimpleResponse(wasteTransferRequest), nil
 }
+
+// UPDATED: RecycleRequest method with storage integration
 func (c *WasteTransferRequestUsecase) RecycleRequest(ctx context.Context, request *model.RecycleWasteTransferRequest) (*model.WasteTransferRequestSimpleResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -631,28 +843,28 @@ func (c *WasteTransferRequestUsecase) RecycleRequest(ctx context.Context, reques
 	var totalRecycledPrice float64
 	updatedItemsCount := 0
 
-	for _, item := range currentItems {
-		if recycledWeight, exists := wasteTypeWeights[item.WasteTypeID]; exists {
+	for i := range currentItems {
+		if recycledWeight, exists := wasteTypeWeights[currentItems[i].WasteTypeID]; exists {
 			// Validate recycled weight doesn't exceed verified weight
-			if item.VerifiedWeight > 0 && recycledWeight > item.VerifiedWeight {
+			if currentItems[i].VerifiedWeight > 0 && recycledWeight > currentItems[i].VerifiedWeight {
 				return nil, fiber.NewError(fiber.StatusBadRequest,
 					fmt.Sprintf("Recycled weight (%.2f) cannot exceed verified weight (%.2f) for waste type: %s",
-						recycledWeight, item.VerifiedWeight, item.WasteTypeID))
+						recycledWeight, currentItems[i].VerifiedWeight, currentItems[i].WasteTypeID))
 			}
 
 			// Update the recycled weight
-			item.RecycledWeight = recycledWeight
+			currentItems[i].RecycledWeight = recycledWeight
 
-			if err := c.WasteTransferItemOfferingRepository.Update(tx, &item); err != nil {
+			if err := c.WasteTransferItemOfferingRepository.Update(tx, &currentItems[i]); err != nil {
 				c.Log.Warnf("Failed to update waste transfer item: %+v", err)
 				return nil, fiber.ErrInternalServerError
 			}
 
 			totalRecycledWeight += recycledWeight
 			// Use accepted price per kg for calculation, fallback to offering price if not set
-			pricePerKg := item.AcceptedPricePerKgs
+			pricePerKg := currentItems[i].AcceptedPricePerKgs
 			if pricePerKg == 0 {
-				pricePerKg = item.OfferingPricePerKgs
+				pricePerKg = currentItems[i].OfferingPricePerKgs
 			}
 			totalRecycledPrice += recycledWeight * pricePerKg
 			updatedItemsCount++
@@ -665,15 +877,59 @@ func (c *WasteTransferRequestUsecase) RecycleRequest(ctx context.Context, reques
 			"Some waste types not found in this transfer request")
 	}
 
-	// Check that ALL items in the request now have recycled_weight > 0
-	// This ensures the entire request is properly recycled before changing status
-	// for _, item := range currentItems {
-	// 	if item.RecycledWeight <= 0 {
-	// 		return nil, fiber.NewError(fiber.StatusBadRequest,
-	// 			fmt.Sprintf("All items must have recycled weight > 0. Item with waste type %s has recycled weight: %.2f",
-	// 				item.WasteTypeID, item.RecycledWeight))
-	// 	}
-	// }
+	// NEW: Handle storage operations for recycling
+	c.Log.Infof("Starting storage operations for waste recycling")
+
+	// The recycling happens at the destination user's location
+	destinationUserID := wasteTransferRequest.DestinationUserID
+
+	// Find or create raw material storage (to subtract from)
+	rawMaterialStorage, err := c.findOrCreateRawMaterialStorage(tx, destinationUserID)
+	if err != nil {
+		c.Log.Warnf("Failed to find or create raw material storage: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	// Find or create recycled material storage (to add to)
+	recycledMaterialStorage, err := c.findOrCreateRecycledMaterialStorage(tx, destinationUserID)
+	if err != nil {
+		c.Log.Warnf("Failed to find or create recycled material storage: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	// Subtract verified weights from raw material storage
+	if err := c.subtractVerifiedWeightFromRawStorage(tx, rawMaterialStorage.ID, currentItems); err != nil {
+		c.Log.Warnf("Failed to subtract from raw material storage: %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Storage operation failed: %v", err))
+	}
+
+	// Add recycled weights to recycled material storage
+	if err := c.addRecycledWeightToRecycledStorage(tx, recycledMaterialStorage.ID, currentItems); err != nil {
+		c.Log.Warnf("Failed to add to recycled material storage: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	c.Log.Infof("Successfully completed recycling storage operations: subtracted verified weights from raw storage %s, added recycled weights to recycled storage %s",
+		rawMaterialStorage.ID.String(), recycledMaterialStorage.ID.String())
+
+	// NEW: Update industry profile with recycled weight (only industries can recycle)
+	// Get the destination user to verify they are an industry
+	user := &entity.User{}
+	if err := c.UserRepository.FindById(tx, user, destinationUserID.String()); err != nil {
+		c.Log.Warnf("Failed to find destination user for recycling profile update: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if user.Role != "industry" {
+		c.Log.Warnf("Only industries can recycle waste. User role: %s", user.Role)
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Only industries are allowed to recycle waste")
+	}
+
+	// Update industry profile with recycled weight
+	if err := c.updateIndustryProfile(tx, destinationUserID, 0, totalRecycledWeight); err != nil {
+		c.Log.Warnf("Failed to update industry profile with recycled weight: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
 
 	// Update the waste transfer request
 	wasteTransferRequest.Status = "recycled"
@@ -688,7 +944,163 @@ func (c *WasteTransferRequestUsecase) RecycleRequest(ctx context.Context, reques
 		return nil, fiber.ErrInternalServerError
 	}
 
+	c.Log.Infof("Successfully completed waste transfer recycling with storage integration")
 	return converter.WasteTransferRequestToSimpleResponse(wasteTransferRequest), nil
+}
+
+// NEW: Helper method to find or create storage for recycled materials
+func (c *WasteTransferRequestUsecase) findOrCreateRecycledMaterialStorage(tx *gorm.DB, userID uuid.UUID) (*entity.Storage, error) {
+	c.Log.Infof("Finding or creating recycled material storage for user ID: %s", userID.String())
+
+	// Try to find existing storage for recycled materials
+	searchReq := &model.SearchStorageRequest{
+		UserID:                userID.String(),
+		IsForRecycledMaterial: &[]bool{true}[0], // Pointer to true
+		Page:                  1,
+		Size:                  1,
+	}
+
+	storages, _, err := c.StorageRepository.Search(tx, searchReq)
+	if err != nil {
+		c.Log.Warnf("Failed to search recycled material storage: %+v", err)
+		return nil, err
+	}
+
+	// If storage exists, return the first one
+	if len(storages) > 0 {
+		c.Log.Infof("Found existing recycled material storage ID: %s", storages[0].ID.String())
+		return &storages[0], nil
+	}
+
+	// Create new storage if none exists
+	c.Log.Infof("Creating new recycled material storage for user")
+	storage := &entity.Storage{
+		UserID:                userID,
+		Length:                10.0, // Default dimensions - you might want to make these configurable
+		Width:                 10.0,
+		Height:                3.0,
+		IsForRecycledMaterial: true, // Recycled materials storage
+	}
+
+	if err := c.StorageRepository.Create(tx, storage); err != nil {
+		c.Log.Warnf("Failed to create recycled material storage: %+v", err)
+		return nil, err
+	}
+
+	c.Log.Infof("Successfully created new recycled material storage ID: %s", storage.ID.String())
+	return storage, nil
+}
+
+// NEW: Helper method to subtract verified weights from raw material storage during recycling
+func (c *WasteTransferRequestUsecase) subtractVerifiedWeightFromRawStorage(tx *gorm.DB, storageID uuid.UUID, items []entity.WasteTransferItemOffering) error {
+	c.Log.Infof("Subtracting verified weights from raw material storage ID: %s for recycling", storageID.String())
+
+	for _, item := range items {
+		if item.VerifiedWeight <= 0 {
+			c.Log.Warnf("Skipping item with zero or negative verified weight: %f", item.VerifiedWeight)
+			continue
+		}
+
+		// Check if storage item exists for this waste type
+		var existingStorageItem entity.StorageItem
+		err := tx.Where("storage_id = ? AND waste_type_id = ?", storageID, item.WasteTypeID).
+			First(&existingStorageItem).Error
+
+		if err == nil {
+			// Storage item exists, subtract verified weight
+			c.Log.Infof("Subtracting verified weight from raw storage for waste type %s: removing %f kg from existing %f kg",
+				item.WasteTypeID.String(), item.VerifiedWeight, existingStorageItem.WeightKgs)
+
+			if existingStorageItem.WeightKgs < item.VerifiedWeight {
+				return fmt.Errorf("insufficient raw material stock for recycling waste type %s: available %f kg, required %f kg",
+					item.WasteTypeID.String(), existingStorageItem.WeightKgs, item.VerifiedWeight)
+			}
+
+			existingStorageItem.WeightKgs -= item.VerifiedWeight
+			existingStorageItem.UpdatedAt = time.Now()
+
+			// If weight becomes zero or negative, delete the storage item
+			if existingStorageItem.WeightKgs <= 0 {
+				c.Log.Infof("Deleting raw storage item for waste type %s as weight is now %f kg",
+					item.WasteTypeID.String(), existingStorageItem.WeightKgs)
+
+				if err := c.StorageItemRepository.Delete(tx, &existingStorageItem); err != nil {
+					c.Log.Warnf("Failed to delete raw storage item: %+v", err)
+					return err
+				}
+			} else {
+				if err := c.StorageItemRepository.Update(tx, &existingStorageItem); err != nil {
+					c.Log.Warnf("Failed to update raw storage item: %+v", err)
+					return err
+				}
+			}
+		} else if err == gorm.ErrRecordNotFound {
+			// Storage item doesn't exist - this is an error for recycling
+			return fmt.Errorf("cannot recycle waste type %s: not found in raw material storage", item.WasteTypeID.String())
+		} else {
+			// Database error
+			c.Log.Warnf("Database error while checking raw storage item: %+v", err)
+			return err
+		}
+	}
+
+	c.Log.Infof("Successfully subtracted all verified weights from raw material storage for recycling")
+	return nil
+}
+
+// NEW: Helper method to add recycled weights to recycled material storage
+func (c *WasteTransferRequestUsecase) addRecycledWeightToRecycledStorage(tx *gorm.DB, storageID uuid.UUID, items []entity.WasteTransferItemOffering) error {
+	c.Log.Infof("Adding recycled weights to recycled material storage ID: %s", storageID.String())
+
+	for _, item := range items {
+		if item.RecycledWeight <= 0 {
+			c.Log.Warnf("Skipping item with zero or negative recycled weight: %f", item.RecycledWeight)
+			continue
+		}
+
+		// Check if storage item already exists for this waste type in recycled storage
+		var existingStorageItem entity.StorageItem
+		err := tx.Where("storage_id = ? AND waste_type_id = ?", storageID, item.WasteTypeID).
+			First(&existingStorageItem).Error
+
+		if err == nil {
+			// Storage item exists, add to existing recycled weight
+			c.Log.Infof("Updating existing recycled storage item for waste type %s: adding %f kg to existing %f kg",
+				item.WasteTypeID.String(), item.RecycledWeight, existingStorageItem.WeightKgs)
+
+			existingStorageItem.WeightKgs += item.RecycledWeight
+			existingStorageItem.UpdatedAt = time.Now()
+
+			if err := c.StorageItemRepository.Update(tx, &existingStorageItem); err != nil {
+				c.Log.Warnf("Failed to update recycled storage item: %+v", err)
+				return err
+			}
+		} else if err == gorm.ErrRecordNotFound {
+			// Storage item doesn't exist, create new one in recycled storage
+			c.Log.Infof("Creating new recycled storage item for waste type %s with weight %f kg",
+				item.WasteTypeID.String(), item.RecycledWeight)
+
+			newStorageItem := &entity.StorageItem{
+				StorageID:   storageID,
+				WasteTypeID: item.WasteTypeID,
+				WeightKgs:   item.RecycledWeight,
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
+			}
+
+			if err := c.StorageItemRepository.Create(tx, newStorageItem); err != nil {
+				c.Log.Warnf("Failed to create new recycled storage item: %+v", err)
+				return err
+			}
+		} else {
+			// Database error
+			c.Log.Warnf("Database error while checking recycled storage item: %+v", err)
+			return err
+		}
+	}
+
+	c.Log.Infof("Successfully processed all recycled weights for recycled material storage")
+	return nil
 }
 
 func (c *WasteTransferRequestUsecase) Search(ctx context.Context, request *model.SearchWasteTransferRequest) ([]model.WasteTransferRequestSimpleResponse, int64, error) {
@@ -776,4 +1188,111 @@ func (c *WasteTransferRequestUsecase) Delete(ctx context.Context, request *model
 	}
 
 	return converter.WasteTransferRequestToSimpleResponse(wasteTransferRequest), nil
+}
+
+func (c *WasteTransferRequestUsecase) updateDestinationUserProfile(tx *gorm.DB, destinationUserID uuid.UUID, totalWeight float64) error {
+	c.Log.Infof("Updating destination user profile for ID: %s with weight: %f", destinationUserID.String(), totalWeight)
+
+	// Get the destination user to check their role
+	user := &entity.User{}
+	if err := c.UserRepository.FindById(tx, user, destinationUserID.String()); err != nil {
+		c.Log.Warnf("Failed to find destination user: %+v", err)
+		return err
+	}
+
+	// Update profile based on user role
+	switch user.Role {
+	case "industry":
+		return c.updateIndustryProfile(tx, destinationUserID, totalWeight, 0) // 0 for recycled weight in completion
+	case "waste_bank":
+		return c.updateWasteBankProfileTransfer(tx, destinationUserID, totalWeight)
+	default:
+		c.Log.Infof("User role %s does not require profile weight update", user.Role)
+		return nil // No error, just no update needed for other roles
+	}
+}
+
+// NEW: Helper method to update industry profile
+func (c *WasteTransferRequestUsecase) updateIndustryProfile(tx *gorm.DB, userID uuid.UUID, wasteWeight float64, recycledWeight float64) error {
+	c.Log.Infof("Updating industry profile for user ID: %s with waste weight: %f, recycled weight: %f",
+		userID.String(), wasteWeight, recycledWeight)
+
+	// Find or create industry profile
+	industryProfile := &entity.IndustryProfile{}
+	err := c.IndustryRepository.FindByUserID(tx, industryProfile, userID.String())
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.Log.Infof("Creating new industry profile for user ID: %s", userID.String())
+			// Create new profile if doesn't exist
+			industryProfile = &entity.IndustryProfile{
+				UserID:              userID,
+				TotalWasteWeight:    0,
+				TotalRecycledWeight: 0,
+			}
+			if err := c.IndustryRepository.Create(tx, industryProfile); err != nil {
+				c.Log.Warnf("Failed to create industry profile: %+v", err)
+				return err
+			}
+		} else {
+			c.Log.Warnf("Failed to find industry profile: %+v", err)
+			return err
+		}
+	}
+
+	// Update weights
+	oldWasteWeight := industryProfile.TotalWasteWeight
+	oldRecycledWeight := industryProfile.TotalRecycledWeight
+	industryProfile.TotalWasteWeight += wasteWeight
+	industryProfile.TotalRecycledWeight += recycledWeight
+
+	c.Log.Infof("Updating industry profile: waste weight from %f to %f, recycled weight from %f to %f",
+		oldWasteWeight, industryProfile.TotalWasteWeight, oldRecycledWeight, industryProfile.TotalRecycledWeight)
+
+	if err := c.IndustryRepository.Update(tx, industryProfile); err != nil {
+		c.Log.Warnf("Failed to update industry profile: %+v", err)
+		return err
+	}
+
+	c.Log.Infof("Successfully updated industry profile")
+	return nil
+}
+
+// NEW: Helper method to update waste bank profile (reusing existing logic but improved)
+func (c *WasteTransferRequestUsecase) updateWasteBankProfileTransfer(tx *gorm.DB, userID uuid.UUID, totalWeight float64) error {
+	c.Log.Infof("Updating waste bank profile for user ID: %s with weight: %f", userID.String(), totalWeight)
+
+	// Find or create waste bank profile
+	wasteBankProfile := &entity.WasteBankProfile{}
+	err := c.WasteBankRepository.FindByUserID(tx, wasteBankProfile, userID.String())
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.Log.Infof("Creating new waste bank profile for user ID: %s", userID.String())
+			// Create new profile if doesn't exist
+			wasteBankProfile = &entity.WasteBankProfile{
+				UserID:           userID,
+				TotalWasteWeight: 0,
+				TotalWorkers:     1, // Default to 1 worker
+			}
+			if err := c.WasteBankRepository.Create(tx, wasteBankProfile); err != nil {
+				c.Log.Warnf("Failed to create waste bank profile: %+v", err)
+				return err
+			}
+		} else {
+			c.Log.Warnf("Failed to find waste bank profile: %+v", err)
+			return err
+		}
+	}
+
+	// Update total waste weight
+	oldWeight := wasteBankProfile.TotalWasteWeight
+	wasteBankProfile.TotalWasteWeight += totalWeight
+	c.Log.Infof("Updating waste bank weight from %f to %f", oldWeight, wasteBankProfile.TotalWasteWeight)
+
+	if err := c.WasteBankRepository.Update(tx, wasteBankProfile); err != nil {
+		c.Log.Warnf("Failed to update waste bank profile: %+v", err)
+		return err
+	}
+
+	c.Log.Infof("Successfully updated waste bank profile")
+	return nil
 }

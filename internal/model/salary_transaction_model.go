@@ -5,6 +5,7 @@ type SalaryTransactionSimpleResponse struct {
 	SenderID        string `json:"sender_id"`
 	ReceiverID      string `json:"receiver_id"`
 	TransactionType string `json:"transaction_type"`
+	IsPaid          bool   `json:"is_paid"`
 	Amount          int64  `json:"amount"`
 	CreatedAt       string `json:"created_at"`
 	Status          string `json:"status"`

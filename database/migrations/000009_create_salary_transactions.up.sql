@@ -17,6 +17,7 @@ END $$;
 
 CREATE TABLE IF NOT EXISTS salary_transactions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    is_paid BOOLEAN DEFAULT FALSE,
     sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     receiver_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     transaction_type transaction_type NOT NULL,

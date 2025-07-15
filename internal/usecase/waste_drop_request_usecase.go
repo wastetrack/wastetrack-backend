@@ -28,9 +28,27 @@ type WasteDropRequestUsecase struct {
 	CustomerRepository             *repository.CustomerRepository
 	WasteBankRepository            *repository.WasteBankRepository
 	WasteCollectorRepository       *repository.WasteCollectorRepository
+	// NEW: Add storage repositories
+	StorageRepository     *repository.StorageRepository
+	StorageItemRepository *repository.StorageItemRepository
 }
 
-func NewWasteDropRequestUsecase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, wasteDropRequestRepository *repository.WasteDropRequestRepository, userRepository *repository.UserRepository, wasteTypeRepository *repository.WasteTypeRepository, wasteDropRequestItemRepository *repository.WasteDropRequestItemRepository, wasteBankPricedTypeRepository *repository.WasteBankPricedTypeRepository, customerRepository *repository.CustomerRepository, wasteBankRepository *repository.WasteBankRepository, wasteCollectorRepository *repository.WasteCollectorRepository) *WasteDropRequestUsecase {
+func NewWasteDropRequestUsecase(
+	db *gorm.DB,
+	log *logrus.Logger,
+	validate *validator.Validate,
+	wasteDropRequestRepository *repository.WasteDropRequestRepository,
+	userRepository *repository.UserRepository,
+	wasteTypeRepository *repository.WasteTypeRepository,
+	wasteDropRequestItemRepository *repository.WasteDropRequestItemRepository,
+	wasteBankPricedTypeRepository *repository.WasteBankPricedTypeRepository,
+	customerRepository *repository.CustomerRepository,
+	wasteBankRepository *repository.WasteBankRepository,
+	wasteCollectorRepository *repository.WasteCollectorRepository,
+	// NEW: Add storage repository parameters
+	storageRepository *repository.StorageRepository,
+	storageItemRepository *repository.StorageItemRepository,
+) *WasteDropRequestUsecase {
 	return &WasteDropRequestUsecase{
 		DB:                             db,
 		Log:                            log,
@@ -43,7 +61,107 @@ func NewWasteDropRequestUsecase(db *gorm.DB, log *logrus.Logger, validate *valid
 		CustomerRepository:             customerRepository,
 		WasteBankRepository:            wasteBankRepository,
 		WasteCollectorRepository:       wasteCollectorRepository,
+		StorageRepository:              storageRepository,
+		StorageItemRepository:          storageItemRepository,
 	}
+}
+
+// NEW: Helper method to find or create storage for waste bank
+func (c *WasteDropRequestUsecase) findOrCreateWasteBankStorage(tx *gorm.DB, wasteBankID uuid.UUID) (*entity.Storage, error) {
+	c.Log.Infof("Finding or creating storage for waste bank ID: %s", wasteBankID.String())
+
+	// Try to find existing storage for recycled materials
+	searchReq := &model.SearchStorageRequest{
+		UserID:                wasteBankID.String(),
+		IsForRecycledMaterial: &[]bool{false}[0], // Pointer to false
+		Page:                  1,
+		Size:                  1,
+	}
+
+	storages, _, err := c.StorageRepository.Search(tx, searchReq)
+	if err != nil {
+		c.Log.Warnf("Failed to search storage: %+v", err)
+		return nil, err
+	}
+
+	// If storage exists, return the first one
+	if len(storages) > 0 {
+		c.Log.Infof("Found existing storage ID: %s", storages[0].ID.String())
+		return &storages[0], nil
+	}
+
+	// Create new storage if none exists
+	c.Log.Infof("Creating new storage for waste bank")
+	storage := &entity.Storage{
+		UserID:                wasteBankID,
+		Length:                10.0, // Default dimensions - you might want to make these configurable
+		Width:                 10.0,
+		Height:                3.0,
+		IsForRecycledMaterial: true,
+	}
+
+	if err := c.StorageRepository.Create(tx, storage); err != nil {
+		c.Log.Warnf("Failed to create storage: %+v", err)
+		return nil, err
+	}
+
+	c.Log.Infof("Successfully created new storage ID: %s", storage.ID.String())
+	return storage, nil
+}
+
+// NEW: Helper method to add items to storage
+func (c *WasteDropRequestUsecase) addItemsToStorage(tx *gorm.DB, storageID uuid.UUID, items []entity.WasteDropRequestItem) error {
+	c.Log.Infof("Adding %d items to storage ID: %s", len(items), storageID.String())
+
+	for _, item := range items {
+		if item.VerifiedWeight <= 0 {
+			c.Log.Warnf("Skipping item with zero or negative weight: %f", item.VerifiedWeight)
+			continue
+		}
+
+		// Check if storage item already exists for this waste type
+		var existingStorageItem entity.StorageItem
+		err := tx.Where("storage_id = ? AND waste_type_id = ?", storageID, item.WasteTypeID).
+			First(&existingStorageItem).Error
+
+		if err == nil {
+			// Storage item exists, add to existing weight
+			c.Log.Infof("Updating existing storage item for waste type %s: adding %f kg to existing %f kg",
+				item.WasteTypeID.String(), item.VerifiedWeight, existingStorageItem.WeightKgs)
+
+			existingStorageItem.WeightKgs += item.VerifiedWeight
+			existingStorageItem.UpdatedAt = time.Now()
+
+			if err := c.StorageItemRepository.Update(tx, &existingStorageItem); err != nil {
+				c.Log.Warnf("Failed to update existing storage item: %+v", err)
+				return err
+			}
+		} else if err == gorm.ErrRecordNotFound {
+			// Storage item doesn't exist, create new one
+			c.Log.Infof("Creating new storage item for waste type %s with weight %f kg",
+				item.WasteTypeID.String(), item.VerifiedWeight)
+
+			newStorageItem := &entity.StorageItem{
+				StorageID:   storageID,
+				WasteTypeID: item.WasteTypeID,
+				WeightKgs:   item.VerifiedWeight,
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
+			}
+
+			if err := c.StorageItemRepository.Create(tx, newStorageItem); err != nil {
+				c.Log.Warnf("Failed to create new storage item: %+v", err)
+				return err
+			}
+		} else {
+			// Database error
+			c.Log.Warnf("Database error while checking storage item: %+v", err)
+			return err
+		}
+	}
+
+	c.Log.Infof("Successfully processed all items for storage")
+	return nil
 }
 
 func (c *WasteDropRequestUsecase) Create(ctx context.Context, request *model.WasteDropRequestRequest) (*model.WasteDropRequestSimpleResponse, error) {
@@ -432,17 +550,17 @@ func (c *WasteDropRequestUsecase) Complete(ctx context.Context, request *model.C
 	var totalVerifiedPrice int64
 	var totalVerifiedWeight float64
 
-	for _, item := range existingItems {
-		weight, exists := weightMap[item.WasteTypeID]
+	for i := range existingItems {
+		weight, exists := weightMap[existingItems[i].WasteTypeID]
 		if !exists {
-			c.Log.Warnf("Weight not provided for waste type ID: %s", item.WasteTypeID)
+			c.Log.Warnf("Weight not provided for waste type ID: %s", existingItems[i].WasteTypeID)
 			return nil, fiber.ErrBadRequest
 		}
 
 		// Get price from WasteBankPricedType
 		searchReq := &model.SearchWasteBankPricedTypeRequest{
 			WasteBankID: wasteDropRequest.WasteBankID.String(),
-			WasteTypeID: item.WasteTypeID.String(),
+			WasteTypeID: existingItems[i].WasteTypeID.String(),
 			Page:        1,
 			Size:        1,
 		}
@@ -450,17 +568,17 @@ func (c *WasteDropRequestUsecase) Complete(ctx context.Context, request *model.C
 		pricedTypes, _, err := c.WasteBankPricedTypeRepository.Search(tx, searchReq)
 		if err != nil || len(pricedTypes) == 0 {
 			c.Log.Warnf("Price not found for waste bank %s and type %s: %+v",
-				wasteDropRequest.WasteBankID, item.WasteTypeID, err)
+				wasteDropRequest.WasteBankID, existingItems[i].WasteTypeID, err)
 			return nil, fiber.ErrNotFound
 		}
 
 		price := pricedTypes[0].CustomPricePerKgs
 		subtotal := int64(weight * float64(price))
 
-		item.VerifiedWeight = weight
-		item.VerifiedSubtotal = subtotal
+		existingItems[i].VerifiedWeight = weight
+		existingItems[i].VerifiedSubtotal = subtotal
 
-		if err := tx.Save(&item).Error; err != nil {
+		if err := tx.Save(&existingItems[i]).Error; err != nil {
 			c.Log.Warnf("Failed to update item: %+v", err)
 			return nil, fiber.ErrInternalServerError
 		}
@@ -498,6 +616,24 @@ func (c *WasteDropRequestUsecase) Complete(ctx context.Context, request *model.C
 		return nil, fiber.ErrInternalServerError
 	}
 
+	// NEW: Add items to waste bank storage
+	c.Log.Infof("Adding verified items to waste bank storage")
+
+	// Find or create storage for the waste bank
+	storage, err := c.findOrCreateWasteBankStorage(tx, *wasteDropRequest.WasteBankID)
+	if err != nil {
+		c.Log.Warnf("Failed to find or create waste bank storage: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	// Add all verified items to storage
+	if err := c.addItemsToStorage(tx, storage.ID, existingItems); err != nil {
+		c.Log.Warnf("Failed to add items to storage: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	c.Log.Infof("Successfully added %d items to storage ID: %s", len(existingItems), storage.ID.String())
+
 	// Update related profiles
 	if err := c.updateCustomerProfile(tx, wasteDropRequest.CustomerID, totalVerifiedWeight, int64(len(existingItems))); err != nil {
 		c.Log.Warnf("Failed to update customer profile: %+v", err)
@@ -523,6 +659,7 @@ func (c *WasteDropRequestUsecase) Complete(ctx context.Context, request *model.C
 		return nil, fiber.ErrInternalServerError
 	}
 
+	c.Log.Infof("Successfully completed waste drop request with storage integration")
 	return converter.WasteDropRequestToSimpleResponse(wasteDropRequest), nil
 }
 
