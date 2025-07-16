@@ -125,7 +125,9 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Storage
 	wasteBankOnly.Put("/storages/:id", c.StorageController.Update)
 	// Storage Items
+	wasteBankOnly.Post("/storage-items", c.StorageItemController.Create)
 	wasteBankOnly.Put("/storage-items/:id", c.StorageItemController.Update)
+	wasteBankOnly.Delete("/storage-items/:id", c.StorageItemController.Delete)
 
 	// WasteCollector endpoints
 	wasteCollectorOnly := c.App.Group("/api/waste-collector", c.AuthMiddleware, middleware.RequireRoles("admin", "waste_collector_unit", "waste_collector_central", "waste_bank_unit", "waste_bank_central"))
@@ -146,8 +148,9 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Storage
 	industryOnly.Put("/storages/:id", c.StorageController.Update)
 	// Storage Items
+	industryOnly.Post("/storage-items", c.StorageItemController.Create)
 	industryOnly.Put("/storage-items/:id", c.StorageItemController.Update)
-
+	industryOnly.Delete("/storage-items/:id", c.StorageItemController.Delete)
 	// Admin endpoints
 	adminOnly := c.App.Group("/api/admin", c.AuthMiddleware, middleware.RequireRoles("admin"))
 	// Customer profiles

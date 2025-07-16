@@ -3154,13 +3154,58 @@
         },
         "responses": {
           "200": {
-            "description": "Transaction created successfully",
+            "description": "Storage item created successfully",
             "content": {
               "application/json": {
                 "schema": {
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/StorageSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/waste-bank/storage-items": {
+      "post": {
+        "operationId": "CreateStorageItem",
+        "tags": ["Waste Bank - Storage Items"],
+        "summary": "Create storage item",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StorageItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Storage item updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StorageItemSimpleResponse"
                     }
                   }
                 }
@@ -3209,7 +3254,50 @@
         },
         "responses": {
           "200": {
-            "description": "Transaction created successfully",
+            "description": "Storage item updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StorageItemSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "DeleteStorageItem",
+        "tags": ["Waste Bank - Storage Items"],
+        "summary": "Delete storage item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Storage item deleted successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -3683,12 +3771,56 @@
         }
       }
     },
-
+    "/api/industry/storage-items": {
+      "post": {
+        "operationId": "CreateIndustryStorageItem",
+        "tags": ["Industry - Storage Items"],
+        "summary": "Create industry storage item",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StorageItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Storage item updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StorageItemSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/api/industry/storage-items/{id}": {
       "put": {
         "operationId": "UpdateIndustryStorageItem",
         "tags": ["Industry - Storage Items"],
-        "summary": "Update storage item",
+        "summary": "Update industry storage item",
         "parameters": [
           {
             "name": "id",
@@ -3711,7 +3843,50 @@
         },
         "responses": {
           "200": {
-            "description": "Transaction created successfully",
+            "description": "Storage item updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StorageItemSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "DeleteIndustryStorageItem",
+        "tags": ["Industry - Storage Items"],
+        "summary": "Delete industry storage item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Storage item deleted successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -6166,19 +6341,11 @@
       "UpdateStorageItemRequest": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "maxLength": 100
-          },
-          "user_id": {
-            "type": "string",
-            "maxLength": 100
-          },
           "storage_id": {
             "type": "string",
             "maxLength": 100
           },
-          "weight": { "type": "number", "format": "float" }
+          "weight_kgs": { "type": "number", "format": "float" }
         },
         "required": ["id", "user_id", "storage_id", "weight"]
       },

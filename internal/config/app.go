@@ -93,7 +93,7 @@ func Bootstrap(config *BootstrapConfig) {
 	collectorManagementUseCase := usecase.NewCollectorManagementUsecase(config.DB, config.Log, config.Validate, collectorManagementRepository, userRepository)
 	salaryTransactionUseCase := usecase.NewSalaryTransactionUsecase(config.DB, config.Log, config.Validate, salaryTransactionRepository, userRepository)
 	storageUseCase := usecase.NewStorageUsecase(config.DB, config.Log, config.Validate, storageRepository, userRepository)
-	storageItemUseCase := usecase.NewStorageItemUsecase(config.DB, config.Log, config.Validate, storageRepository, storageItemRepository)
+	storageItemUseCase := usecase.NewStorageItemUsecase(config.DB, config.Log, config.Validate, storageRepository, storageItemRepository, wasteTypeRepository)
 
 	// Setup controllers
 	userController := http.NewUserController(
