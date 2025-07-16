@@ -1479,6 +1479,444 @@
         }
       }
     },
+    "/api/salary-transactions": {
+      "get": {
+        "operationId": "ListTransactions",
+        "tags": ["User - Transactions"],
+        "summary": "List transactions",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sender_id",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "receiver_id",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "transaction_type",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "notes",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transactions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/WebResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/TransactionSimpleResponse"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/salary-transactions/{id}": {
+      "get": {
+        "operationId": "GetTransaction",
+        "tags": ["User - Transactions"],
+        "summary": "Get transaction",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TransactionResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/storages": {
+      "get": {
+        "operationId": "ListStorages",
+        "tags": ["User - Storages"],
+        "summary": "List storages",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "is_for_recycled_material",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "min_length",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          {
+            "name": "max_length",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          {
+            "name": "min_width",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          {
+            "name": "max_width",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          {
+            "name": "min_height",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          {
+            "name": "max_height",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Storages retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/WebResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/StorageSimpleResponse"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/storages/{id}": {
+      "get": {
+        "operationId": "GetStorageById",
+        "tags": ["User - Storages"],
+        "summary": "Get storage by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Storage retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StorageResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/storage-items": {
+      "get": {
+        "operationId": "ListStorageItems",
+        "tags": ["User - Storage Items"],
+        "summary": "List storage items",
+        "parameters": [
+          {
+            "name": "storage_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "waste_type_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order_by_weight_kgs",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["asc", "desc"]
+            },
+            "description": "Order by weight in kilograms (asc or desc)"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Storages retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/WebResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/StorageItemSimpleResponse"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/storage-items/{id}": {
+      "get": {
+        "operationId": "GetStorageItemById",
+        "tags": ["User - Storage Items"],
+        "summary": "Get storage item by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Storage item retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StorageItemResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/api/customer/profiles/{user_id}": {
       "get": {
         "operationId": "GetCustomerProfile",
@@ -2105,6 +2543,177 @@
         }
       }
     },
+    "/api/waste-bank/waste-transfer-requests/{id}/assign-collector": {
+      "put": {
+        "operationId": "AssignCollectorByWasteType",
+        "tags": ["Waste Bank - Waste Transfer Requests"],
+        "summary": "Assign collector and accept waste types",
+        "description": "Assigns a collector to the waste transfer request and sets accepted weights and prices for each waste type.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Waste transfer request ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignCollectorByWasteTypeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Collector assigned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WasteTransferRequestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/waste-bank/waste-transfer-requests/{id}/status": {
+      "put": {
+        "operationId": "UpdateWasteTransferRequestStatus",
+        "tags": ["Waste Bank - Waste Transfer Requests"],
+        "summary": "Update waste transfer request status",
+        "description": "Updates the status of a waste transfer request. Only 'collecting' and 'cancelled' statuses are allowed.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Waste transfer request ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "description": "New status for the waste transfer request",
+            "schema": {
+              "type": "string",
+              "enum": ["collecting", "cancelled"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WasteTransferRequestSimpleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/waste-transfer/{id}/complete": {
+      "put": {
+        "operationId": "CompleteWasteTransferRequest",
+        "tags": ["Waste Bank - Waste Transfer Requests"],
+        "summary": "Complete waste transfer request",
+        "description": "Completes a waste transfer request by recording verified weights. This operation updates storage inventories and user profiles.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Waste transfer request ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteWasteTransferRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Waste transfer completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WasteTransferRequestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/api/waste-bank/collector-management/{id}": {
       "get": {
         "operationId": "GetCollectorManagement",
@@ -2414,99 +3023,6 @@
       }
     },
     "/api/waste-bank/salary-transactions": {
-      "get": {
-        "operationId": "ListTransactions",
-        "tags": ["Waste Bank - Transactions"],
-        "summary": "List transactions",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "sender_id",
-            "in": "query",
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "receiver_id",
-            "in": "query",
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "transaction_type",
-            "in": "query",
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "notes",
-            "in": "query",
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Transactions retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/WebResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/TransactionSimpleResponse"
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          }
-        }
-      },
       "post": {
         "operationId": "CreateTransaction",
         "tags": ["Waste Bank - Transactions"],
@@ -2557,15 +3073,10 @@
       }
     },
     "/api/waste-bank/salary-transactions/{id}": {
-      "get": {
-        "operationId": "GetTransaction",
+      "put": {
+        "operationId": "UpdateTransaction",
         "tags": ["Waste Bank - Transactions"],
-        "summary": "Get transaction",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "summary": "Update transaction",
         "parameters": [
           {
             "name": "id",
@@ -2576,20 +3087,33 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTransactionRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "Transaction retrieved successfully",
+            "description": "Transaction created successfully",
             "content": {
               "application/json": {
                 "schema": {
                   "properties": {
                     "data": {
-                      "$ref": "#/components/schemas/TransactionResponse"
+                      "$ref": "#/components/schemas/TransactionSimpleResponse"
                     }
                   }
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -2597,8 +3121,115 @@
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/waste-bank/storages/{id}": {
+      "put": {
+        "operationId": "UpdateStorage",
+        "tags": ["Waste Bank - Storages"],
+        "summary": "Update storage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStorageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StorageSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/waste-bank/storage-items/{id}": {
+      "put": {
+        "operationId": "UpdateStorageItem",
+        "tags": ["Waste Bank - Storage Items"],
+        "summary": "Update storage item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStorageItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StorageItemSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -2879,6 +3510,228 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/industry/waste-transfer-requests/{id}/status": {
+      "put": {
+        "operationId": "UpdateIndustryWasteTransferRequestStatus",
+        "tags": ["Industry - Waste Transfer Requests"],
+        "summary": "Update waste transfer request status",
+        "description": "Updates the status of a waste transfer request. Only 'collecting' and 'cancelled' statuses are allowed.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Waste transfer request ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "description": "New status for the waste transfer request",
+            "schema": {
+              "type": "string",
+              "enum": ["collecting", "cancelled"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WasteTransferRequestSimpleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/industry/waste-transfer-requests/{id}/recycle": {
+      "put": {
+        "operationId": "RecycleWasteTransferRequest",
+        "tags": ["Industry - Waste Transfer Requests"],
+        "summary": "Recycle waste materials",
+        "description": "Processes waste materials through recycling. Only available for industry users. Updates storage inventories and industry recycling metrics.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Waste transfer request ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecycleWasteTransferRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Waste recycled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WasteTransferRequestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/industry/storages/{id}": {
+      "put": {
+        "operationId": "UpdateIndustryStorage",
+        "tags": ["Industry - Storages"],
+        "summary": "Update storage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStorageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StorageSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+
+    "/api/industry/storage-items/{id}": {
+      "put": {
+        "operationId": "UpdateIndustryStorageItem",
+        "tags": ["Industry - Storage Items"],
+        "summary": "Update storage item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStorageItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StorageItemSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -4048,11 +4901,11 @@
           },
           "open_time": {
             "type": "string",
-            "example":"09:00:00+07:00"
+            "example": "09:00:00+07:00"
           },
           "close_time": {
             "type": "string",
-            "example":"11:00:00+07:00"
+            "example": "11:00:00+07:00"
           }
         }
       },
@@ -4477,11 +5330,11 @@
           },
           "appointment_start_time": {
             "type": "string",
-            "example":"09:00:00+07:00"
+            "example": "09:00:00+07:00"
           },
           "appointment_end_time": {
             "type": "string",
-            "example":"10:00:00+07:00"
+            "example": "10:00:00+07:00"
           },
           "notes": {
             "type": "string"
@@ -4874,12 +5727,10 @@
       "UpdateTransactionRequest": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
           "transaction_type": { "type": "string" },
           "status": { "type": "string" },
           "notes": { "type": "string" }
-        },
-        "required": ["id"]
+        }
       },
 
       "WasteTransferRequestItems": {
@@ -4945,7 +5796,6 @@
       },
       "UpdateWasteTransferItemOfferingRequest": {
         "type": "object",
-        "required": ["id"],
         "properties": {
           "offering_weight": {
             "type": "number"
@@ -5010,7 +5860,7 @@
           "appointment_end_time": {
             "type": "string"
           },
-                    "appointment_location": {
+          "appointment_location": {
             "$ref": "#/components/schemas/LocationResponse"
           },
           "items": {
@@ -5064,7 +5914,7 @@
           "appointment_end_time": {
             "type": "string"
           },
-                    "appointment_location": {
+          "appointment_location": {
             "$ref": "#/components/schemas/LocationResponse"
           },
           "created_at": {
@@ -5128,7 +5978,7 @@
           "appointment_end_time": {
             "type": "string"
           },
-                    "appointment_location": {
+          "appointment_location": {
             "$ref": "#/components/schemas/LocationResponse"
           },
           "created_at": {
@@ -5151,7 +6001,7 @@
               "$ref": "#/components/schemas/WasteTransferItemOfferingResponse"
             }
           },
-                    "distance": {
+          "distance": {
             "type": "number",
             "format": "float",
             "example": 0
@@ -5178,6 +6028,285 @@
           },
           "appointment_end_time": {
             "type": "string"
+          }
+        }
+      },
+      "StorageSimpleResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "user_id": { "type": "string" },
+          "length": { "type": "number", "format": "float" },
+          "width": { "type": "number", "format": "float" },
+          "height": { "type": "number", "format": "float" },
+          "is_for_recycled_material": { "type": "boolean" }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "length",
+          "width",
+          "height",
+          "is_for_recycled_material"
+        ]
+      },
+
+      "StorageResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "user_id": { "type": "string" },
+          "length": { "type": "number", "format": "float" },
+          "width": { "type": "number", "format": "float" },
+          "height": { "type": "number", "format": "float" },
+          "is_for_recycled_material": { "type": "boolean" },
+          "user": { "$ref": "#/components/schemas/UserResponse" }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "length",
+          "width",
+          "height",
+          "is_for_recycled_material"
+        ]
+      },
+
+      "StorageRequest": {
+        "type": "object",
+        "properties": {
+          "user_id": { "type": "string" },
+          "length": { "type": "number", "format": "float" },
+          "width": { "type": "number", "format": "float" },
+          "height": { "type": "number", "format": "float" },
+          "is_for_recycled_material": { "type": "boolean" }
+        },
+        "required": [
+          "user_id",
+          "length",
+          "width",
+          "height",
+          "is_for_recycled_material"
+        ]
+      },
+
+      "UpdateStorageRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "user_id": { "type": "string" },
+          "length": { "type": "number", "format": "float" },
+          "width": { "type": "number", "format": "float" },
+          "height": { "type": "number", "format": "float" },
+          "is_for_recycled_material": { "type": "boolean" }
+        },
+        "required": ["id"]
+      },
+      "StorageItemSimpleResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "storage_id": { "type": "string" },
+          "waste_type_id": { "type": "string" },
+          "weight_kgs": { "type": "number", "format": "float" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        },
+        "required": [
+          "id",
+          "storage_id",
+          "waste_type_id",
+          "weight_kgs",
+          "created_at",
+          "updated_at"
+        ]
+      },
+
+      "StorageItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "storage_id": { "type": "string" },
+          "waste_type_id": { "type": "string" },
+          "weight_kgs": { "type": "number", "format": "float" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "storage": { "$ref": "#/components/schemas/StorageSimpleResponse" },
+          "waste_type": { "$ref": "#/components/schemas/WasteTypeResponse" }
+        },
+        "required": [
+          "id",
+          "storage_id",
+          "waste_type_id",
+          "weight_kgs",
+          "created_at",
+          "updated_at"
+        ]
+      },
+
+      "StorageItemRequest": {
+        "type": "object",
+        "properties": {
+          "storage_id": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "waste_type_id": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "weight_kgs": { "type": "number", "format": "float" }
+        },
+        "required": ["storage_id", "waste_type_id", "weight_kgs"]
+      },
+
+      "UpdateStorageItemRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "user_id": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "storage_id": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "weight": { "type": "number", "format": "float" }
+        },
+        "required": ["id", "user_id", "storage_id", "weight"]
+      },
+      "AssignCollectorByWasteTypeRequest": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "assigned_collector_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the collector to assign (optional - some industries can collect without specific collector)",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "items": {
+            "type": "array",
+            "description": "Waste types with accepted weights and prices",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/AssignCollectorWasteTypeRequest"
+            }
+          }
+        }
+      },
+      "AssignCollectorWasteTypeRequest": {
+        "type": "object",
+        "required": [
+          "waste_type_id",
+          "accepted_weight",
+          "accepted_price_per_kgs"
+        ],
+        "properties": {
+          "waste_type_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the waste type",
+            "example": "456e7890-e89b-12d3-a456-426614174001"
+          },
+          "accepted_weight": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "description": "Accepted weight in kilograms",
+            "example": 50.5
+          },
+          "accepted_price_per_kgs": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "description": "Accepted price per kilogram",
+            "example": 2.5
+          }
+        }
+      },
+      "CompleteWasteTransferRequest": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "$ref": "#/components/schemas/CompleteWasteTransferRequestItems"
+          }
+        }
+      },
+      "CompleteWasteTransferRequestItems": {
+        "type": "object",
+        "required": ["waste_type_ids", "weights"],
+        "properties": {
+          "waste_type_ids": {
+            "type": "array",
+            "description": "Array of waste type IDs",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": [
+              "456e7890-e89b-12d3-a456-426614174001",
+              "789e0123-e89b-12d3-a456-426614174002"
+            ]
+          },
+          "weights": {
+            "type": "array",
+            "description": "Array of verified weights in kilograms (must match waste_type_ids array length)",
+            "minItems": 1,
+            "items": {
+              "type": "number",
+              "format": "float",
+              "minimum": 0
+            },
+            "example": [48.2, 32.8]
+          }
+        }
+      },
+      "RecycleWasteTransferRequest": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "$ref": "#/components/schemas/RecycleWasteTransferRequestItems"
+          }
+        }
+      },
+      "RecycleWasteTransferRequestItems": {
+        "type": "object",
+        "required": ["waste_type_ids", "weights"],
+        "properties": {
+          "waste_type_ids": {
+            "type": "array",
+            "description": "Array of waste type IDs to recycle",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": [
+              "456e7890-e89b-12d3-a456-426614174001",
+              "789e0123-e89b-12d3-a456-426614174002"
+            ]
+          },
+          "weights": {
+            "type": "array",
+            "description": "Array of recycled weights in kilograms (must match waste_type_ids array length)",
+            "minItems": 1,
+            "items": {
+              "type": "number",
+              "format": "float",
+              "minimum": 0
+            },
+            "example": [45.0, 30.2]
           }
         }
       }
