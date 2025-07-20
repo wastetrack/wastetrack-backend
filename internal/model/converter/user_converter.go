@@ -1,3 +1,5 @@
+// internal/model/converter/user_converter.go - Updated to include distance
+
 package converter
 
 import (
@@ -32,5 +34,6 @@ func UserToResponse(user *entity.User) *model.UserResponse {
 		Location:            location,
 		CreatedAt:           &user.CreatedAt,
 		UpdatedAt:           &user.UpdatedAt,
+		Distance:            user.Distance, // Now directly accessible from entity
 	}
 }

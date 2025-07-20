@@ -2,6 +2,7 @@ package http
 
 import (
 	"math"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
@@ -86,6 +87,38 @@ func (c *UserController) VerifyEmail(ctx *fiber.Ctx) error {
 }
 
 func (c *UserController) List(ctx *fiber.Ctx) error {
+	// Parse latitude and longitude from query parameters
+	var latitude, longitude *float64
+	var radiusMeters *int
+
+	if latStr := ctx.Query("latitude"); latStr != "" {
+		if lat, err := strconv.ParseFloat(latStr, 64); err == nil {
+			latitude = &lat
+		} else {
+			c.Log.Warnf("Invalid latitude parameter: %s", latStr)
+			return fiber.NewError(fiber.StatusBadRequest, "Invalid latitude parameter")
+		}
+	}
+
+	if lngStr := ctx.Query("longitude"); lngStr != "" {
+		if lng, err := strconv.ParseFloat(lngStr, 64); err == nil {
+			longitude = &lng
+		} else {
+			c.Log.Warnf("Invalid longitude parameter: %s", lngStr)
+			return fiber.NewError(fiber.StatusBadRequest, "Invalid longitude parameter")
+		}
+	}
+
+	// Parse optional radius parameter (in meters)
+	if radiusStr := ctx.Query("radius_meters"); radiusStr != "" {
+		if radius, err := strconv.Atoi(radiusStr); err == nil && radius > 0 {
+			radiusMeters = &radius
+		} else {
+			c.Log.Warnf("Invalid radius_meters parameter: %s", radiusStr)
+			return fiber.NewError(fiber.StatusBadRequest, "Invalid radius_meters parameter")
+		}
+	}
+
 	request := &model.SearchUserRequest{
 		Username:            ctx.Query("username"),
 		Email:               ctx.Query("email"),
@@ -95,6 +128,9 @@ func (c *UserController) List(ctx *fiber.Ctx) error {
 		City:                ctx.Query("city"),
 		Province:            ctx.Query("province"),
 		IsAcceptingCustomer: helper.ParseBoolQuery(ctx, "is_accepting_customer"),
+		Latitude:            latitude,
+		Longitude:           longitude,
+		RadiusMeters:        radiusMeters,
 		Page:                ctx.QueryInt("page"),
 		Size:                ctx.QueryInt("size"),
 	}
@@ -117,6 +153,7 @@ func (c *UserController) List(ctx *fiber.Ctx) error {
 		Paging: paging,
 	})
 }
+
 func (c *UserController) Current(ctx *fiber.Ctx) error {
 	auth := middleware.GetUser(ctx)
 

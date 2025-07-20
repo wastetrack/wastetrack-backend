@@ -17,7 +17,7 @@ type WasteDropRequestSimpleResponse struct {
 	AppointmentStartTime string            `json:"appointment_start_time,omitempty"`
 	AppointmentEndTime   string            `json:"appointment_end_time,omitempty"`
 	Notes                string            `json:"notes,omitempty"`
-	Distance             *float64          `json:"distance,omitempty"` // Distance in kilometers
+	Distance             *float64          `json:"distance,omitempty"`
 	CreatedAt            *time.Time        `json:"created_at"`
 	UpdatedAt            *time.Time        `json:"updated_at"`
 }

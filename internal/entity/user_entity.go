@@ -32,4 +32,5 @@ type User struct {
 	ResetPasswordExpiry    *time.Time   `gorm:"column:reset_password_expiry"`
 	CreatedAt              time.Time    `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt              time.Time    `gorm:"column:updated_at;autoUpdateTime"`
+	Distance               *float64     `gorm:"->" json:"-"`
 }

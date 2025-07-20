@@ -26,6 +26,8 @@ type UserResponse struct {
 	RefreshToken        string            `json:"refresh_token,omitempty"`
 	CreatedAt           *time.Time        `json:"created_at,omitempty"`
 	UpdatedAt           *time.Time        `json:"updated_at,omitempty"`
+	// Add distance field (in meters) - will be populated when lat/lng provided in search
+	Distance *float64 `json:"distance,omitempty"`
 }
 
 type RegisterUserRequest struct {
@@ -75,18 +77,20 @@ type LogoutUserRequest struct {
 }
 
 type SearchUserRequest struct {
-	Username            string `json:"username"`
-	Email               string `json:"email"`
-	Role                string `json:"role"`
-	Institution         string `json:"institution"`
-	Address             string `json:"address"`
-	City                string `json:"city"`
-	Province            string `json:"province"`
-	IsAcceptingCustomer *bool  `json:"is_accepting_customer"`
-	Page                int    `json:"page,omitempty" validate:"min=1"`
-	Size                int    `json:"size,omitempty" validate:"min=1,max=100"`
+	Username            string   `json:"username"`
+	Email               string   `json:"email"`
+	Role                string   `json:"role"`
+	Institution         string   `json:"institution"`
+	Address             string   `json:"address"`
+	City                string   `json:"city"`
+	Province            string   `json:"province"`
+	IsAcceptingCustomer *bool    `json:"is_accepting_customer"`
+	RadiusMeters        *int     `json:"radius_meters"`
+	Latitude            *float64 `json:"latitude"`
+	Longitude           *float64 `json:"longitude"`
+	Page                int      `json:"page,omitempty" validate:"min=1"`
+	Size                int      `json:"size,omitempty" validate:"min=1,max=100"`
 }
-
 type GetUserRequest struct {
 	ID string `json:"id" validate:"required,max=100"`
 }

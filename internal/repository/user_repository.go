@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/sirupsen/logrus"
 	"github.com/wastetrack/wastetrack-backend/internal/entity"
 	"github.com/wastetrack/wastetrack-backend/internal/model"
@@ -44,18 +46,66 @@ func (r *UserRepository) CountByUsername(db *gorm.DB, username string) (int64, e
 
 func (r *UserRepository) Search(db *gorm.DB, request *model.SearchUserRequest) ([]entity.User, int64, error) {
 	var users []entity.User
-	var total int64
 
-	// Build the base query with filters
-	query := db.Model(&entity.User{}).Scopes(r.FilterUser(request))
+	// Build the query with distance calculation if coordinates provided
+	query := db.Scopes(r.FilterUser(request))
 
-	// Get total count first
-	if err := query.Count(&total).Error; err != nil {
+	// If latitude and longitude are provided, calculate distance and order by it
+	if request.Latitude != nil && request.Longitude != nil {
+		distanceSelect := fmt.Sprintf(`*, 
+			CASE 
+				WHEN location IS NOT NULL THEN 
+					ST_Distance(
+						location, 
+						ST_SetSRID(ST_MakePoint(%f, %f), 4326)
+					)
+				ELSE NULL 
+			END as distance`,
+			*request.Longitude, *request.Latitude)
+
+		// Get radius in meters (default 10km = 10000m if not specified)
+		radiusMeters := 10000
+		if request.RadiusMeters != nil && *request.RadiusMeters > 0 {
+			radiusMeters = *request.RadiusMeters
+		}
+
+		// Add distance filter for specified radius
+		distanceFilter := fmt.Sprintf(`(location IS NULL OR ST_Distance(
+			location, 
+			ST_SetSRID(ST_MakePoint(%f, %f), 4326)
+		) <= %d)`, *request.Longitude, *request.Latitude, radiusMeters)
+
+		query = query.Select(distanceSelect).
+			Where(distanceFilter).
+			Order("distance ASC NULLS LAST")
+	}
+
+	// Apply pagination and execute query
+	if err := query.Offset((request.Page - 1) * request.Size).
+		Limit(request.Size).
+		Find(&users).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Get paginated results
-	if err := query.Offset((request.Page - 1) * request.Size).Limit(request.Size).Find(&users).Error; err != nil {
+	// Count total records with same filters (without distance calculation for performance)
+	var total int64 = 0
+	countQuery := db.Model(&entity.User{}).Scopes(r.FilterUser(request))
+
+	// Apply same distance filter for count when coordinates provided
+	if request.Latitude != nil && request.Longitude != nil {
+		radiusMeters := 10000
+		if request.RadiusMeters != nil && *request.RadiusMeters > 0 {
+			radiusMeters = *request.RadiusMeters
+		}
+
+		distanceFilter := fmt.Sprintf(`(location IS NULL OR ST_Distance(
+			location, 
+			ST_SetSRID(ST_MakePoint(%f, %f), 4326)
+		) <= %d)`, *request.Longitude, *request.Latitude, radiusMeters)
+		countQuery = countQuery.Where(distanceFilter)
+	}
+
+	if err := countQuery.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -91,4 +141,32 @@ func (r *UserRepository) FilterUser(request *model.SearchUserRequest) func(tx *g
 		}
 		return tx
 	}
+}
+
+// FindByIDWithDistance finds a user by ID and calculates distance if coordinates are provided
+func (r *UserRepository) FindByIDWithDistance(db *gorm.DB, user *entity.User, id string, lat, lng *float64) error {
+	query := db.Where("id = ?", id)
+
+	if lat != nil && lng != nil {
+		distanceSelect := fmt.Sprintf(`*, 
+			CASE 
+				WHEN location IS NOT NULL THEN 
+					ST_Distance(
+						location, 
+						ST_SetSRID(ST_MakePoint(%f, %f), 4326)
+					)
+				ELSE NULL 
+			END as distance`,
+			*lng, *lat)
+
+		// Also apply 10km radius filter for single user lookup
+		distanceFilter := fmt.Sprintf(`(location IS NULL OR ST_Distance(
+			location, 
+			ST_SetSRID(ST_MakePoint(%f, %f), 4326)
+		) <= 10000)`, *lng, *lat)
+
+		query = query.Select(distanceSelect).Where(distanceFilter)
+	}
+
+	return query.First(user).Error
 }
