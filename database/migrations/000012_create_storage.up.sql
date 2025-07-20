@@ -4,5 +4,6 @@ CREATE TABLE IF NOT EXISTS storage (
     length DECIMAL,
     width DECIMAL,
     height DECIMAL,
-    is_for_recycled_material BOOLEAN DEFAULT FALSE
+    is_for_recycled_material BOOLEAN DEFAULT FALSE,
+    is_deleted BOOLEAN DEFAULT FALSE
 );

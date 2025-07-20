@@ -29,5 +29,6 @@ CREATE TABLE IF NOT EXISTS waste_drop_requests (
     appointment_end_time TIMETZ,
     notes TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    is_deleted BOOLEAN DEFAULT FALSE
 );

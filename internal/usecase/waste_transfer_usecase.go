@@ -30,8 +30,9 @@ type WasteTransferRequestUsecase struct {
 	StorageRepository     *repository.StorageRepository
 	StorageItemRepository *repository.StorageItemRepository
 	// NEW: Profile repositories
-	IndustryRepository  *repository.IndustryRepository
-	WasteBankRepository *repository.WasteBankRepository
+	IndustryRepository          *repository.IndustryRepository
+	WasteBankRepository         *repository.WasteBankRepository
+	SalaryTransactionRepository *repository.SalaryTransactionRepository
 }
 
 func NewWasteTransferRequestUsecase(
@@ -48,6 +49,7 @@ func NewWasteTransferRequestUsecase(
 	// NEW: Profile repository parameters
 	industryRepository *repository.IndustryRepository,
 	wasteBankRepository *repository.WasteBankRepository,
+	salaryTransactionRepository *repository.SalaryTransactionRepository,
 ) *WasteTransferRequestUsecase {
 	return &WasteTransferRequestUsecase{
 		DB:                                  db,
@@ -61,6 +63,7 @@ func NewWasteTransferRequestUsecase(
 		StorageItemRepository:               storageItemRepository,
 		IndustryRepository:                  industryRepository,
 		WasteBankRepository:                 wasteBankRepository,
+		SalaryTransactionRepository:         salaryTransactionRepository,
 	}
 }
 
@@ -710,7 +713,72 @@ func (c *WasteTransferRequestUsecase) CompleteRequest(ctx context.Context, reque
 			"Some waste types not found in this transfer request")
 	}
 
-	// NEW: Handle storage operations
+	// NEW: Handle payment transaction
+	totalPaymentAmount := int64(math.Round(totalVerifiedPrice))
+	if totalPaymentAmount > 0 {
+		c.Log.Infof("Processing payment: buyer (destination) pays %d to seller (source)", totalPaymentAmount)
+
+		// Get buyer (destination user - receives the waste)
+		buyer := new(entity.User)
+		if err := c.UserRepository.FindById(tx, buyer, wasteTransferRequest.DestinationUserID.String()); err != nil {
+			c.Log.Warnf("Failed to find buyer (destination user): %+v", err)
+			return nil, fiber.ErrNotFound
+		}
+
+		// Get seller (source user - sends the waste)
+		seller := new(entity.User)
+		if err := c.UserRepository.FindById(tx, seller, wasteTransferRequest.SourceUserID.String()); err != nil {
+			c.Log.Warnf("Failed to find seller (source user): %+v", err)
+			return nil, fiber.ErrNotFound
+		}
+
+		// Check if buyer has sufficient balance
+		if buyer.Balance < totalPaymentAmount {
+			c.Log.Warnf("Insufficient balance for waste payment: buyer_id=%s, balance=%d, required=%d",
+				buyer.ID.String(), buyer.Balance, totalPaymentAmount)
+			return nil, fiber.NewError(fiber.StatusBadRequest,
+				fmt.Sprintf("Insufficient balance. Required: %d, Available: %d", totalPaymentAmount, buyer.Balance))
+		}
+
+		// Perform balance transfer: buyer pays seller
+		buyer.Balance -= totalPaymentAmount
+		seller.Balance += totalPaymentAmount
+
+		c.Log.Infof("Transferring %d from buyer %s to seller %s",
+			totalPaymentAmount, buyer.ID.String(), seller.ID.String())
+
+		// Update buyer balance
+		if err := c.UserRepository.Update(tx, buyer); err != nil {
+			c.Log.Warnf("Failed to update buyer balance: %+v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+
+		// Update seller balance
+		if err := c.UserRepository.Update(tx, seller); err != nil {
+			c.Log.Warnf("Failed to update seller balance: %+v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+
+		// Create salary transaction record for the payment
+		salaryTransaction := &entity.SalaryTransaction{
+			SenderID:        buyer.ID,  // Buyer is the sender (payer)
+			ReceiverID:      seller.ID, // Seller is the receiver (payee)
+			TransactionType: "waste_payment",
+			Amount:          totalPaymentAmount,
+			Status:          "completed",
+			Notes:           fmt.Sprintf("Payment for waste transfer request: %s", wasteTransferRequest.ID.String()),
+		}
+
+		// Create the salary transaction record
+		if err := c.SalaryTransactionRepository.Create(tx, salaryTransaction); err != nil {
+			c.Log.Warnf("Failed to create salary transaction: %+v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+
+		c.Log.Infof("Successfully created waste payment transaction: %s", salaryTransaction.ID.String())
+	}
+
+	// Handle storage operations
 	c.Log.Infof("Starting storage operations for waste transfer completion")
 
 	// Find or create source storage (raw materials)
@@ -742,7 +810,7 @@ func (c *WasteTransferRequestUsecase) CompleteRequest(ctx context.Context, reque
 	c.Log.Infof("Successfully completed storage operations: subtracted from source storage %s, added to destination storage %s",
 		sourceStorage.ID.String(), destinationStorage.ID.String())
 
-	// NEW: Update destination user profile
+	// Update destination user profile
 	if err := c.updateDestinationUserProfile(tx, wasteTransferRequest.DestinationUserID, totalVerifiedWeight); err != nil {
 		c.Log.Warnf("Failed to update destination user profile: %+v", err)
 		return nil, fiber.ErrInternalServerError
@@ -751,7 +819,7 @@ func (c *WasteTransferRequestUsecase) CompleteRequest(ctx context.Context, reque
 	// Update the waste transfer request
 	wasteTransferRequest.Status = "completed"
 	wasteTransferRequest.TotalWeight = totalVerifiedWeight
-	wasteTransferRequest.TotalPrice = int64(math.Round(totalVerifiedPrice))
+	wasteTransferRequest.TotalPrice = totalPaymentAmount
 
 	if err := c.WasteTransferRequestRepository.Update(tx, wasteTransferRequest); err != nil {
 		c.Log.Warnf("Failed to update waste transfer request: %+v", err)
@@ -763,7 +831,7 @@ func (c *WasteTransferRequestUsecase) CompleteRequest(ctx context.Context, reque
 		return nil, fiber.ErrInternalServerError
 	}
 
-	c.Log.Infof("Successfully completed waste transfer request with storage integration")
+	c.Log.Infof("Successfully completed waste transfer request with payment and storage integration")
 	return converter.WasteTransferRequestToSimpleResponse(wasteTransferRequest), nil
 }
 

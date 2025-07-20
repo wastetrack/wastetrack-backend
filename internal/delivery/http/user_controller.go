@@ -2,11 +2,11 @@ package http
 
 import (
 	"math"
-	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/wastetrack/wastetrack-backend/internal/delivery/http/middleware"
+	"github.com/wastetrack/wastetrack-backend/internal/helper"
 	"github.com/wastetrack/wastetrack-backend/internal/model"
 	"github.com/wastetrack/wastetrack-backend/internal/usecase"
 )
@@ -85,23 +85,6 @@ func (c *UserController) VerifyEmail(ctx *fiber.Ctx) error {
 	})
 }
 
-func parseBoolQuery(ctx *fiber.Ctx, key string) *bool {
-	value := ctx.Query(key)
-	if value == "" {
-		return nil // Parameter not provided
-	}
-
-	switch strings.ToLower(value) {
-	case "true", "1", "yes":
-		result := true
-		return &result
-	case "false", "0", "no":
-		result := false
-		return &result
-	default:
-		return nil // Invalid value, treat as not provided
-	}
-}
 func (c *UserController) List(ctx *fiber.Ctx) error {
 	request := &model.SearchUserRequest{
 		Username:            ctx.Query("username"),
@@ -111,7 +94,7 @@ func (c *UserController) List(ctx *fiber.Ctx) error {
 		Address:             ctx.Query("address"),
 		City:                ctx.Query("city"),
 		Province:            ctx.Query("province"),
-		IsAcceptingCustomer: parseBoolQuery(ctx, "is_accepting_customer"),
+		IsAcceptingCustomer: helper.ParseBoolQuery(ctx, "is_accepting_customer"),
 		Page:                ctx.QueryInt("page"),
 		Size:                ctx.QueryInt("size"),
 	}

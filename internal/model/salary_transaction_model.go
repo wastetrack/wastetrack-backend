@@ -5,8 +5,8 @@ type SalaryTransactionSimpleResponse struct {
 	SenderID        string `json:"sender_id"`
 	ReceiverID      string `json:"receiver_id"`
 	TransactionType string `json:"transaction_type"`
-	IsPaid          bool   `json:"is_paid"`
 	Amount          int64  `json:"amount"`
+	IsDeleted       bool   `json:"is_deleted"`
 	CreatedAt       string `json:"created_at"`
 	Status          string `json:"status"`
 	Notes           string `json:"notes"`
@@ -21,6 +21,7 @@ type SalaryTransactionResponse struct {
 	CreatedAt       string `json:"created_at"`
 	Status          string `json:"status"`
 	Notes           string `json:"notes"`
+	IsDeleted       bool   `json:"is_deleted"`
 	Sender          *UserResponse
 	Receiver        *UserResponse
 }
@@ -39,6 +40,7 @@ type SearchSalaryTransactionRequest struct {
 	TransactionType string `json:"transaction_type"`
 	Status          string `json:"status"`
 	Notes           string `json:"notes"`
+	IsDeleted       *bool  `json:"is_deleted"`
 	Page            int    `json:"page,omitempty" validate:"min=1"`
 	Size            int    `json:"size,omitempty" validate:"min=1,max=100"`
 }

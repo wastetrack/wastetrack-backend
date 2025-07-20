@@ -45,7 +45,6 @@ func NewWasteDropRequestUsecase(
 	customerRepository *repository.CustomerRepository,
 	wasteBankRepository *repository.WasteBankRepository,
 	wasteCollectorRepository *repository.WasteCollectorRepository,
-	// NEW: Add storage repository parameters
 	storageRepository *repository.StorageRepository,
 	storageItemRepository *repository.StorageItemRepository,
 ) *WasteDropRequestUsecase {
@@ -278,15 +277,41 @@ func (c *WasteDropRequestUsecase) Create(ctx context.Context, request *model.Was
 		return nil, fiber.ErrInternalServerError
 	}
 
-	// Create waste drop request items in batch
+	// NEW: Create waste drop request items with price per kg from waste bank priced type
 	wasteDropRequestItems := make([]*entity.WasteDropRequestItem, len(wasteTypeIDs))
 	for i, wasteTypeID := range wasteTypeIDs {
+		var pricePerKg int64 = 0
+
+		// Get price from WasteBankPricedType if waste bank is assigned
+		if wasteBankID != nil {
+			searchReq := &model.SearchWasteBankPricedTypeRequest{
+				WasteBankID: wasteBankID.String(),
+				WasteTypeID: wasteTypeID.String(),
+				Page:        1,
+				Size:        1,
+			}
+
+			pricedTypes, _, err := c.WasteBankPricedTypeRepository.Search(tx, searchReq)
+			if err != nil {
+				c.Log.Warnf("Failed to find price for waste bank %s and type %s: %+v",
+					wasteBankID.String(), wasteTypeID.String(), err)
+				// Continue with zero price if price not found
+			} else if len(pricedTypes) > 0 {
+				pricePerKg = pricedTypes[0].CustomPricePerKgs
+				c.Log.Infof("Found price per kg: %d for waste type: %s", pricePerKg, wasteTypeID.String())
+			} else {
+				c.Log.Warnf("No price found for waste bank %s and type %s, using default price 0",
+					wasteBankID.String(), wasteTypeID.String())
+			}
+		}
+
 		wasteDropRequestItems[i] = &entity.WasteDropRequestItem{
-			RequestID:        wasteDropRequest.ID,
-			WasteTypeID:      wasteTypeID,
-			Quantity:         request.Items.Quantities[i],
-			VerifiedWeight:   0.0, // Initial values
-			VerifiedSubtotal: 0,   // Initial values
+			RequestID:           wasteDropRequest.ID,
+			WasteTypeID:         wasteTypeID,
+			Quantity:            request.Items.Quantities[i],
+			VerifiedPricePerKgs: pricePerKg,
+			VerifiedWeight:      0.0, // Initial values
+			VerifiedSubtotal:    0,   // Initial values
 		}
 	}
 
@@ -550,6 +575,7 @@ func (c *WasteDropRequestUsecase) Complete(ctx context.Context, request *model.C
 	var totalVerifiedPrice int64
 	var totalVerifiedWeight float64
 
+	// NEW: Calculate subtotal using price_per_kgs from the request item and verified weight
 	for i := range existingItems {
 		weight, exists := weightMap[existingItems[i].WasteTypeID]
 		if !exists {
@@ -557,23 +583,12 @@ func (c *WasteDropRequestUsecase) Complete(ctx context.Context, request *model.C
 			return nil, fiber.ErrBadRequest
 		}
 
-		// Get price from WasteBankPricedType
-		searchReq := &model.SearchWasteBankPricedTypeRequest{
-			WasteBankID: wasteDropRequest.WasteBankID.String(),
-			WasteTypeID: existingItems[i].WasteTypeID.String(),
-			Page:        1,
-			Size:        1,
-		}
+		// NEW: Use the price_per_kgs stored in the request item (set during creation)
+		pricePerKg := existingItems[i].VerifiedPricePerKgs
+		subtotal := int64(weight * float64(pricePerKg))
 
-		pricedTypes, _, err := c.WasteBankPricedTypeRepository.Search(tx, searchReq)
-		if err != nil || len(pricedTypes) == 0 {
-			c.Log.Warnf("Price not found for waste bank %s and type %s: %+v",
-				wasteDropRequest.WasteBankID, existingItems[i].WasteTypeID, err)
-			return nil, fiber.ErrNotFound
-		}
-
-		price := pricedTypes[0].CustomPricePerKgs
-		subtotal := int64(weight * float64(price))
+		c.Log.Infof("Calculating subtotal for waste type %s: weight=%f, price_per_kg=%d, subtotal=%d",
+			existingItems[i].WasteTypeID.String(), weight, pricePerKg, subtotal)
 
 		existingItems[i].VerifiedWeight = weight
 		existingItems[i].VerifiedSubtotal = subtotal

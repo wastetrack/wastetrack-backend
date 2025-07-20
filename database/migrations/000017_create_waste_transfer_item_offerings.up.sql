@@ -15,5 +15,6 @@ CREATE TABLE IF NOT EXISTS waste_transfer_items (
     verified_weight DECIMAL,
 
     -- Recycling process
-    recycled_weight DECIMAL         -- FINAL: weight of actual recycled material
+    recycled_weight DECIMAL,         -- FINAL: weight of actual recycled material
+    is_deleted BOOLEAN DEFAULT FALSE
 );

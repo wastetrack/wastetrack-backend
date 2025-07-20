@@ -8,12 +8,13 @@ import (
 
 func WasteDropRequestItemToSimpleResponse(wasteDropRequestItem *entity.WasteDropRequestItem) *model.WasteDropRequestItemSimpleResponse {
 	return &model.WasteDropRequestItemSimpleResponse{
-		ID:               wasteDropRequestItem.ID.String(),
-		RequestID:        wasteDropRequestItem.RequestID.String(),
-		WasteTypeID:      wasteDropRequestItem.WasteTypeID.String(),
-		Quantity:         wasteDropRequestItem.Quantity,
-		VerifiedWeight:   wasteDropRequestItem.VerifiedWeight,
-		VerifiedSubtotal: wasteDropRequestItem.VerifiedSubtotal,
+		ID:                  wasteDropRequestItem.ID.String(),
+		RequestID:           wasteDropRequestItem.RequestID.String(),
+		WasteTypeID:         wasteDropRequestItem.WasteTypeID.String(),
+		Quantity:            wasteDropRequestItem.Quantity,
+		VerifiedWeight:      wasteDropRequestItem.VerifiedWeight,
+		VerifiedPricePerKgs: wasteDropRequestItem.VerifiedPricePerKgs,
+		VerifiedSubtotal:    wasteDropRequestItem.VerifiedSubtotal,
 	}
 }
 
@@ -27,13 +28,14 @@ func WasteDropRequestItemToResponse(wasteDropRequestItem *entity.WasteDropReques
 		wasteType = WasteTypeToResponse(&wasteDropRequestItem.WasteType)
 	}
 	return &model.WasteDropRequestItemResponse{
-		ID:               wasteDropRequestItem.ID.String(),
-		RequestID:        wasteDropRequestItem.RequestID.String(),
-		WasteTypeID:      wasteDropRequestItem.WasteTypeID.String(),
-		Quantity:         wasteDropRequestItem.Quantity,
-		VerifiedWeight:   wasteDropRequestItem.VerifiedWeight,
-		VerifiedSubtotal: wasteDropRequestItem.VerifiedSubtotal,
-		Request:          wasteDropRequest,
-		WasteType:        wasteType,
+		ID:                  wasteDropRequestItem.ID.String(),
+		RequestID:           wasteDropRequestItem.RequestID.String(),
+		WasteTypeID:         wasteDropRequestItem.WasteTypeID.String(),
+		Quantity:            wasteDropRequestItem.Quantity,
+		VerifiedWeight:      wasteDropRequestItem.VerifiedWeight,
+		VerifiedPricePerKgs: wasteDropRequestItem.VerifiedPricePerKgs,
+		VerifiedSubtotal:    wasteDropRequestItem.VerifiedSubtotal,
+		Request:             wasteDropRequest,
+		WasteType:           wasteType,
 	}
 }

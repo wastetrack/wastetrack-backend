@@ -212,7 +212,7 @@ func (u *SalaryTransactionUsecase) Delete(ctx context.Context, id string) (*mode
 		return nil, fiber.ErrNotFound
 	}
 
-	if err := u.SalaryTransactionRepository.Delete(tx, salaryTransaction); err != nil {
+	if err := u.SalaryTransactionRepository.SoftDelete(tx, salaryTransaction); err != nil {
 		u.Log.Warnf("Delete failed: %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}

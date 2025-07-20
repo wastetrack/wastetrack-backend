@@ -48,6 +48,9 @@ func (r *SalaryTransactionRepository) FilterSalaryTransaction(request *model.Sea
 		if notes := request.Notes; notes != "" {
 			tx = tx.Where("notes ILIKE ?", "%"+notes+"%")
 		}
+		if isDeleted := request.IsDeleted; isDeleted != nil {
+			tx = tx.Where("is_deleted = ?", *isDeleted)
+		}
 		return tx
 	}
 }

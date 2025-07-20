@@ -44,5 +44,6 @@ CREATE TABLE IF NOT EXISTS waste_transfer_requests (
     appointment_end_time TIMETZ,
     appointment_location GEOGRAPHY(Point, 4326),
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    is_deleted BOOLEAN DEFAULT FALSE
 );

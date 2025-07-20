@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/wastetrack/wastetrack-backend/internal/delivery/http/middleware"
+	"github.com/wastetrack/wastetrack-backend/internal/helper"
 	"github.com/wastetrack/wastetrack-backend/internal/model"
 	"github.com/wastetrack/wastetrack-backend/internal/usecase"
 )
@@ -62,6 +63,7 @@ func (c *SalaryTransactionController) List(ctx *fiber.Ctx) error {
 		ReceiverID:      ctx.Query("receiver_id"),
 		TransactionType: ctx.Query("transaction_type"),
 		Status:          ctx.Query("status"),
+		IsDeleted:       helper.ParseBoolQuery(ctx, "is_deleted"),
 		Page:            ctx.QueryInt("page", 1),
 		Size:            ctx.QueryInt("size", 10),
 	}

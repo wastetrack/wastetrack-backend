@@ -5,5 +5,7 @@ CREATE TABLE IF NOT EXISTS waste_drop_request_items (
     waste_type_id UUID NOT NULL REFERENCES waste_types(id) ON DELETE CASCADE,
     quantity BIGINT,
     verified_weight DECIMAL,
-    verified_subtotal BIGINT
+    verified_price_per_kgs BIGINT,
+    verified_subtotal BIGINT,
+    is_deleted BOOLEAN DEFAULT FALSE
 );

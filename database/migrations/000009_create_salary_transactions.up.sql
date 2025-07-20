@@ -23,5 +23,6 @@ CREATE TABLE IF NOT EXISTS salary_transactions (
     amount BIGINT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     status transaction_status DEFAULT 'completed',
-    notes TEXT
+    notes TEXT,
+    is_deleted BOOLEAN DEFAULT FALSE
 );

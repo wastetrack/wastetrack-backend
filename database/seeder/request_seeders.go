@@ -159,19 +159,20 @@ func SeedWasteDropRequestItems(db *gorm.DB) error {
 
 	// Create items for each request
 	requestItems := []struct {
-		RequestIndex     int
-		WasteTypeName    string
-		Quantity         int64
-		VerifiedWeight   float64
-		VerifiedSubtotal int64
+		RequestIndex        int
+		WasteTypeName       string
+		Quantity            int64
+		VerifiedWeight      float64
+		VerifiedPricePerKgs int64
+		VerifiedSubtotal    int64
 	}{
-		{0, "PET Bottles", 15, 4.5, 13500},
-		{0, "Aluminum Cans", 8, 1.2, 18000},
-		{0, "Cardboard", 3, 8.7, 13050},
-		{1, "Office Paper", 10, 12.4, 24800},
-		{1, "Steel Cans", 6, 4.6, 36800},
-		{2, "HDPE Containers", 5, 6.2, 15500},
-		{2, "Glass Jars", 4, 3.8, 12500},
+		{0, "PET Bottles", 15, 4.5, 10000, 13500},
+		{0, "Aluminum Cans", 8, 1.2, 10000, 18000},
+		{0, "Cardboard", 3, 8.7, 10000, 13050},
+		{1, "Office Paper", 10, 12.4, 10000, 24800},
+		{1, "Steel Cans", 6, 4.6, 10000, 36800},
+		{2, "HDPE Containers", 5, 6.2, 10000, 15500},
+		{2, "Glass Jars", 4, 3.8, 10000, 12500},
 	}
 
 	for _, item := range requestItems {
@@ -186,12 +187,13 @@ func SeedWasteDropRequestItems(db *gorm.DB) error {
 		}
 
 		requestItem := entity.WasteDropRequestItem{
-			ID:               uuid.New(),
-			RequestID:        requests[item.RequestIndex].ID,
-			WasteTypeID:      wasteType.ID,
-			Quantity:         item.Quantity,
-			VerifiedWeight:   item.VerifiedWeight,
-			VerifiedSubtotal: item.VerifiedSubtotal,
+			ID:                  uuid.New(),
+			RequestID:           requests[item.RequestIndex].ID,
+			WasteTypeID:         wasteType.ID,
+			Quantity:            item.Quantity,
+			VerifiedWeight:      item.VerifiedWeight,
+			VerifiedPricePerKgs: item.VerifiedPricePerKgs,
+			VerifiedSubtotal:    item.VerifiedSubtotal,
 		}
 
 		var existing entity.WasteDropRequestItem

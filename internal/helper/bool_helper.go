@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func parseBoolQuery(ctx *fiber.Ctx, key string) *bool {
+func ParseBoolQuery(ctx *fiber.Ctx, key string) *bool {
 	value := ctx.Query(key)
 	if value == "" {
 		return nil // Parameter not provided

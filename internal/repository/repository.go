@@ -26,6 +26,10 @@ func (r *Repository[T]) CreateBatch(db *gorm.DB, entities []*T) error {
 func (r *Repository[T]) Update(db *gorm.DB, entity *T) error {
 	return db.Save(entity).Error
 }
+func (r *Repository[T]) SoftDelete(db *gorm.DB, entity *T) error {
+	result := db.Model(entity).Update("is_deleted", true)
+	return result.Error
+}
 
 func (r *Repository[T]) Delete(db *gorm.DB, entity *T) error {
 	return db.Delete(entity).Error
