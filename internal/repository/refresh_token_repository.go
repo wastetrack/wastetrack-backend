@@ -40,6 +40,18 @@ func (r *RefreshTokenRepository) RevokeAllUserTokens(db *gorm.DB, userID uuid.UU
 		Update("is_revoked", true).Error
 }
 
+func (r *RefreshTokenRepository) RevokeOldestTokenByUser(db *gorm.DB, userID uuid.UUID) error {
+	var oldestToken entity.RefreshToken
+	if err := db.Where("user_id = ? AND is_revoked = false AND expires_at > ?", userID, time.Now()).
+		Order("created_at ASC").
+		First(&oldestToken).Error; err != nil {
+		return err
+	}
+
+	return db.Model(&oldestToken).
+		Update("is_revoked", true).Error
+}
+
 func (r *RefreshTokenRepository) DeleteExpiredTokens(db *gorm.DB) error {
 	return db.Where("expires_at < ? OR is_revoked = true", time.Now()).
 		Delete(&entity.RefreshToken{}).Error

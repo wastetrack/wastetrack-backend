@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS users (
     balance BIGINT DEFAULT 0,
     location GEOGRAPHY(Point, 4326),
     is_email_verified BOOLEAN DEFAULT FALSE,
+    is_accepting_customer BOOLEAN DEFAULT TRUE,
     email_verification_token TEXT,
     reset_password_token TEXT,
     reset_password_expiry TIMESTAMPTZ,

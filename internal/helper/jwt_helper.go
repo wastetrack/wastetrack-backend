@@ -140,3 +140,23 @@ func (j *JWTHelper) CheckSessionLimit(db *gorm.DB, userID uuid.UUID, maxSessions
 	}
 	return count < int64(maxSessions), nil
 }
+
+// NEW: Revoke oldest refresh token for a user
+func (j *JWTHelper) RevokeOldestToken(db *gorm.DB, userID uuid.UUID) error {
+	return j.RefreshTokenRepository.RevokeOldestTokenByUser(db, userID)
+}
+
+// NEW: Enforce session limit by automatically revoking oldest token
+func (j *JWTHelper) EnforceSessionLimit(db *gorm.DB, userID uuid.UUID, maxSessions int) error {
+	count, err := j.RefreshTokenRepository.CountActiveTokensByUser(db, userID)
+	if err != nil {
+		return err
+	}
+
+	// If we're at the limit, revoke exactly 1 oldest token to make room for the new one
+	if int(count) >= maxSessions {
+		return j.RevokeOldestToken(db, userID)
+	}
+
+	return nil
+}

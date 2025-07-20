@@ -67,6 +67,13 @@ func NewUserUseCase(
 }
 
 // TODO: Create Government profile upon registering
+func getIsAcceptingCustomer(ptr *bool) bool {
+	if ptr == nil {
+		return true
+	}
+	return *ptr
+}
+
 func (c *UserUseCase) Register(ctx context.Context, request *model.RegisterUserRequest) (*model.UserResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -107,7 +114,7 @@ func (c *UserUseCase) Register(ctx context.Context, request *model.RegisterUserR
 			Lng: request.Location.Longitude,
 		}
 	}
-
+	isAcceptingCustomer := getIsAcceptingCustomer(request.IsAcceptingCustomer)
 	user := &entity.User{
 		Username:               request.Username,
 		Email:                  request.Email,
@@ -119,9 +126,11 @@ func (c *UserUseCase) Register(ctx context.Context, request *model.RegisterUserR
 		City:                   request.City,
 		Province:               request.Province,
 		IsEmailVerified:        false,
+		IsAcceptingCustomer:    isAcceptingCustomer,
 		EmailVerificationToken: verificationToken,
 		Location:               location,
 	}
+	c.Log.Infof("Creating user with IsAcceptingCustomer: %v", user.IsAcceptingCustomer)
 	if err := c.UserRepository.Create(tx, user); err != nil {
 		c.Log.Warnf("Failed to create user to database: %v", err)
 		return nil, fiber.ErrInternalServerError
@@ -263,15 +272,10 @@ func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequest
 		return nil, fiber.ErrUnauthorized
 	}
 
-	// Optional: Check session limit (e.g., max 5 active sessions)
-	canCreateSession, err := c.JWTHelper.CheckSessionLimit(tx, user.ID, 5)
-	if err != nil {
-		c.Log.Warnf("Failed to check session limit: %+v", err)
+	// Enforce session limit by automatically revoking oldest tokens if needed
+	if err := c.JWTHelper.EnforceSessionLimit(tx, user.ID, 5); err != nil {
+		c.Log.Warnf("Failed to enforce session limit: %+v", err)
 		return nil, fiber.ErrInternalServerError
-	}
-	if !canCreateSession {
-		// Optionally revoke oldest token or return error
-		return nil, fiber.NewError(fiber.StatusTooManyRequests, "Too many active sessions")
 	}
 
 	// Generate JWT tokens
@@ -571,6 +575,66 @@ func (c *UserUseCase) Current(ctx context.Context, request *model.GetUserRequest
 
 func (c *UserUseCase) Get(ctx context.Context, request *model.GetUserRequest) (*model.UserResponse, error) {
 	return c.Current(ctx, request)
+}
+
+func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserRequest) (*model.UserResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	// Validate request
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request body: %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	// Find the user to be updated
+	user := new(entity.User)
+	if err := c.UserRepository.FindById(tx, user, request.ID); err != nil {
+		c.Log.Warnf("Failed to find user by ID: %+v", err)
+		return nil, fiber.ErrNotFound
+	}
+
+	// Authorization check: ensure the requesting user is the owner
+	if user.ID.String() != request.UserID {
+		c.Log.Warnf("Unauthorized update attempt: user %s trying to update user %s", request.UserID, request.ID)
+		return nil, fiber.ErrForbidden
+	}
+
+	// Update user fields (only update non-empty fields)
+	if request.Username != "" {
+		user.Username = request.Username
+	}
+	if request.PhoneNumber != "" {
+		user.PhoneNumber = request.PhoneNumber
+	}
+	if request.Address != "" {
+		user.Address = request.Address
+	}
+	if request.City != "" {
+		user.City = request.City
+	}
+	if request.Province != "" {
+		user.Province = request.Province
+	}
+	if request.IsAcceptingCustomer != nil {
+		user.IsAcceptingCustomer = *request.IsAcceptingCustomer
+	}
+
+	// Update the user in database
+	if err := c.UserRepository.Update(tx, user); err != nil {
+		c.Log.Warnf("Failed to update user: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	// Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed to commit transaction: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	// Convert to response and return
+	response := converter.UserToResponse(user)
+	return response, nil
 }
 
 func (c *UserUseCase) Search(ctx context.Context, request *model.SearchUserRequest) ([]model.UserResponse, int64, error) {

@@ -44,14 +44,21 @@ func (r *UserRepository) CountByUsername(db *gorm.DB, username string) (int64, e
 
 func (r *UserRepository) Search(db *gorm.DB, request *model.SearchUserRequest) ([]entity.User, int64, error) {
 	var users []entity.User
-	if err := db.Scopes(r.FilterUser(request)).Offset((request.Page - 1) * request.Size).Limit(request.Size).Find(&users).Error; err != nil {
+	var total int64
+
+	// Build the base query with filters
+	query := db.Model(&entity.User{}).Scopes(r.FilterUser(request))
+
+	// Get total count first
+	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	var total int64 = 0
-	if err := db.Model(&entity.User{}).Scopes(r.FilterUser(request)).Count(&total).Error; err != nil {
+	// Get paginated results
+	if err := query.Offset((request.Page - 1) * request.Size).Limit(request.Size).Find(&users).Error; err != nil {
 		return nil, 0, err
 	}
+
 	return users, total, nil
 }
 
@@ -77,6 +84,10 @@ func (r *UserRepository) FilterUser(request *model.SearchUserRequest) func(tx *g
 		}
 		if province := request.Province; province != "" {
 			tx = tx.Where("province ILIKE ?", "%"+province+"%")
+		}
+		// Fixed: Now properly handle the boolean filter
+		if request.IsAcceptingCustomer != nil {
+			tx = tx.Where("is_accepting_customer = ?", *request.IsAcceptingCustomer)
 		}
 		return tx
 	}

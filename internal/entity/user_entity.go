@@ -26,6 +26,7 @@ type User struct {
 	// Using custom Point type that handles PostGIS geography
 	Location               *types.Point `gorm:"type:geography(POINT,4326);"`
 	IsEmailVerified        bool         `gorm:"column:is_email_verified;default:false"`
+	IsAcceptingCustomer    bool         `gorm:"column:is_accepting_customer"`
 	EmailVerificationToken string       `gorm:"column:email_verification_token"`
 	ResetPasswordToken     string       `gorm:"column:reset_password_token"`
 	ResetPasswordExpiry    *time.Time   `gorm:"column:reset_password_expiry"`

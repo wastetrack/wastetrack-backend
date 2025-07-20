@@ -2,6 +2,7 @@ package http
 
 import (
 	"math"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
@@ -23,6 +24,10 @@ func NewUserController(userUsecase *usecase.UserUseCase, logger *logrus.Logger) 
 }
 
 func (c *UserController) Register(ctx *fiber.Ctx) error {
+	// Get raw body first
+	body := ctx.Body()
+	c.Log.Infof("Raw request body: %s", string(body))
+
 	request := new(model.RegisterUserRequest)
 	err := ctx.BodyParser(request)
 
@@ -30,6 +35,9 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 		c.Log.Warnf("Failed to parse request body: %v", err)
 		return fiber.ErrBadRequest
 	}
+
+	// Debug parsed values
+	c.Log.Infof("Parsed IsAcceptingCustomer: %v", request.IsAcceptingCustomer)
 
 	response, err := c.UserUsecase.Register(ctx.UserContext(), request)
 	if err != nil {
@@ -77,17 +85,35 @@ func (c *UserController) VerifyEmail(ctx *fiber.Ctx) error {
 	})
 }
 
+func parseBoolQuery(ctx *fiber.Ctx, key string) *bool {
+	value := ctx.Query(key)
+	if value == "" {
+		return nil // Parameter not provided
+	}
+
+	switch strings.ToLower(value) {
+	case "true", "1", "yes":
+		result := true
+		return &result
+	case "false", "0", "no":
+		result := false
+		return &result
+	default:
+		return nil // Invalid value, treat as not provided
+	}
+}
 func (c *UserController) List(ctx *fiber.Ctx) error {
 	request := &model.SearchUserRequest{
-		Username:    ctx.Query("username"),
-		Email:       ctx.Query("email"),
-		Role:        ctx.Query("role"),
-		Institution: ctx.Query("institution"),
-		Address:     ctx.Query("address"),
-		City:        ctx.Query("city"),
-		Province:    ctx.Query("province"),
-		Page:        ctx.QueryInt("page"),
-		Size:        ctx.QueryInt("size"),
+		Username:            ctx.Query("username"),
+		Email:               ctx.Query("email"),
+		Role:                ctx.Query("role"),
+		Institution:         ctx.Query("institution"),
+		Address:             ctx.Query("address"),
+		City:                ctx.Query("city"),
+		Province:            ctx.Query("province"),
+		IsAcceptingCustomer: parseBoolQuery(ctx, "is_accepting_customer"),
+		Page:                ctx.QueryInt("page"),
+		Size:                ctx.QueryInt("size"),
 	}
 
 	responses, total, err := c.UserUsecase.Search(ctx.UserContext(), request)
@@ -134,6 +160,30 @@ func (c *UserController) Get(ctx *fiber.Ctx) error {
 		return err
 	}
 
+	return ctx.JSON(model.WebResponse[*model.UserResponse]{Data: response})
+}
+
+func (c *UserController) Update(ctx *fiber.Ctx) error {
+	auth := middleware.GetUser(ctx)
+
+	// Parse the request body
+	request := new(model.UpdateUserRequest)
+	request.ID = ctx.Params("id") // Get user ID from URL params
+	request.UserID = auth.ID      // Set the authenticated user's ID for authorization
+
+	if err := ctx.BodyParser(request); err != nil {
+		c.Log.Warnf("Failed to parse request body: %v", err)
+		return fiber.ErrBadRequest
+	}
+
+	// Call the use case
+	response, err := c.UserUsecase.Update(ctx.UserContext(), request)
+	if err != nil {
+		c.Log.Warnf("Failed to update user: %v", err)
+		return err
+	}
+
+	// Return the correct response type
 	return ctx.JSON(model.WebResponse[*model.UserResponse]{Data: response})
 }
 
