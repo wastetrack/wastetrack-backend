@@ -127,6 +127,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Storage Items
 	wasteBankOnly.Post("/storage-items", c.StorageItemController.Create)
 	wasteBankOnly.Put("/storage-items/:id", c.StorageItemController.Update)
+	wasteBankOnly.Put("/storage-items/:id/deduct-weight", c.StorageItemController.DeductStorageItem)
 	wasteBankOnly.Delete("/storage-items/:id", c.StorageItemController.Delete)
 
 	// WasteCollector endpoints
@@ -143,13 +144,14 @@ func (c *RouteConfig) SetupAuthRoute() {
 	industryOnly.Get("/profiles/:user_id", c.IndustryController.Get)
 	industryOnly.Put("/profiles/:id", c.IndustryController.Update)
 	// Recycle Waste Transfer
-	industryOnly.Put("/waste-transfer-requests/:id", c.WasteTransferController.UpdateStatusRecycle)
-	industryOnly.Put("/waste-transfer-requests/:id/recycle", c.WasteTransferController.RecycleRequest)
+	industryOnly.Put("/waste-transfer-requests/:id", c.WasteTransferController.UpdateStatus)
+	industryOnly.Put("/waste-transfer-requests/:id/complete", c.WasteTransferController.CompleteRequest)
 	// Storage
 	industryOnly.Put("/storages/:id", c.StorageController.Update)
 	// Storage Items
 	industryOnly.Post("/storage-items", c.StorageItemController.Create)
 	industryOnly.Put("/storage-items/:id", c.StorageItemController.Update)
+	industryOnly.Put("/storage-items/:id/deduct-weight", c.StorageItemController.DeductStorageItem)
 	industryOnly.Delete("/storage-items/:id", c.StorageItemController.Delete)
 	// Admin endpoints
 	adminOnly := c.App.Group("/api/admin", c.AuthMiddleware, middleware.RequireRoles("admin"))

@@ -105,6 +105,30 @@ func (c *StorageItemController) Update(ctx *fiber.Ctx) error {
 	return ctx.JSON(model.WebResponse[*model.StorageItemSimpleResponse]{Data: response})
 }
 
+func (c *StorageItemController) DeductStorageItem(ctx *fiber.Ctx) error {
+	auth := middleware.GetUser(ctx)
+
+	authRequest := &model.GetUserRequest{
+		ID: auth.ID,
+	}
+	request := new(model.DeductStorageItemRequest)
+	request.ID = ctx.Params("id")
+	request.UserID = authRequest.ID
+
+	if err := ctx.BodyParser(request); err != nil {
+		c.Log.Warnf("Failed to parse request body: %v", err)
+		return fiber.ErrBadRequest
+	}
+
+	response, err := c.StorageItemUsecase.DeductFromStorage(ctx.UserContext(), request)
+	if err != nil {
+		c.Log.Warnf("Failed to update storage item: %v", err)
+		return err
+	}
+
+	return ctx.JSON(model.WebResponse[*model.StorageItemSimpleResponse]{Data: response})
+}
+
 func (c *StorageItemController) Delete(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 

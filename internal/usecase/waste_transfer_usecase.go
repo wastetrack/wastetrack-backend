@@ -713,70 +713,23 @@ func (c *WasteTransferRequestUsecase) CompleteRequest(ctx context.Context, reque
 			"Some waste types not found in this transfer request")
 	}
 
-	// NEW: Handle payment transaction
-	totalPaymentAmount := int64(math.Round(totalVerifiedPrice))
-	if totalPaymentAmount > 0 {
-		c.Log.Infof("Processing payment: buyer (destination) pays %d to seller (source)", totalPaymentAmount)
+	// Create salary transaction record for the payment
+	// salaryTransaction := &entity.SalaryTransaction{
+	// 	SenderID:        buyer.ID,  // Buyer is the sender (payer)
+	// 	ReceiverID:      seller.ID, // Seller is the receiver (payee)
+	// 	TransactionType: "waste_payment",
+	// 	Amount:          totalPaymentAmount,
+	// 	Status:          "completed",
+	// 	Notes:           fmt.Sprintf("Payment for waste transfer request: %s", wasteTransferRequest.ID.String()),
+	// }
 
-		// Get buyer (destination user - receives the waste)
-		buyer := new(entity.User)
-		if err := c.UserRepository.FindById(tx, buyer, wasteTransferRequest.DestinationUserID.String()); err != nil {
-			c.Log.Warnf("Failed to find buyer (destination user): %+v", err)
-			return nil, fiber.ErrNotFound
-		}
+	// // Create the salary transaction record
+	// if err := c.SalaryTransactionRepository.Create(tx, salaryTransaction); err != nil {
+	// 	c.Log.Warnf("Failed to create salary transaction: %+v", err)
+	// 	return nil, fiber.ErrInternalServerError
+	// }
 
-		// Get seller (source user - sends the waste)
-		seller := new(entity.User)
-		if err := c.UserRepository.FindById(tx, seller, wasteTransferRequest.SourceUserID.String()); err != nil {
-			c.Log.Warnf("Failed to find seller (source user): %+v", err)
-			return nil, fiber.ErrNotFound
-		}
-
-		// Check if buyer has sufficient balance
-		if buyer.Balance < totalPaymentAmount {
-			c.Log.Warnf("Insufficient balance for waste payment: buyer_id=%s, balance=%d, required=%d",
-				buyer.ID.String(), buyer.Balance, totalPaymentAmount)
-			return nil, fiber.NewError(fiber.StatusBadRequest,
-				fmt.Sprintf("Insufficient balance. Required: %d, Available: %d", totalPaymentAmount, buyer.Balance))
-		}
-
-		// Perform balance transfer: buyer pays seller
-		buyer.Balance -= totalPaymentAmount
-		seller.Balance += totalPaymentAmount
-
-		c.Log.Infof("Transferring %d from buyer %s to seller %s",
-			totalPaymentAmount, buyer.ID.String(), seller.ID.String())
-
-		// Update buyer balance
-		if err := c.UserRepository.Update(tx, buyer); err != nil {
-			c.Log.Warnf("Failed to update buyer balance: %+v", err)
-			return nil, fiber.ErrInternalServerError
-		}
-
-		// Update seller balance
-		if err := c.UserRepository.Update(tx, seller); err != nil {
-			c.Log.Warnf("Failed to update seller balance: %+v", err)
-			return nil, fiber.ErrInternalServerError
-		}
-
-		// Create salary transaction record for the payment
-		salaryTransaction := &entity.SalaryTransaction{
-			SenderID:        buyer.ID,  // Buyer is the sender (payer)
-			ReceiverID:      seller.ID, // Seller is the receiver (payee)
-			TransactionType: "waste_payment",
-			Amount:          totalPaymentAmount,
-			Status:          "completed",
-			Notes:           fmt.Sprintf("Payment for waste transfer request: %s", wasteTransferRequest.ID.String()),
-		}
-
-		// Create the salary transaction record
-		if err := c.SalaryTransactionRepository.Create(tx, salaryTransaction); err != nil {
-			c.Log.Warnf("Failed to create salary transaction: %+v", err)
-			return nil, fiber.ErrInternalServerError
-		}
-
-		c.Log.Infof("Successfully created waste payment transaction: %s", salaryTransaction.ID.String())
-	}
+	// c.Log.Infof("Successfully created waste payment transaction: %s", salaryTransaction.ID.String())
 
 	// Handle storage operations
 	c.Log.Infof("Starting storage operations for waste transfer completion")
@@ -819,7 +772,7 @@ func (c *WasteTransferRequestUsecase) CompleteRequest(ctx context.Context, reque
 	// Update the waste transfer request
 	wasteTransferRequest.Status = "completed"
 	wasteTransferRequest.TotalWeight = totalVerifiedWeight
-	wasteTransferRequest.TotalPrice = totalPaymentAmount
+	wasteTransferRequest.TotalPrice = int64(totalVerifiedPrice)
 
 	if err := c.WasteTransferRequestRepository.Update(tx, wasteTransferRequest); err != nil {
 		c.Log.Warnf("Failed to update waste transfer request: %+v", err)
@@ -832,187 +785,6 @@ func (c *WasteTransferRequestUsecase) CompleteRequest(ctx context.Context, reque
 	}
 
 	c.Log.Infof("Successfully completed waste transfer request with payment and storage integration")
-	return converter.WasteTransferRequestToSimpleResponse(wasteTransferRequest), nil
-}
-
-// UPDATED: RecycleRequest method with storage integration
-func (c *WasteTransferRequestUsecase) RecycleRequest(ctx context.Context, request *model.RecycleWasteTransferRequest) (*model.WasteTransferRequestSimpleResponse, error) {
-	tx := c.DB.WithContext(ctx).Begin()
-	defer tx.Rollback()
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body: %+v", err)
-		return nil, fiber.ErrBadRequest
-	}
-
-	// Validate items arrays have same length
-	if len(request.Items.WasteTypeIDs) != len(request.Items.Weights) {
-		c.Log.Warnf("WasteTypeIDs and Weights arrays must have same length")
-		return nil, fiber.ErrBadRequest
-	}
-
-	// Parse and validate the transfer request ID
-	transferFormUUID, err := uuid.Parse(request.ID)
-	if err != nil {
-		c.Log.Warnf("Invalid transfer request ID: %+v", err)
-		return nil, fiber.ErrBadRequest
-	}
-
-	// Get transfer request
-	wasteTransferRequest := new(entity.WasteTransferRequest)
-	if err := c.WasteTransferRequestRepository.FindByID(tx, wasteTransferRequest, request.ID); err != nil {
-		c.Log.Warnf("Failed to find waste transfer request by ID: %+v", err)
-		return nil, fiber.ErrNotFound
-	}
-
-	// Validate status - can only recycle completed requests
-	if wasteTransferRequest.Status != "completed" && wasteTransferRequest.Status != "recycling_in_process" {
-		return nil, fiber.NewError(fiber.StatusBadRequest, "Can only recycle completed or recycling in process requests")
-	}
-
-	// Get current items
-	currentItems, err := c.WasteTransferItemOfferingRepository.FindByTransferFormID(tx, transferFormUUID)
-	if err != nil {
-		c.Log.Warnf("Failed to find waste transfer items: %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-
-	if len(currentItems) == 0 {
-		return nil, fiber.NewError(fiber.StatusBadRequest, "No items found for this transfer request")
-	}
-
-	// Parse waste type IDs and validate
-	wasteTypeUUIDs := make([]uuid.UUID, len(request.Items.WasteTypeIDs))
-	for i, wasteTypeIDStr := range request.Items.WasteTypeIDs {
-		wasteTypeID, err := uuid.Parse(wasteTypeIDStr)
-		if err != nil {
-			c.Log.Warnf("Invalid waste type ID: %+v", err)
-			return nil, fiber.ErrBadRequest
-		}
-		wasteTypeUUIDs[i] = wasteTypeID
-	}
-
-	// Validate all weights are non-negative
-	for i, weight := range request.Items.Weights {
-		if weight < 0 {
-			return nil, fiber.NewError(fiber.StatusBadRequest,
-				fmt.Sprintf("Weight at index %d must be non-negative", i))
-		}
-	}
-
-	// Create waste type weight mapping
-	wasteTypeWeights := make(map[uuid.UUID]float64)
-	for i, wasteTypeID := range wasteTypeUUIDs {
-		wasteTypeWeights[wasteTypeID] = request.Items.Weights[i]
-	}
-
-	// Update items with recycled weights
-	var totalRecycledWeight float64
-	var totalRecycledPrice float64
-	updatedItemsCount := 0
-
-	for i := range currentItems {
-		if recycledWeight, exists := wasteTypeWeights[currentItems[i].WasteTypeID]; exists {
-			// Validate recycled weight doesn't exceed verified weight
-			if currentItems[i].VerifiedWeight > 0 && recycledWeight > currentItems[i].VerifiedWeight {
-				return nil, fiber.NewError(fiber.StatusBadRequest,
-					fmt.Sprintf("Recycled weight (%.2f) cannot exceed verified weight (%.2f) for waste type: %s",
-						recycledWeight, currentItems[i].VerifiedWeight, currentItems[i].WasteTypeID))
-			}
-
-			// Update the recycled weight
-			currentItems[i].RecycledWeight = recycledWeight
-
-			if err := c.WasteTransferItemOfferingRepository.Update(tx, &currentItems[i]); err != nil {
-				c.Log.Warnf("Failed to update waste transfer item: %+v", err)
-				return nil, fiber.ErrInternalServerError
-			}
-
-			totalRecycledWeight += recycledWeight
-			// Use accepted price per kg for calculation, fallback to offering price if not set
-			pricePerKg := currentItems[i].AcceptedPricePerKgs
-			if pricePerKg == 0 {
-				pricePerKg = currentItems[i].OfferingPricePerKgs
-			}
-			totalRecycledPrice += recycledWeight * pricePerKg
-			updatedItemsCount++
-		}
-	}
-
-	// Ensure all provided waste types were found and updated
-	if updatedItemsCount != len(request.Items.WasteTypeIDs) {
-		return nil, fiber.NewError(fiber.StatusBadRequest,
-			"Some waste types not found in this transfer request")
-	}
-
-	// NEW: Handle storage operations for recycling
-	c.Log.Infof("Starting storage operations for waste recycling")
-
-	// The recycling happens at the destination user's location
-	destinationUserID := wasteTransferRequest.DestinationUserID
-
-	// Find or create raw material storage (to subtract from)
-	rawMaterialStorage, err := c.findOrCreateRawMaterialStorage(tx, destinationUserID)
-	if err != nil {
-		c.Log.Warnf("Failed to find or create raw material storage: %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-
-	// Find or create recycled material storage (to add to)
-	recycledMaterialStorage, err := c.findOrCreateRecycledMaterialStorage(tx, destinationUserID)
-	if err != nil {
-		c.Log.Warnf("Failed to find or create recycled material storage: %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-
-	// Subtract verified weights from raw material storage
-	if err := c.subtractVerifiedWeightFromRawStorage(tx, rawMaterialStorage.ID, currentItems); err != nil {
-		c.Log.Warnf("Failed to subtract from raw material storage: %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Storage operation failed: %v", err))
-	}
-
-	// Add recycled weights to recycled material storage
-	if err := c.addRecycledWeightToRecycledStorage(tx, recycledMaterialStorage.ID, currentItems); err != nil {
-		c.Log.Warnf("Failed to add to recycled material storage: %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-
-	c.Log.Infof("Successfully completed recycling storage operations: subtracted verified weights from raw storage %s, added recycled weights to recycled storage %s",
-		rawMaterialStorage.ID.String(), recycledMaterialStorage.ID.String())
-
-	// NEW: Update industry profile with recycled weight (only industries can recycle)
-	// Get the destination user to verify they are an industry
-	user := &entity.User{}
-	if err := c.UserRepository.FindById(tx, user, destinationUserID.String()); err != nil {
-		c.Log.Warnf("Failed to find destination user for recycling profile update: %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-
-	if user.Role != "industry" {
-		c.Log.Warnf("Only industries can recycle waste. User role: %s", user.Role)
-		return nil, fiber.NewError(fiber.StatusBadRequest, "Only industries are allowed to recycle waste")
-	}
-
-	// Update industry profile with recycled weight
-	if err := c.updateIndustryProfile(tx, destinationUserID, 0, totalRecycledWeight); err != nil {
-		c.Log.Warnf("Failed to update industry profile with recycled weight: %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-
-	// Update the waste transfer request
-	wasteTransferRequest.Status = "recycled"
-
-	if err := c.WasteTransferRequestRepository.Update(tx, wasteTransferRequest); err != nil {
-		c.Log.Warnf("Failed to update waste transfer request: %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction: %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-
-	c.Log.Infof("Successfully completed waste transfer recycling with storage integration")
 	return converter.WasteTransferRequestToSimpleResponse(wasteTransferRequest), nil
 }
 

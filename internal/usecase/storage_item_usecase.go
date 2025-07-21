@@ -207,6 +207,50 @@ func (u *StorageItemUsecase) Update(ctx context.Context, request *model.UpdateSt
 	return converter.StorageItemToSimpleResponse(item), nil
 }
 
+func (u *StorageItemUsecase) DeductFromStorage(ctx context.Context, request *model.DeductStorageItemRequest) (*model.StorageItemSimpleResponse, error) {
+	tx := u.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := u.Validate.Struct(request); err != nil {
+		u.Log.Warnf("Invalid request body: %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+	storage := new(entity.Storage)
+	if err := u.StorageRepository.FindById(tx, storage, request.StorageID); err != nil {
+		u.Log.Warnf("Storage not found: %v", err)
+		return nil, fiber.ErrNotFound
+	}
+	item := new(entity.StorageItem)
+	if err := u.StorageItemRepository.FindById(tx, item, request.ID); err != nil {
+		u.Log.Warnf("Storage item not found: %v", err)
+		return nil, fiber.ErrNotFound
+	}
+	if storage.UserID != uuid.MustParse(request.UserID) {
+		return nil, fiber.NewError(fiber.StatusForbidden, "You are not the owner of this storage")
+	}
+
+	if request.Weight <= 0 {
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Weight must be greater than 0")
+	}
+	if item.WeightKgs < request.Weight {
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Not enough weight in storage item")
+	}
+
+	item.WeightKgs -= request.Weight
+
+	if err := u.StorageItemRepository.Update(tx, item); err != nil {
+		u.Log.Warnf("Failed to update storage item: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		u.Log.Warnf("Commit error: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.StorageItemToSimpleResponse(item), nil
+}
+
 func (u *StorageItemUsecase) Search(ctx context.Context, request *model.SearchStorageItemRequest) ([]model.StorageItemSimpleResponse, int64, error) {
 	tx := u.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()

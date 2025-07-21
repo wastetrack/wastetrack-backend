@@ -221,26 +221,6 @@ func (c *WasteTransferRequestController) UpdateStatusRecycle(ctx *fiber.Ctx) err
 	return ctx.JSON(model.WebResponse[*model.WasteTransferRequestSimpleResponse]{Data: response})
 }
 
-func (c *WasteTransferRequestController) RecycleRequest(ctx *fiber.Ctx) error {
-	request := new(model.RecycleWasteTransferRequest)
-	request.ID = ctx.Params("id")
-
-	if err := ctx.BodyParser(request); err != nil {
-		c.Log.Warnf("Failed to parse request body: %v", err)
-		return fiber.ErrBadRequest
-	}
-
-	// Ensure the ID from params is used
-	request.ID = ctx.Params("id")
-
-	response, err := c.WasteTransferRequestUsecase.RecycleRequest(ctx.UserContext(), request)
-	if err != nil {
-		c.Log.Warnf("Failed to recycle waste transfer request: %v", err)
-		return err
-	}
-
-	return ctx.JSON(model.WebResponse[*model.WasteTransferRequestSimpleResponse]{Data: response})
-}
 func (c *WasteTransferRequestController) AssignCollectorByWasteType(ctx *fiber.Ctx) error {
 	request := new(model.AssignCollectorByWasteTypeRequest)
 	request.ID = ctx.Params("id")

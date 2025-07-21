@@ -44,6 +44,13 @@ type UpdateStorageItemRequest struct {
 	Weight    float64 `json:"weight_kgs"`
 }
 
+type DeductStorageItemRequest struct {
+	ID        string  `json:"id" validate:"required,max=100"`
+	UserID    string  `json:"user_id" validate:"required,max=100"`
+	StorageID string  `json:"storage_id" validate:"required,max=100"`
+	Weight    float64 `json:"weight_kgs"`
+}
+
 type DeleteStorageItemRequest struct {
 	ID string `json:"id" validate:"required,max=100"`
 }
