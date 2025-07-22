@@ -134,6 +134,9 @@ func (r *WasteTransferRequestRepository) UpdateStatus(db *gorm.DB, id string, st
 		Where("id = ?", id).
 		Update("status", status).Error
 }
+func (r *WasteTransferItemOfferingRepository) UpdateVerifiedWeight(tx *gorm.DB, item *entity.WasteTransferItemOffering) error {
+	return tx.Model(item).Select("verified_weight").Updates(item).Error
+}
 
 // NEW: AssignCollector assigns a collector to a waste transfer request and updates status to "assigned"
 func (r *WasteTransferRequestRepository) AssignCollector(db *gorm.DB, id string, collectorID uuid.UUID) error {

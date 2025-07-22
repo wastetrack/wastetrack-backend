@@ -6,9 +6,9 @@ type WasteTransferItemOfferingSimpleResponse struct {
 	TransferFormID      string  `json:"transfer_form_id"`
 	WasteTypeID         string  `json:"waste_type_id"`
 	OfferingWeight      float64 `json:"offering_weight"`
-	OfferingPricePerKgs float64 `json:"offering_price_per_kgs"`
+	OfferingPricePerKgs int64   `json:"offering_price_per_kgs"`
 	AcceptedWeight      float64 `json:"accepted_weight"`
-	AcceptedPricePerKgs float64 `json:"accepted_price_per_kgs"`
+	AcceptedPricePerKgs int64   `json:"accepted_price_per_kgs"`
 }
 
 type WasteTransferItemOfferingResponse struct {
@@ -16,9 +16,9 @@ type WasteTransferItemOfferingResponse struct {
 	TransferFormID      string                              `json:"transfer_form_id"`
 	WasteTypeID         string                              `json:"waste_type_id"`
 	OfferingWeight      float64                             `json:"offering_weight"`
-	OfferingPricePerKgs float64                             `json:"offering_price_per_kgs"`
+	OfferingPricePerKgs int64                               `json:"offering_price_per_kgs"`
 	AcceptedWeight      float64                             `json:"accepted_weight"`
-	AcceptedPricePerKgs float64                             `json:"accepted_price_per_kgs"`
+	AcceptedPricePerKgs int64                               `json:"accepted_price_per_kgs"`
 	TransferForm        *WasteTransferRequestSimpleResponse `json:"transfer_form,omitempty"`
 	WasteType           *WasteTypeResponse                  `json:"waste_type,omitempty"`
 }
@@ -27,9 +27,9 @@ type WasteTransferItemOfferingRequest struct {
 	TransferFormID      string  `json:"transfer_form_id" validate:"required"`
 	WasteTypeID         string  `json:"waste_type_id" validate:"required"`
 	OfferingWeight      float64 `json:"offering_weight" validate:"required,min=0"`
-	OfferingPricePerKgs float64 `json:"offering_price_per_kgs" validate:"required,min=0"`
+	OfferingPricePerKgs int64   `json:"offering_price_per_kgs" validate:"required,min=0"`
 	AcceptedWeight      float64 `json:"accepted_weight"`
-	AcceptedPricePerKgs float64 `json:"accepted_price_per_kgs"`
+	AcceptedPricePerKgs int64   `json:"accepted_price_per_kgs"`
 }
 
 type SearchWasteTransferItemOfferingRequest struct {
@@ -46,9 +46,9 @@ type GetWasteTransferItemOfferingRequest struct {
 type UpdateWasteTransferItemOfferingRequest struct {
 	ID                  string  `json:"id" validate:"required,max=100"`
 	OfferingWeight      float64 `json:"offering_weight"`
-	OfferingPricePerKgs float64 `json:"offering_price_per_kgs"`
+	OfferingPricePerKgs int64   `json:"offering_price_per_kgs"`
 	AcceptedWeight      float64 `json:"accepted_weight"`
-	AcceptedPricePerKgs float64 `json:"accepted_price_per_kgs"`
+	AcceptedPricePerKgs int64   `json:"accepted_price_per_kgs"`
 }
 
 type DeleteWasteTransferItemOfferingRequest struct {

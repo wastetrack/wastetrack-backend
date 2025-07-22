@@ -15,11 +15,11 @@ type WasteTransferItemOffering struct {
 
 	// Offering details (initial proposal)
 	OfferingWeight      float64 `gorm:"column:offering_weight"`        // DECIMAL - offered weight
-	OfferingPricePerKgs float64 `gorm:"column:offering_price_per_kgs"` // DECIMAL - offered price per kg
+	OfferingPricePerKgs int64   `gorm:"column:offering_price_per_kgs"` // DECIMAL - offered price per kg
 
 	// Accepted details (filled when collector is assigned)
 	AcceptedWeight      float64 `gorm:"column:accepted_weight;default:0"`        // DECIMAL - accepted weight
-	AcceptedPricePerKgs float64 `gorm:"column:accepted_price_per_kgs;default:0"` // DECIMAL - accepted price per kg
+	AcceptedPricePerKgs int64   `gorm:"column:accepted_price_per_kgs;default:0"` // DECIMAL - accepted price per kg
 
 	VerifiedWeight float64 `gorm:"column:verified_weight;default:0"` // DECIMAL - verified weight
 

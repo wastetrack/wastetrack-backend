@@ -5,7 +5,7 @@ import "time"
 type WasteTransferRequestItems struct {
 	WasteTypeIDs         []string  `json:"waste_type_ids" validate:"required,min=1"`
 	OfferingWeights      []float64 `json:"offering_weights" validate:"required,min=1"`
-	OfferingPricesPerKgs []float64 `json:"offering_prices_per_kgs" validate:"required,min=1"`
+	OfferingPricesPerKgs []int64   `json:"offering_prices_per_kgs" validate:"required,min=1"`
 }
 
 type WasteTransferRequestRequest struct {
@@ -33,7 +33,7 @@ type AssignCollectorByWasteTypeRequest struct {
 type AssignCollectorWasteTypeRequest struct {
 	WasteTypeID         string  `json:"waste_type_id" validate:"required,max=100"`
 	AcceptedWeight      float64 `json:"accepted_weight" validate:"required,min=0"`
-	AcceptedPricePerKgs float64 `json:"accepted_price_per_kgs" validate:"required,min=0"`
+	AcceptedPricePerKgs int64   `json:"accepted_price_per_kgs" validate:"required,min=0"`
 }
 
 type CompleteWasteTransferRequestItems struct {

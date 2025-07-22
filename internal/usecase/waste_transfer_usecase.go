@@ -341,7 +341,7 @@ func (c *WasteTransferRequestUsecase) Create(ctx context.Context, request *model
 
 	// Create waste transfer item offerings in batch
 	var totalOfferingWeight float64
-	var totalOfferingPrice float64
+	var totalOfferingPrice int64
 	wasteTransferItems := make([]*entity.WasteTransferItemOffering, len(wasteTypeIDs))
 	for i, wasteTypeID := range wasteTypeIDs {
 		weight := request.Items.OfferingWeights[i]
@@ -357,7 +357,7 @@ func (c *WasteTransferRequestUsecase) Create(ctx context.Context, request *model
 		}
 
 		totalOfferingWeight += weight
-		totalOfferingPrice += weight * pricePerKg
+		totalOfferingPrice += int64(weight) * pricePerKg
 	}
 
 	if err := c.WasteTransferItemOfferingRepository.CreateBatch(tx, wasteTransferItems); err != nil {
@@ -489,7 +489,7 @@ func (c *WasteTransferRequestUsecase) AssignCollectorByWasteType(ctx context.Con
 
 	// Update items based on waste type pricing
 	var totalAcceptedWeight float64
-	var totalAcceptedPrice float64
+	var totalAcceptedPrice int64
 
 	for _, item := range currentItems {
 		if pricing, exists := wasteTypePricing[item.WasteTypeID]; exists {
@@ -510,7 +510,7 @@ func (c *WasteTransferRequestUsecase) AssignCollectorByWasteType(ctx context.Con
 			}
 
 			totalAcceptedWeight += pricing.AcceptedWeight
-			totalAcceptedPrice += pricing.AcceptedWeight * pricing.AcceptedPricePerKgs
+			totalAcceptedPrice += int64(math.Round(pricing.AcceptedWeight)) * pricing.AcceptedPricePerKgs
 		} else {
 			return nil, fiber.NewError(fiber.StatusBadRequest,
 				fmt.Sprintf("Missing pricing for waste type: %s", item.WasteTypeID))
@@ -530,7 +530,7 @@ func (c *WasteTransferRequestUsecase) AssignCollectorByWasteType(ctx context.Con
 	wasteTransferRequest.Status = "assigned"
 	// Use proper rounding for float to int conversion
 	wasteTransferRequest.TotalWeight = totalAcceptedWeight
-	wasteTransferRequest.TotalPrice = int64(math.Round(totalAcceptedPrice))
+	wasteTransferRequest.TotalPrice = totalAcceptedPrice
 
 	if err := c.WasteTransferRequestRepository.Update(tx, wasteTransferRequest); err != nil {
 		c.Log.Warnf("Failed to update waste transfer request: %+v", err)
@@ -676,7 +676,7 @@ func (c *WasteTransferRequestUsecase) CompleteRequest(ctx context.Context, reque
 
 	// Update items with verified weights
 	var totalVerifiedWeight float64
-	var totalVerifiedPrice float64
+	var totalVerifiedPrice int64
 	updatedItemsCount := 0
 
 	for i := range currentItems {
@@ -691,8 +691,8 @@ func (c *WasteTransferRequestUsecase) CompleteRequest(ctx context.Context, reque
 			// Update the verified weight
 			currentItems[i].VerifiedWeight = verifiedWeight
 
-			if err := c.WasteTransferItemOfferingRepository.Update(tx, &currentItems[i]); err != nil {
-				c.Log.Warnf("Failed to update waste transfer item: %+v", err)
+			if err := c.WasteTransferItemOfferingRepository.UpdateVerifiedWeight(tx, &currentItems[i]); err != nil {
+				c.Log.Warnf("Failed to update waste transfer item verified weight: %+v", err)
 				return nil, fiber.ErrInternalServerError
 			}
 
@@ -702,7 +702,7 @@ func (c *WasteTransferRequestUsecase) CompleteRequest(ctx context.Context, reque
 			if pricePerKg == 0 {
 				pricePerKg = currentItems[i].OfferingPricePerKgs
 			}
-			totalVerifiedPrice += verifiedWeight * pricePerKg
+			totalVerifiedPrice += pricePerKg * int64(verifiedWeight)
 			updatedItemsCount++
 		}
 	}
@@ -786,161 +786,6 @@ func (c *WasteTransferRequestUsecase) CompleteRequest(ctx context.Context, reque
 
 	c.Log.Infof("Successfully completed waste transfer request with payment and storage integration")
 	return converter.WasteTransferRequestToSimpleResponse(wasteTransferRequest), nil
-}
-
-// NEW: Helper method to find or create storage for recycled materials
-func (c *WasteTransferRequestUsecase) findOrCreateRecycledMaterialStorage(tx *gorm.DB, userID uuid.UUID) (*entity.Storage, error) {
-	c.Log.Infof("Finding or creating recycled material storage for user ID: %s", userID.String())
-
-	// Try to find existing storage for recycled materials
-	searchReq := &model.SearchStorageRequest{
-		UserID:                userID.String(),
-		IsForRecycledMaterial: &[]bool{true}[0], // Pointer to true
-		Page:                  1,
-		Size:                  1,
-	}
-
-	storages, _, err := c.StorageRepository.Search(tx, searchReq)
-	if err != nil {
-		c.Log.Warnf("Failed to search recycled material storage: %+v", err)
-		return nil, err
-	}
-
-	// If storage exists, return the first one
-	if len(storages) > 0 {
-		c.Log.Infof("Found existing recycled material storage ID: %s", storages[0].ID.String())
-		return &storages[0], nil
-	}
-
-	// Create new storage if none exists
-	c.Log.Infof("Creating new recycled material storage for user")
-	storage := &entity.Storage{
-		UserID:                userID,
-		Length:                10.0, // Default dimensions - you might want to make these configurable
-		Width:                 10.0,
-		Height:                3.0,
-		IsForRecycledMaterial: true, // Recycled materials storage
-	}
-
-	if err := c.StorageRepository.Create(tx, storage); err != nil {
-		c.Log.Warnf("Failed to create recycled material storage: %+v", err)
-		return nil, err
-	}
-
-	c.Log.Infof("Successfully created new recycled material storage ID: %s", storage.ID.String())
-	return storage, nil
-}
-
-// NEW: Helper method to subtract verified weights from raw material storage during recycling
-func (c *WasteTransferRequestUsecase) subtractVerifiedWeightFromRawStorage(tx *gorm.DB, storageID uuid.UUID, items []entity.WasteTransferItemOffering) error {
-	c.Log.Infof("Subtracting verified weights from raw material storage ID: %s for recycling", storageID.String())
-
-	for _, item := range items {
-		if item.VerifiedWeight <= 0 {
-			c.Log.Warnf("Skipping item with zero or negative verified weight: %f", item.VerifiedWeight)
-			continue
-		}
-
-		// Check if storage item exists for this waste type
-		var existingStorageItem entity.StorageItem
-		err := tx.Where("storage_id = ? AND waste_type_id = ?", storageID, item.WasteTypeID).
-			First(&existingStorageItem).Error
-
-		if err == nil {
-			// Storage item exists, subtract verified weight
-			c.Log.Infof("Subtracting verified weight from raw storage for waste type %s: removing %f kg from existing %f kg",
-				item.WasteTypeID.String(), item.VerifiedWeight, existingStorageItem.WeightKgs)
-
-			if existingStorageItem.WeightKgs < item.VerifiedWeight {
-				return fmt.Errorf("insufficient raw material stock for recycling waste type %s: available %f kg, required %f kg",
-					item.WasteTypeID.String(), existingStorageItem.WeightKgs, item.VerifiedWeight)
-			}
-
-			existingStorageItem.WeightKgs -= item.VerifiedWeight
-			existingStorageItem.UpdatedAt = time.Now()
-
-			// If weight becomes zero or negative, delete the storage item
-			if existingStorageItem.WeightKgs <= 0 {
-				c.Log.Infof("Deleting raw storage item for waste type %s as weight is now %f kg",
-					item.WasteTypeID.String(), existingStorageItem.WeightKgs)
-
-				if err := c.StorageItemRepository.Delete(tx, &existingStorageItem); err != nil {
-					c.Log.Warnf("Failed to delete raw storage item: %+v", err)
-					return err
-				}
-			} else {
-				if err := c.StorageItemRepository.Update(tx, &existingStorageItem); err != nil {
-					c.Log.Warnf("Failed to update raw storage item: %+v", err)
-					return err
-				}
-			}
-		} else if err == gorm.ErrRecordNotFound {
-			// Storage item doesn't exist - this is an error for recycling
-			return fmt.Errorf("cannot recycle waste type %s: not found in raw material storage", item.WasteTypeID.String())
-		} else {
-			// Database error
-			c.Log.Warnf("Database error while checking raw storage item: %+v", err)
-			return err
-		}
-	}
-
-	c.Log.Infof("Successfully subtracted all verified weights from raw material storage for recycling")
-	return nil
-}
-
-// NEW: Helper method to add recycled weights to recycled material storage
-func (c *WasteTransferRequestUsecase) addRecycledWeightToRecycledStorage(tx *gorm.DB, storageID uuid.UUID, items []entity.WasteTransferItemOffering) error {
-	c.Log.Infof("Adding recycled weights to recycled material storage ID: %s", storageID.String())
-
-	for _, item := range items {
-		if item.RecycledWeight <= 0 {
-			c.Log.Warnf("Skipping item with zero or negative recycled weight: %f", item.RecycledWeight)
-			continue
-		}
-
-		// Check if storage item already exists for this waste type in recycled storage
-		var existingStorageItem entity.StorageItem
-		err := tx.Where("storage_id = ? AND waste_type_id = ?", storageID, item.WasteTypeID).
-			First(&existingStorageItem).Error
-
-		if err == nil {
-			// Storage item exists, add to existing recycled weight
-			c.Log.Infof("Updating existing recycled storage item for waste type %s: adding %f kg to existing %f kg",
-				item.WasteTypeID.String(), item.RecycledWeight, existingStorageItem.WeightKgs)
-
-			existingStorageItem.WeightKgs += item.RecycledWeight
-			existingStorageItem.UpdatedAt = time.Now()
-
-			if err := c.StorageItemRepository.Update(tx, &existingStorageItem); err != nil {
-				c.Log.Warnf("Failed to update recycled storage item: %+v", err)
-				return err
-			}
-		} else if err == gorm.ErrRecordNotFound {
-			// Storage item doesn't exist, create new one in recycled storage
-			c.Log.Infof("Creating new recycled storage item for waste type %s with weight %f kg",
-				item.WasteTypeID.String(), item.RecycledWeight)
-
-			newStorageItem := &entity.StorageItem{
-				StorageID:   storageID,
-				WasteTypeID: item.WasteTypeID,
-				WeightKgs:   item.RecycledWeight,
-				CreatedAt:   time.Now(),
-				UpdatedAt:   time.Now(),
-			}
-
-			if err := c.StorageItemRepository.Create(tx, newStorageItem); err != nil {
-				c.Log.Warnf("Failed to create new recycled storage item: %+v", err)
-				return err
-			}
-		} else {
-			// Database error
-			c.Log.Warnf("Database error while checking recycled storage item: %+v", err)
-			return err
-		}
-	}
-
-	c.Log.Infof("Successfully processed all recycled weights for recycled material storage")
-	return nil
 }
 
 func (c *WasteTransferRequestUsecase) Search(ctx context.Context, request *model.SearchWasteTransferRequest) ([]model.WasteTransferRequestSimpleResponse, int64, error) {

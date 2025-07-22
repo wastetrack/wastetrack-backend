@@ -336,9 +336,9 @@ func SeedWasteTransferItemOfferings(db *gorm.DB) error {
 		TransferIndex       int
 		WasteTypeName       string
 		OfferingWeight      float64
-		OfferingPricePerKgs float64
+		OfferingPricePerKgs int64
 		AcceptedWeight      float64
-		AcceptedPricePerKgs float64
+		AcceptedPricePerKgs int64
 	}{
 		{0, "PET Bottles", 120.5, 3000, 120.5, 3000},
 		{0, "Aluminum Cans", 45.2, 15000, 45.2, 15000},
