@@ -146,6 +146,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Recycle Waste Transfer
 	industryOnly.Put("/waste-transfer-requests/:id", c.WasteTransferController.UpdateStatus)
 	industryOnly.Put("/waste-transfer-requests/:id/complete", c.WasteTransferController.CompleteRequest)
+	industryOnly.Put("waste-transfer-requests/:id/assign-collector", c.WasteTransferController.AssignCollectorByWasteType)
 	// Storage
 	industryOnly.Put("/storages/:id", c.StorageController.Update)
 	// Storage Items
