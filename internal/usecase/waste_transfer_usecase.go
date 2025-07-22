@@ -633,9 +633,9 @@ func (c *WasteTransferRequestUsecase) CompleteRequest(ctx context.Context, reque
 		return nil, fiber.ErrNotFound
 	}
 
-	// Validate status - can only complete assigned or in_progress requests
-	if wasteTransferRequest.Status != "assigned" && wasteTransferRequest.Status != "in_progress" {
-		return nil, fiber.NewError(fiber.StatusBadRequest, "Can only complete assigned or in_progress requests")
+	// Validate status - can only complete assigned or collecting requests
+	if wasteTransferRequest.Status != "assigned" && wasteTransferRequest.Status != "collecting" {
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Can only complete assigned or collecting requests")
 	}
 
 	// Get current items
