@@ -702,7 +702,7 @@ func (c *WasteTransferRequestUsecase) CompleteRequest(ctx context.Context, reque
 			if pricePerKg == 0 {
 				pricePerKg = currentItems[i].OfferingPricePerKgs
 			}
-			totalVerifiedPrice += pricePerKg * int64(verifiedWeight)
+			totalVerifiedPrice += int64(float64(pricePerKg) * verifiedWeight)
 			updatedItemsCount++
 		}
 	}
