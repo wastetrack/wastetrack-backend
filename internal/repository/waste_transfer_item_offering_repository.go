@@ -26,6 +26,7 @@ func (r *WasteTransferItemOfferingRepository) FindByID(db *gorm.DB, item *entity
 		Preload("TransferForm.SourceUser").
 		Preload("TransferForm.DestinationUser").
 		Preload("WasteType").
+		Preload("WasteType.WasteCategory").
 		First(item).Error
 }
 

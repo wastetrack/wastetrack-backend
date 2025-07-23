@@ -9,6 +9,7 @@ type WasteTransferItemOfferingSimpleResponse struct {
 	OfferingPricePerKgs int64   `json:"offering_price_per_kgs"`
 	AcceptedWeight      float64 `json:"accepted_weight"`
 	AcceptedPricePerKgs int64   `json:"accepted_price_per_kgs"`
+	VerifiedWeight      float64 `json:"verified_weight"`
 }
 
 type WasteTransferItemOfferingResponse struct {
@@ -19,6 +20,7 @@ type WasteTransferItemOfferingResponse struct {
 	OfferingPricePerKgs int64                               `json:"offering_price_per_kgs"`
 	AcceptedWeight      float64                             `json:"accepted_weight"`
 	AcceptedPricePerKgs int64                               `json:"accepted_price_per_kgs"`
+	VerifiedWeight      float64                             `json:"verified_weight"`
 	TransferForm        *WasteTransferRequestSimpleResponse `json:"transfer_form,omitempty"`
 	WasteType           *WasteTypeResponse                  `json:"waste_type,omitempty"`
 }

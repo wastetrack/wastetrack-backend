@@ -17,6 +17,7 @@ func WasteTransferItemOfferingToSimpleResponse(item *entity.WasteTransferItemOff
 		OfferingPricePerKgs: item.OfferingPricePerKgs,
 		AcceptedWeight:      item.AcceptedWeight,
 		AcceptedPricePerKgs: item.AcceptedPricePerKgs,
+		VerifiedWeight:      item.VerifiedWeight,
 	}
 }
 
@@ -39,6 +40,7 @@ func WasteTransferItemOfferingToResponse(item *entity.WasteTransferItemOffering)
 		OfferingPricePerKgs: item.OfferingPricePerKgs,
 		AcceptedWeight:      item.AcceptedWeight,
 		AcceptedPricePerKgs: item.AcceptedPricePerKgs,
+		VerifiedWeight:      item.VerifiedWeight,
 		TransferForm:        transferForm,
 		WasteType:           wasteType,
 	}
