@@ -637,7 +637,7 @@ func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserReque
 	return response, nil
 }
 
-func (c *UserUseCase) Search(ctx context.Context, request *model.SearchUserRequest) ([]model.UserResponse, int64, error) {
+func (c *UserUseCase) Search(ctx context.Context, request *model.SearchUserRequest) ([]model.UserListResponse, int64, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -653,9 +653,9 @@ func (c *UserUseCase) Search(ctx context.Context, request *model.SearchUserReque
 		request.Size = 10
 	}
 
-	users, total, err := c.UserRepository.Search(tx, request)
+	users, customerProfiles, wasteBankProfiles, industryProfiles, governmentProfiles, total, err := c.UserRepository.Search(tx, request)
 	if err != nil {
-		c.Log.Warnf("Failed search users: %+v", err)
+		c.Log.Warnf("Failed search users with profiles: %+v", err)
 		return nil, 0, fiber.ErrInternalServerError
 	}
 
@@ -664,58 +664,37 @@ func (c *UserUseCase) Search(ctx context.Context, request *model.SearchUserReque
 		return nil, 0, fiber.ErrInternalServerError
 	}
 
-	responses := make([]model.UserResponse, len(users))
+	responses := make([]model.UserListResponse, len(users))
 	for i, user := range users {
-		responses[i] = *converter.UserToResponse(&user)
+		response := converter.UserToListResponse(&user)
+		userID := user.ID.String()
+
+		// Attach profile data based on role
+		switch user.Role {
+		case "customer":
+			if profile, exists := customerProfiles[userID]; exists {
+				response.CustomerProfile = converter.CustomerToResponse(profile)
+			}
+		case "waste_bank_unit", "waste_bank_central":
+			if profile, exists := wasteBankProfiles[userID]; exists {
+				response.WasteBankProfile = converter.WasteBankToResponse(profile)
+			}
+		case "industry":
+			if profile, exists := industryProfiles[userID]; exists {
+				response.IndustryProfile = converter.IndustryToResponse(profile)
+			}
+		case "government":
+			if profile, exists := governmentProfiles[userID]; exists {
+				response.GovernmentProfile = converter.GovernmentToResponse(profile)
+			}
+			// Add other role cases as needed (waste_collector_unit, waste_collector_central, etc.)
+		}
+
+		responses[i] = *response
 	}
 
 	return responses, total, nil
 }
-
-// func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserRequest) (*model.UserResponse, error) {
-// 	tx := c.DB.WithContext(ctx).Begin()
-// 	defer tx.Rollback()
-
-// 	if err := c.Validate.Struct(request); err != nil {
-// 		c.Log.Warnf("Invalid request body: %+v", err)
-// 		return nil, fiber.ErrBadRequest
-// 	}
-
-// 	user := new(entity.User)
-// 	if err := c.UserRepository.FindById(tx, user, request.ID); err != nil {
-// 		c.Log.Warnf("Failed find user by id: %+v", err)
-// 		return nil, fiber.ErrNotFound
-// 	}
-
-// 	// Update fields if provided
-// 	if request.Username != "" {
-// 		user.Username = request.Username
-// 	}
-// 	if request.PhoneNumber != "" {
-// 		user.PhoneNumber = request.PhoneNumber
-// 	}
-// 	if request.AvatarUrl != "" {
-// 		user.AvatarUrl = request.AvatarUrl
-// 	}
-// 	if request.BirthDate != nil {
-// 		user.BirthDate = *request.BirthDate
-// 	}
-// 	if request.GradeLevel != 0 {
-// 		user.GradeLevel = request.GradeLevel
-// 	}
-
-// 	if err := c.UserRepository.Update(tx, user); err != nil {
-// 		c.Log.Warnf("Failed update user: %+v", err)
-// 		return nil, fiber.ErrInternalServerError
-// 	}
-
-// 	if err := tx.Commit().Error; err != nil {
-// 		c.Log.Warnf("Failed commit transaction: %+v", err)
-// 		return nil, fiber.ErrInternalServerError
-// 	}
-
-// 	return converter.UserToResponse(user), nil
-// }
 
 func (c *UserUseCase) Delete(ctx context.Context, request *model.DeleteUserRequest) (*model.UserResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()

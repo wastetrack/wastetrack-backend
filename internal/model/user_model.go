@@ -6,6 +6,32 @@ import (
 	"github.com/google/uuid"
 )
 
+type UserListResponse struct {
+	ID                  uuid.UUID         `json:"id"`
+	Username            string            `json:"username"`
+	Email               string            `json:"email"`
+	Role                string            `json:"role"`
+	AvatarURL           string            `json:"avatar_url,omitempty"`
+	PhoneNumber         string            `json:"phone_number,omitempty"`
+	Institution         string            `json:"institution,omitempty"`
+	Address             string            `json:"address,omitempty"`
+	City                string            `json:"city,omitempty"`
+	Province            string            `json:"province,omitempty"`
+	Points              int64             `json:"points"`
+	Balance             int64             `json:"balance"`
+	Location            *LocationResponse `json:"location,omitempty"`
+	IsEmailVerified     bool              `json:"is_email_verified"`
+	IsAcceptingCustomer bool              `json:"is_accepting_customer"`
+	CreatedAt           *time.Time        `json:"created_at,omitempty"`
+	UpdatedAt           *time.Time        `json:"updated_at,omitempty"`
+	Distance            *float64          `json:"distance,omitempty"`
+
+	// Profile data based on role
+	CustomerProfile   *CustomerResponse   `json:"customer_profile,omitempty"`
+	WasteBankProfile  *WasteBankResponse  `json:"waste_bank_profile,omitempty"`
+	IndustryProfile   *IndustryResponse   `json:"industry_profile,omitempty"`
+	GovernmentProfile *GovernmentResponse `json:"government_profile,omitempty"`
+}
 type UserResponse struct {
 	ID                  uuid.UUID         `json:"id"`
 	Username            string            `json:"username"`

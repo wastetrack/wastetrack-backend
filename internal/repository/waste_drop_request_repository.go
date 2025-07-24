@@ -90,6 +90,9 @@ func (r *WasteDropRequestRepository) FilterWasteDropRequest(request *model.Searc
 		if appointmentEndTime := request.AppointmentEndTime; appointmentEndTime != "" {
 			tx = tx.Where("appointment_end_time <= ?", appointmentEndTime)
 		}
+		if isDeleted := request.IsDeleted; isDeleted != nil {
+			tx = tx.Where("is_deleted = ?", *isDeleted)
+		}
 		return tx
 	}
 }

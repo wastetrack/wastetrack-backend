@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/wastetrack/wastetrack-backend/internal/entity"
 	"github.com/wastetrack/wastetrack-backend/internal/model"
@@ -54,4 +55,16 @@ func (r *WasteDropRequestItemRepository) FilterWasteDropRequestItem(request *mod
 		}
 		return tx
 	}
+}
+
+func (r *WasteDropRequestItemRepository) FindByDropFormID(db *gorm.DB, dropFormID uuid.UUID) ([]entity.WasteDropRequestItem, error) {
+	var items []entity.WasteDropRequestItem
+	err := db.Where("request_id = ?", dropFormID).
+		Preload("WasteType").
+		Find(&items).Error
+	return items, err
+}
+
+func (r *WasteDropRequestItemRepository) SoftDelete(db *gorm.DB, wasteDropRequestItem *entity.WasteDropRequestItem) error {
+	return db.Delete(wasteDropRequestItem).Error
 }

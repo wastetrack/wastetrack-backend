@@ -721,7 +721,28 @@ func (c *WasteDropRequestUsecase) Delete(ctx context.Context, request *model.Del
 		return nil, fiber.ErrNotFound
 	}
 
-	if err := c.WasteDropRequestRepository.Delete(tx, wasteDropRequest); err != nil {
+	// Parse UUID for finding items
+	dropFormUUID, err := uuid.Parse(request.ID)
+	if err != nil {
+		c.Log.Warnf("Invalid drop form ID: %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	// Delete related items first
+	items, err := c.WasteDropRequestItemRepository.FindByDropFormID(tx, dropFormUUID)
+	if err != nil {
+		c.Log.Warnf("Failed to find waste drop items: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	for _, item := range items {
+		if err := c.WasteDropRequestItemRepository.SoftDelete(tx, &item); err != nil {
+			c.Log.Warnf("Failed to delete waste drop item: %+v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+	}
+
+	if err := c.WasteDropRequestRepository.SoftDelete(tx, wasteDropRequest); err != nil {
 		c.Log.Warnf("Failed to delete waste drop request: %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}

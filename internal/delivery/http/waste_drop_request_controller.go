@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/wastetrack/wastetrack-backend/internal/helper"
 	"github.com/wastetrack/wastetrack-backend/internal/model"
 	"github.com/wastetrack/wastetrack-backend/internal/usecase"
 )
@@ -81,6 +82,7 @@ func (c *WasteDropRequestController) List(ctx *fiber.Ctx) error {
 		AppointmentDate:      ctx.Query("appointment_date"),
 		AppointmentStartTime: ctx.Query("appointment_start_time"),
 		AppointmentEndTime:   ctx.Query("appointment_end_time"),
+		IsDeleted:            helper.ParseBoolQuery(ctx, "is_deleted"),
 		Page:                 ctx.QueryInt("page"),
 		Size:                 ctx.QueryInt("size"),
 	}

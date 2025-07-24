@@ -17,4 +17,5 @@ type WasteDropRequestItem struct {
 	VerifiedWeight      float64 `gorm:"column:verified_weight"` // DECIMAL
 	VerifiedPricePerKgs int64   `gorm:"column:verified_price_per_kgs"`
 	VerifiedSubtotal    int64   `gorm:"column:verified_subtotal"` // BIGINT
+	IsDeleted           bool    `gorm:"column:is_deleted;default:false"`
 }

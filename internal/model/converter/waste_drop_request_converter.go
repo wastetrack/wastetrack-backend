@@ -54,6 +54,7 @@ func WasteDropRequestToSimpleResponse(wasteDropRequest *entity.WasteDropRequest)
 		CreatedAt:            &wasteDropRequest.CreatedAt,
 		UpdatedAt:            &wasteDropRequest.UpdatedAt,
 		Distance:             wasteDropRequest.Distance, // Now directly accessible
+		IsDeleted:            wasteDropRequest.IsDeleted,
 	}
 
 	return response
@@ -116,6 +117,7 @@ func WasteDropRequestToResponse(wasteDropRequest *entity.WasteDropRequest) *mode
 		WasteBank:            UserToResponse(&wasteDropRequest.WasteBank),
 		AssignedCollector:    assignedCollector,
 		Distance:             wasteDropRequest.Distance, // Now directly accessible
+		IsDeleted:            wasteDropRequest.IsDeleted,
 	}
 
 	return response

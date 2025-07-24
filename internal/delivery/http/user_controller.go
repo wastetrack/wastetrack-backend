@@ -137,7 +137,7 @@ func (c *UserController) List(ctx *fiber.Ctx) error {
 
 	responses, total, err := c.UserUsecase.Search(ctx.UserContext(), request)
 	if err != nil {
-		c.Log.WithError(err).Warnf("Failed to search users")
+		c.Log.WithError(err).Warnf("Failed to search users with profiles")
 		return err
 	}
 
@@ -148,12 +148,11 @@ func (c *UserController) List(ctx *fiber.Ctx) error {
 		TotalPage: int64(math.Ceil(float64(total) / float64(request.Size))),
 	}
 
-	return ctx.JSON(model.WebResponse[[]model.UserResponse]{
+	return ctx.JSON(model.WebResponse[[]model.UserListResponse]{
 		Data:   responses,
 		Paging: paging,
 	})
 }
-
 func (c *UserController) Current(ctx *fiber.Ctx) error {
 	auth := middleware.GetUser(ctx)
 

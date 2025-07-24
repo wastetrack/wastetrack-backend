@@ -22,6 +22,7 @@ type WasteDropRequestItemSimpleResponse struct {
 	VerifiedWeight      float64 `json:"verified_weight"`
 	VerifiedPricePerKgs int64   `json:"verified_price_per_kgs"`
 	VerifiedSubtotal    int64   `json:"verified_subtotal"`
+	IsDeleted           bool    `json:"is_deleted"`
 }
 type WasteDropRequestItemResponse struct {
 	ID                  string  `json:"id"`
@@ -33,6 +34,7 @@ type WasteDropRequestItemResponse struct {
 	VerifiedSubtotal    int64   `json:"verified_subtotal"`
 	Request             *WasteDropRequestSimpleResponse
 	WasteType           *WasteTypeResponse
+	IsDeleted           bool `json:"is_deleted"`
 }
 
 type WasteDropRequestItemRequest struct {

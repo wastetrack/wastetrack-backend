@@ -44,7 +44,7 @@ func (r *UserRepository) CountByUsername(db *gorm.DB, username string) (int64, e
 	return total, err
 }
 
-func (r *UserRepository) Search(db *gorm.DB, request *model.SearchUserRequest) ([]entity.User, int64, error) {
+func (r *UserRepository) Search(db *gorm.DB, request *model.SearchUserRequest) ([]entity.User, map[string]*entity.CustomerProfile, map[string]*entity.WasteBankProfile, map[string]*entity.IndustryProfile, map[string]*entity.GovernmentProfile, int64, error) {
 	var users []entity.User
 
 	// Build the query with distance calculation if coordinates provided
@@ -84,10 +84,10 @@ func (r *UserRepository) Search(db *gorm.DB, request *model.SearchUserRequest) (
 	if err := query.Offset((request.Page - 1) * request.Size).
 		Limit(request.Size).
 		Find(&users).Error; err != nil {
-		return nil, 0, err
+		return nil, nil, nil, nil, nil, 0, err
 	}
 
-	// Count total records with same filters (without distance calculation for performance)
+	// Count total records with same filters
 	var total int64 = 0
 	countQuery := db.Model(&entity.User{}).Scopes(r.FilterUser(request))
 
@@ -106,10 +106,68 @@ func (r *UserRepository) Search(db *gorm.DB, request *model.SearchUserRequest) (
 	}
 
 	if err := countQuery.Count(&total).Error; err != nil {
-		return nil, 0, err
+		return nil, nil, nil, nil, nil, 0, err
 	}
 
-	return users, total, nil
+	// Collect user IDs for profile loading
+	var userIDs []string
+	userRoleMap := make(map[string]string)
+
+	for _, user := range users {
+		userID := user.ID.String()
+		userIDs = append(userIDs, userID)
+		userRoleMap[userID] = user.Role
+	}
+
+	// Load profiles based on roles
+	customerProfiles := make(map[string]*entity.CustomerProfile)
+	wasteBankProfiles := make(map[string]*entity.WasteBankProfile)
+	industryProfiles := make(map[string]*entity.IndustryProfile)
+	governmentProfiles := make(map[string]*entity.GovernmentProfile)
+
+	if len(userIDs) > 0 {
+		// Load customer profiles
+		var customers []entity.CustomerProfile
+		if err := db.Where("user_id IN ?", userIDs).Find(&customers).Error; err != nil {
+			r.Log.Warnf("Failed to load customer profiles: %v", err)
+		} else {
+			for _, customer := range customers {
+				customerProfiles[customer.UserID.String()] = &customer
+			}
+		}
+
+		// Load waste bank profiles
+		var wasteBanks []entity.WasteBankProfile
+		if err := db.Where("user_id IN ?", userIDs).Find(&wasteBanks).Error; err != nil {
+			r.Log.Warnf("Failed to load waste bank profiles: %v", err)
+		} else {
+			for _, wasteBank := range wasteBanks {
+				wasteBankProfiles[wasteBank.UserID.String()] = &wasteBank
+			}
+		}
+
+		// Load industry profiles
+		var industries []entity.IndustryProfile
+		if err := db.Where("user_id IN ?", userIDs).Find(&industries).Error; err != nil {
+			r.Log.Warnf("Failed to load industry profiles: %v", err)
+		} else {
+			for _, industry := range industries {
+				industryProfiles[industry.UserID.String()] = &industry
+			}
+		}
+
+		// Load government profiles
+		var governments []entity.GovernmentProfile
+		if err := db.Where("user_id IN ?", userIDs).Find(&governments).Error; err != nil {
+			r.Log.Warnf("Failed to load government profiles: %v", err)
+		} else {
+			for _, government := range governments {
+				governmentProfiles[government.UserID.String()] = &government
+			}
+		}
+	}
+
+	return users, customerProfiles, wasteBankProfiles, industryProfiles, governmentProfiles, total, nil
 }
 
 func (r *UserRepository) FilterUser(request *model.SearchUserRequest) func(tx *gorm.DB) *gorm.DB {

@@ -20,6 +20,7 @@ type WasteDropRequestSimpleResponse struct {
 	Distance             *float64          `json:"distance,omitempty"`
 	CreatedAt            *time.Time        `json:"created_at"`
 	UpdatedAt            *time.Time        `json:"updated_at"`
+	IsDeleted            bool              `json:"is_deleted"`
 }
 
 type WasteDropRequestResponse struct {
@@ -43,6 +44,7 @@ type WasteDropRequestResponse struct {
 	Customer             *UserResponse     `json:"customer"`
 	WasteBank            *UserResponse     `json:"waste_bank"`
 	AssignedCollector    *UserResponse     `json:"assigned_collector"`
+	IsDeleted            bool              `json:"is_deleted"`
 }
 
 type WasteDropRequestRequest struct {
@@ -73,6 +75,7 @@ type SearchWasteDropRequest struct {
 	// Location parameters for distance calculation
 	Latitude  *float64 `json:"latitude,omitempty"`
 	Longitude *float64 `json:"longitude,omitempty"`
+	IsDeleted *bool    `json:"is_deleted"`
 	Page      int      `json:"page,omitempty" validate:"min=1"`
 	Size      int      `json:"size,omitempty" validate:"min=1,max=100"`
 }

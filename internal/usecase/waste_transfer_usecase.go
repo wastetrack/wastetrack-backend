@@ -856,13 +856,13 @@ func (c *WasteTransferRequestUsecase) Delete(ctx context.Context, request *model
 	}
 
 	for _, item := range items {
-		if err := c.WasteTransferItemOfferingRepository.Delete(tx, &item); err != nil {
+		if err := c.WasteTransferItemOfferingRepository.SoftDelete(tx, &item); err != nil {
 			c.Log.Warnf("Failed to delete waste transfer item: %+v", err)
 			return nil, fiber.ErrInternalServerError
 		}
 	}
 
-	if err := c.WasteTransferRequestRepository.Delete(tx, wasteTransferRequest); err != nil {
+	if err := c.WasteTransferRequestRepository.SoftDelete(tx, wasteTransferRequest); err != nil {
 		c.Log.Warnf("Failed to delete waste transfer request: %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
