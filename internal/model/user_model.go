@@ -64,7 +64,7 @@ type RegisterUserRequest struct {
 	PhoneNumber         string           `json:"phone_number" validate:"required,max=100"`
 	Institution         string           `json:"institution"` // Not required
 	Address             string           `json:"address" validate:"required,max=100"`
-	City                string           `json:"city" validate:"required,max=100"`
+	City                string           `json:"city" validate:"required,max=500"`
 	IsAcceptingCustomer *bool            `json:"is_accepting_customer"`
 	Province            string           `json:"province" validate:"required,max=100"`
 	Location            *LocationRequest `json:"location"` // Optional pointer to allow null
