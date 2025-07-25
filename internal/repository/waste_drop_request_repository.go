@@ -30,7 +30,13 @@ func (r *WasteDropRequestRepository) Search(db *gorm.DB, request *model.SearchWa
 	// Build the query with distance calculation if coordinates provided
 	query := db.Scopes(r.FilterWasteDropRequest(request))
 
-	// If latitude and longitude are provided, calculate distance and order by it
+	// Set order direction for created_at (default: DESC)
+	orderDir := "DESC"
+	if request.OrderDir == "asc" {
+		orderDir = "ASC"
+	}
+
+	// If latitude and longitude are provided, calculate distance and order by it FIRST
 	if request.Latitude != nil && request.Longitude != nil {
 		distanceSelect := fmt.Sprintf(`*, 
     CASE 
@@ -43,7 +49,12 @@ func (r *WasteDropRequestRepository) Search(db *gorm.DB, request *model.SearchWa
     END as distance`,
 			*request.Longitude, *request.Latitude)
 
-		query = query.Select(distanceSelect).Order("distance ASC NULLS LAST")
+		// Primary: Distance (nearest first), Secondary: created_at (based on order_dir)
+		query = query.Select(distanceSelect).
+			Order(fmt.Sprintf("distance ASC NULLS LAST, created_at %s", orderDir))
+	} else {
+		// No coordinates provided, only order by created_at
+		query = query.Order(fmt.Sprintf("created_at %s", orderDir))
 	}
 
 	// Apply pagination and execute query

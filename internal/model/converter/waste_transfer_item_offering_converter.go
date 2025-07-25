@@ -9,6 +9,10 @@ import (
 // WasteTransferItemOffering converters
 
 func WasteTransferItemOfferingToSimpleResponse(item *entity.WasteTransferItemOffering) *model.WasteTransferItemOfferingSimpleResponse {
+	var wasteType *model.WasteTypeResponse
+	if item.WasteTypeID != uuid.Nil {
+		wasteType = WasteTypeToResponse(&item.WasteType)
+	}
 	return &model.WasteTransferItemOfferingSimpleResponse{
 		ID:                  item.ID.String(),
 		TransferFormID:      item.TransferFormID.String(),
@@ -18,6 +22,7 @@ func WasteTransferItemOfferingToSimpleResponse(item *entity.WasteTransferItemOff
 		AcceptedWeight:      item.AcceptedWeight,
 		AcceptedPricePerKgs: item.AcceptedPricePerKgs,
 		VerifiedWeight:      item.VerifiedWeight,
+		WasteType:           wasteType,
 	}
 }
 

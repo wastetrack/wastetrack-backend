@@ -108,6 +108,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Waste Drop Requests
 	wasteBankOnly.Put("/waste-drop-requests/:id", c.WasteDropRequestController.UpdateStatus)
 	wasteBankOnly.Put("/waste-drop-requests/:id/assign-collector", c.WasteDropRequestController.AssignCollector)
+	wasteBankOnly.Put("/waste-drop-requests/:id/complete", c.WasteDropRequestController.Complete)
 	// Waste Transfer
 	wasteBankOnly.Post("/waste-transfer-requests", c.WasteTransferController.Create)
 	wasteBankOnly.Put("/waste-transfer-requests/:id/assign-collector", c.WasteTransferController.AssignCollectorByWasteType)
@@ -136,6 +137,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	wasteCollectorOnly.Get("/profiles/:user_id", c.WasteCollectorController.Get)
 	wasteCollectorOnly.Put("/profiles/:id", c.WasteCollectorController.Update)
 	// Waste Drop Requests
+	wasteCollectorOnly.Put("/waste-drop-requests/:id", c.WasteDropRequestController.UpdateStatus)
 	wasteCollectorOnly.Put("/waste-drop-requests/:id/complete", c.WasteDropRequestController.Complete)
 
 	// Industry endpoints

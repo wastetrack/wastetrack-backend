@@ -63,6 +63,11 @@ func (r *WasteTransferRequestRepository) Search(db *gorm.DB, request *model.Sear
 
 	// Start with applying filters
 	query := db.Scopes(r.FilterWasteTransferRequest(request))
+	// Set order direction for created_at (default: DESC)
+	orderDir := "DESC"
+	if request.OrderDir == "asc" {
+		orderDir = "ASC"
+	}
 
 	// If coordinates are provided, select the distance calculation and order by it
 	if request.Latitude != nil && request.Longitude != nil {
@@ -75,7 +80,10 @@ func (r *WasteTransferRequestRepository) Search(db *gorm.DB, request *model.Sear
 					)
 				ELSE NULL 
 			END as distance`, *request.Longitude, *request.Latitude)
-		query = query.Select(distanceSelect).Order("distance ASC NULLS LAST")
+		query = query.Select(distanceSelect).Order(fmt.Sprintf("distance ASC NULLS LAST, created_at %s", orderDir))
+	} else {
+		// No coordinates provided, only order by created_at
+		query = query.Order(fmt.Sprintf("created_at %s", orderDir))
 	}
 
 	// Apply pagination and execute query

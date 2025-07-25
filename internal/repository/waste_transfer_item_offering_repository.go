@@ -35,6 +35,8 @@ func (r *WasteTransferItemOfferingRepository) Search(db *gorm.DB, request *model
 
 	// Apply filters and pagination
 	if err := db.Scopes(r.FilterWasteTransferItemOffering(request)).
+		Preload("WasteType").
+		Preload("WasteType.WasteCategory").
 		Offset((request.Page - 1) * request.Size).
 		Limit(request.Size).
 		Find(&items).Error; err != nil {
@@ -57,9 +59,17 @@ func (r *WasteTransferItemOfferingRepository) FilterWasteTransferItemOffering(re
 		if transferFormID := request.TransferFormID; transferFormID != "" {
 			tx = tx.Where("transfer_request_id = ?", transferFormID)
 		}
+
+		// Filter by waste category ID - need to join waste_types table since category is in waste_type
+		if wasteCategoryID := request.WasteCategoryID; wasteCategoryID != "" {
+			tx = tx.Joins("JOIN waste_types ON waste_transfer_items.waste_type_id = waste_types.id").
+				Where("waste_types.category_id = ?", wasteCategoryID)
+		}
+
 		if wasteTypeID := request.WasteTypeID; wasteTypeID != "" {
 			tx = tx.Where("waste_type_id = ?", wasteTypeID)
 		}
+
 		return tx
 	}
 }

@@ -37,10 +37,11 @@ func (c *WasteTransferItemOfferingController) Get(ctx *fiber.Ctx) error {
 
 func (c *WasteTransferItemOfferingController) List(ctx *fiber.Ctx) error {
 	request := &model.SearchWasteTransferItemOfferingRequest{
-		TransferFormID: ctx.Query("transfer_form_id"),
-		WasteTypeID:    ctx.Query("waste_type_id"),
-		Page:           ctx.QueryInt("page"),
-		Size:           ctx.QueryInt("size"),
+		TransferFormID:  ctx.Query("transfer_form_id"),
+		WasteCategoryID: ctx.Query("waste_category_id"),
+		WasteTypeID:     ctx.Query("waste_type_id"),
+		Page:            ctx.QueryInt("page"),
+		Size:            ctx.QueryInt("size"),
 	}
 
 	// Set default values for pagination

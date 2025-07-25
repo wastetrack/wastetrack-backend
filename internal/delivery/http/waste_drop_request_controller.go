@@ -83,8 +83,10 @@ func (c *WasteDropRequestController) List(ctx *fiber.Ctx) error {
 		AppointmentStartTime: ctx.Query("appointment_start_time"),
 		AppointmentEndTime:   ctx.Query("appointment_end_time"),
 		IsDeleted:            helper.ParseBoolQuery(ctx, "is_deleted"),
-		Page:                 ctx.QueryInt("page"),
-		Size:                 ctx.QueryInt("size"),
+		// Parse order direction for created_at
+		OrderDir: ctx.Query("order_dir"), // "asc" or "desc" (default: "desc")
+		Page:     ctx.QueryInt("page"),
+		Size:     ctx.QueryInt("size"),
 	}
 
 	// Parse optional latitude and longitude query parameters for distance calculation
@@ -112,6 +114,12 @@ func (c *WasteDropRequestController) List(ctx *fiber.Ctx) error {
 	}
 	if request.Size == 0 {
 		request.Size = 10
+	}
+
+	// Validate order direction if provided
+	if request.OrderDir != "" && request.OrderDir != "asc" && request.OrderDir != "desc" {
+		c.Log.Warnf("Invalid order direction: %s", request.OrderDir)
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid order direction. Use 'asc' or 'desc'")
 	}
 
 	responses, total, err := c.WasteDropRequestUsecase.Search(ctx.UserContext(), request)

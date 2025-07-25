@@ -81,6 +81,7 @@ func (c *WasteTransferRequestController) List(ctx *fiber.Ctx) error {
 		AppointmentDate:      ctx.Query("appointment_date"),
 		AppointmentStartTime: ctx.Query("appointment_start_time"),
 		AppointmentEndTime:   ctx.Query("appointment_end_time"),
+		OrderDir:             ctx.Query("order_dir"),
 		Page:                 ctx.QueryInt("page"),
 		Size:                 ctx.QueryInt("size"),
 	}

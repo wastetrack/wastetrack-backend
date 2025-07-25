@@ -2,14 +2,15 @@ package model
 
 // Waste Transfer Item Offering models
 type WasteTransferItemOfferingSimpleResponse struct {
-	ID                  string  `json:"id"`
-	TransferFormID      string  `json:"transfer_form_id"`
-	WasteTypeID         string  `json:"waste_type_id"`
-	OfferingWeight      float64 `json:"offering_weight"`
-	OfferingPricePerKgs int64   `json:"offering_price_per_kgs"`
-	AcceptedWeight      float64 `json:"accepted_weight"`
-	AcceptedPricePerKgs int64   `json:"accepted_price_per_kgs"`
-	VerifiedWeight      float64 `json:"verified_weight"`
+	ID                  string             `json:"id"`
+	TransferFormID      string             `json:"transfer_form_id"`
+	WasteTypeID         string             `json:"waste_type_id"`
+	OfferingWeight      float64            `json:"offering_weight"`
+	OfferingPricePerKgs int64              `json:"offering_price_per_kgs"`
+	AcceptedWeight      float64            `json:"accepted_weight"`
+	AcceptedPricePerKgs int64              `json:"accepted_price_per_kgs"`
+	VerifiedWeight      float64            `json:"verified_weight"`
+	WasteType           *WasteTypeResponse `json:"waste_type,omitempty"`
 }
 
 type WasteTransferItemOfferingResponse struct {
@@ -35,10 +36,11 @@ type WasteTransferItemOfferingRequest struct {
 }
 
 type SearchWasteTransferItemOfferingRequest struct {
-	TransferFormID string `json:"transfer_form_id"`
-	WasteTypeID    string `json:"waste_type_id"`
-	Page           int    `json:"page,omitempty" validate:"min=1"`
-	Size           int    `json:"size,omitempty" validate:"min=1,max=100"`
+	TransferFormID  string `json:"transfer_form_id"`
+	WasteCategoryID string `json:"waste_category_id"`
+	WasteTypeID     string `json:"waste_type_id"`
+	Page            int    `json:"page,omitempty" validate:"min=1"`
+	Size            int    `json:"size,omitempty" validate:"min=1,max=100"`
 }
 
 type GetWasteTransferItemOfferingRequest struct {

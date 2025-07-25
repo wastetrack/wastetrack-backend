@@ -117,6 +117,7 @@ type SearchWasteTransferRequest struct {
 	AppointmentEndTime   string   `json:"appointment_end_time,omitempty"`
 	Latitude             *float64 `json:"latitude,omitempty"`
 	Longitude            *float64 `json:"longitude,omitempty"`
+	OrderDir             string   `json:"order_dir,omitempty"`
 	Page                 int      `json:"page,omitempty" validate:"min=1"`
 	Size                 int      `json:"size,omitempty" validate:"min=1,max=100"`
 }

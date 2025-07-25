@@ -76,6 +76,7 @@ type SearchWasteDropRequest struct {
 	Latitude  *float64 `json:"latitude,omitempty"`
 	Longitude *float64 `json:"longitude,omitempty"`
 	IsDeleted *bool    `json:"is_deleted"`
+	OrderDir  string   `json:"order_dir,omitempty"`
 	Page      int      `json:"page,omitempty" validate:"min=1"`
 	Size      int      `json:"size,omitempty" validate:"min=1,max=100"`
 }
