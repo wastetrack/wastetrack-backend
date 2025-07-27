@@ -77,6 +77,7 @@ type WasteTransferRequestSimpleResponse struct {
 	CreatedAt              *time.Time        `json:"created_at"`
 	UpdatedAt              *time.Time        `json:"updated_at"`
 	Distance               *float64          `json:"distance,omitempty"`
+	IsDeleted              bool              `json:"is_deleted"`
 }
 
 type WasteTransferRequestResponse struct {
@@ -103,6 +104,7 @@ type WasteTransferRequestResponse struct {
 	AssignedCollector      *UserResponse                       `json:"assigned_collector,omitempty"` // NEW
 	Items                  []WasteTransferItemOfferingResponse `json:"items"`
 	Distance               *float64                            `json:"distance,omitempty"`
+	IsDeleted              bool                                `json:"is_deleted"`
 }
 
 // Search and operation models
@@ -118,6 +120,7 @@ type SearchWasteTransferRequest struct {
 	Latitude             *float64 `json:"latitude,omitempty"`
 	Longitude            *float64 `json:"longitude,omitempty"`
 	OrderDir             string   `json:"order_dir,omitempty"`
+	IsDeleted            *bool    `json:"is_deleted"`
 	Page                 int      `json:"page,omitempty" validate:"min=1"`
 	Size                 int      `json:"size,omitempty" validate:"min=1,max=100"`
 }

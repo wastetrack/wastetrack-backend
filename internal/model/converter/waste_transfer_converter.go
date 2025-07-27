@@ -55,6 +55,7 @@ func WasteTransferRequestToSimpleResponse(request *entity.WasteTransferRequest) 
 		CreatedAt:              &request.CreatedAt,
 		UpdatedAt:              &request.UpdatedAt,
 		Distance:               request.Distance,
+		IsDeleted:              request.IsDeleted,
 	}
 }
 
@@ -133,5 +134,6 @@ func WasteTransferRequestToResponse(request *entity.WasteTransferRequest) *model
 		AssignedCollector:      assignedCollector, // Use the safely handled user
 		Items:                  items,
 		Distance:               request.Distance,
+		IsDeleted:              request.IsDeleted,
 	}
 }

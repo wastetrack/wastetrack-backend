@@ -41,6 +41,7 @@ type SearchSalaryTransactionRequest struct {
 	Status          string `json:"status"`
 	Notes           string `json:"notes"`
 	IsDeleted       *bool  `json:"is_deleted"`
+	OrderDir        string `json:"order_dir"`
 	Page            int    `json:"page,omitempty" validate:"min=1"`
 	Size            int    `json:"size,omitempty" validate:"min=1,max=100"`
 }

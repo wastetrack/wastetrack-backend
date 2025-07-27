@@ -22,6 +22,7 @@ type RouteConfig struct {
 	WasteTransferItemOfferingController *http.WasteTransferItemOfferingController
 	CollectorManagementController       *http.CollectorManagementController
 	SalaryTransactionController         *http.SalaryTransactionController
+	PointConversionController           *http.PointConversionController
 	StorageController                   *http.StorageController
 	StorageItemController               *http.StorageItemController
 	AuthMiddleware                      fiber.Handler
@@ -81,6 +82,9 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Salary Transactions
 	auth.Get("/salary-transactions", c.SalaryTransactionController.List)
 	auth.Get("/salary-transactions/:id", c.SalaryTransactionController.Get)
+	// Point Conversions
+	auth.Get("/point-conversions", c.PointConversionController.List)
+	auth.Get("/point-conversions/:id", c.PointConversionController.Get)
 	// Storage
 	auth.Get("/storages", c.StorageController.List)
 	auth.Get("/storages/:id", c.StorageController.Get)
@@ -95,6 +99,8 @@ func (c *RouteConfig) SetupAuthRoute() {
 	customerOnly.Put("/profiles/:id", c.CustomerController.Update)
 	// Waste Drop Requests
 	customerOnly.Post("/waste-drop-requests", c.WasteDropRequestController.Create)
+	// Point Conversions
+	customerOnly.Post("/point-conversions", c.PointConversionController.Create)
 
 	// WasteBank endpoints
 	wasteBankOnly := c.App.Group("/api/waste-bank", c.AuthMiddleware, middleware.RequireRoles("admin", "waste_bank_unit", "waste_bank_central"))
@@ -182,6 +188,9 @@ func (c *RouteConfig) SetupAuthRoute() {
 	adminOnly.Delete("/waste-transfer-requests/:id", c.WasteTransferController.Delete)
 	// Salary Transactions
 	adminOnly.Delete("/salary-transactions/:id", c.SalaryTransactionController.Delete)
+	// Point Conversions
+	adminOnly.Put("/point-conversions/:id", c.PointConversionController.Update)
+	adminOnly.Delete("/point-conversions/:id", c.PointConversionController.Delete)
 	// Storage
 	adminOnly.Delete("/storages/:id", c.StorageController.Delete)
 

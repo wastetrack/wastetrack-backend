@@ -34,6 +34,7 @@ type WasteTransferRequest struct {
 	AppointmentStartTime types.TimeOnly `gorm:"type:timetz"`
 	AppointmentEndTime   types.TimeOnly `gorm:"type:timetz"`
 	AppointmentLocation  *types.Point   `gorm:"type:geography(POINT,4326);"`
+	IsDeleted            bool           `gorm:"column:is_deleted;default:false"`
 
 	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`

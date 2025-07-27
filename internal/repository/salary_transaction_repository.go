@@ -20,7 +20,7 @@ func NewSalaryTransactionRepository(log *logrus.Logger) *SalaryTransactionReposi
 
 func (r *SalaryTransactionRepository) Search(db *gorm.DB, request *model.SearchSalaryTransactionRequest) ([]entity.SalaryTransaction, int64, error) {
 	var salaryTransactions []entity.SalaryTransaction
-	if err := db.Scopes(r.FilterSalaryTransaction(request)).Offset((request.Page - 1) * request.Size).Limit(request.Size).Find(&salaryTransactions).Error; err != nil {
+	if err := db.Scopes(r.FilterSalaryTransaction(request), r.OrderSalaryTransaction(request)).Offset((request.Page - 1) * request.Size).Limit(request.Size).Find(&salaryTransactions).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -52,6 +52,25 @@ func (r *SalaryTransactionRepository) FilterSalaryTransaction(request *model.Sea
 			tx = tx.Where("is_deleted = ?", *isDeleted)
 		}
 		return tx
+	}
+}
+
+func (r *SalaryTransactionRepository) OrderSalaryTransaction(request *model.SearchSalaryTransactionRequest) func(tx *gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		orderDir := request.OrderDir
+
+		// Set default if not provided
+		if orderDir == "" {
+			orderDir = "desc"
+		}
+
+		// Validate order direction
+		if orderDir != "asc" && orderDir != "desc" {
+			orderDir = "desc"
+		}
+
+		// Always order by created_at with the specified direction
+		return tx.Order("created_at " + orderDir)
 	}
 }
 

@@ -42,6 +42,7 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteTransferItemOfferingRepository := repository.NewWasteTransferItemOfferingRepository(config.Log)
 	collectorManagementRepository := repository.NewCollectorManagementRepository(config.Log)
 	salaryTransactionRepository := repository.NewSalaryTransactionRepository(config.Log)
+	pointConversionRepository := repository.NewPointConversionRepository(config.Log)
 	storageRepository := repository.NewStorageRepository(config.Log)
 	storageItemRepository := repository.NewStorageItemRepository(config.Log)
 
@@ -92,6 +93,7 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteTransferItemOfferingUseCase := usecase.NewWasteTransferItemOfferingUsecase(config.DB, config.Log, config.Validate, wasteTransferItemOfferingRepository, wasteTransferRequestRepository, wasteTypeRepository)
 	collectorManagementUseCase := usecase.NewCollectorManagementUsecase(config.DB, config.Log, config.Validate, collectorManagementRepository, userRepository)
 	salaryTransactionUseCase := usecase.NewSalaryTransactionUsecase(config.DB, config.Log, config.Validate, salaryTransactionRepository, userRepository)
+	pointConversionUseCase := usecase.NewPointConversionUsecase(config.DB, config.Log, config.Validate, pointConversionRepository, userRepository)
 	storageUseCase := usecase.NewStorageUsecase(config.DB, config.Log, config.Validate, storageRepository, userRepository)
 	storageItemUseCase := usecase.NewStorageItemUsecase(config.DB, config.Log, config.Validate, storageRepository, storageItemRepository, wasteTypeRepository)
 
@@ -113,6 +115,7 @@ func Bootstrap(config *BootstrapConfig) {
 	wasteTransferItemOfferingController := http.NewWasteTransferItemOfferingController(wasteTransferItemOfferingUseCase, config.Log)
 	collectorManagementController := http.NewCollectorManagementController(collectorManagementUseCase, config.Log)
 	salaryTransactionController := http.NewSalaryTransactionController(salaryTransactionUseCase, config.Log)
+	pointConversionController := http.NewPointConversionController(pointConversionUseCase, config.Log)
 	storageController := http.NewStorageController(storageUseCase, config.Log)
 	storageItemController := http.NewStorageItemController(storageItemUseCase, config.Log)
 
@@ -137,6 +140,7 @@ func Bootstrap(config *BootstrapConfig) {
 		WasteTransferItemOfferingController: wasteTransferItemOfferingController,
 		CollectorManagementController:       collectorManagementController,
 		SalaryTransactionController:         salaryTransactionController,
+		PointConversionController:           pointConversionController,
 		StorageController:                   storageController,
 		StorageItemController:               storageItemController,
 		AuthMiddleware:                      authMiddleware,

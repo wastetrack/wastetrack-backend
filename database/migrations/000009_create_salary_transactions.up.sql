@@ -6,7 +6,7 @@ DO $$
 BEGIN
     -- Transaction types
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transaction_type') THEN
-        CREATE TYPE transaction_type AS ENUM ('salary', 'points_conversion', 'waste_payment');
+        CREATE TYPE transaction_type AS ENUM ('salary', 'waste_payment');
     END IF;
     
     -- Transaction status

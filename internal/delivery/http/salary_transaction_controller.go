@@ -64,6 +64,7 @@ func (c *SalaryTransactionController) List(ctx *fiber.Ctx) error {
 		TransactionType: ctx.Query("transaction_type"),
 		Status:          ctx.Query("status"),
 		IsDeleted:       helper.ParseBoolQuery(ctx, "is_deleted"),
+		OrderDir:        ctx.Query("order_dir"),
 		Page:            ctx.QueryInt("page", 1),
 		Size:            ctx.QueryInt("size", 10),
 	}
