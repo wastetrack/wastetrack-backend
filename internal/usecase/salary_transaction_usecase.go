@@ -112,6 +112,135 @@ func (u *SalaryTransactionUsecase) Create(ctx context.Context, request *model.Sa
 	return converter.SalaryTransactionToSimpleResponse(salaryTransaction), nil
 }
 
+func (u *SalaryTransactionUsecase) CreatePointConversion(ctx context.Context, request *model.SalaryTransactionRequest) (*model.SalaryTransactionSimpleResponse, error) {
+	tx := u.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := u.Validate.Struct(request); err != nil {
+		u.Log.Warnf("Invalid request body: %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+	// Parse UUIDs
+	senderID, err := uuid.Parse(request.SenderID)
+	if err != nil {
+		u.Log.Warnf("Invalid sender ID: %v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	receiverID, err := uuid.Parse(request.ReceiverID)
+	if err != nil {
+		u.Log.Warnf("Invalid receiver ID: %v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	// Check if sender exists
+	sender := new(entity.User)
+	if err := u.UserRepository.FindById(tx, sender, request.SenderID); err != nil {
+		u.Log.Warnf("Sender not found: %v", err)
+		return nil, fiber.NewError(fiber.StatusNotFound, "Sender not found")
+	}
+
+	// Check if receiver exists
+	receiver := new(entity.User)
+	if err := u.UserRepository.FindById(tx, receiver, request.ReceiverID); err != nil {
+		u.Log.Warnf("Receiver not found: %v", err)
+		return nil, fiber.NewError(fiber.StatusNotFound, "Receiver not found")
+	}
+	// Check if sender has sufficient points
+	if sender.Points < request.Amount {
+		u.Log.Warnf("Insufficient points: sender_id=%s, points=%d, required=%d", request.SenderID, sender.Points, request.Amount)
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Insufficient points")
+	}
+
+	salaryTransaction := &entity.SalaryTransaction{
+		SenderID:        senderID,
+		ReceiverID:      receiverID,
+		TransactionType: "point_conversion",
+		Amount:          request.Amount,
+		Status:          "pennding",
+		Notes:           request.Notes,
+	}
+	if err := u.SalaryTransactionRepository.Create(tx, salaryTransaction); err != nil {
+		u.Log.Warnf("Failed to create salary transaction: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		u.Log.Warnf("Commit error: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.SalaryTransactionToSimpleResponse(salaryTransaction), nil
+}
+
+func (u *SalaryTransactionUsecase) CompletePointConversion(ctx context.Context, id string) (*model.SalaryTransactionSimpleResponse, error) {
+	tx := u.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	// Find the existing salary transaction by ID
+	salaryTransaction := new(entity.SalaryTransaction)
+	if err := u.SalaryTransactionRepository.FindById(tx, salaryTransaction, id); err != nil {
+		u.Log.Warnf("Salary transaction not found: %v", err)
+		return nil, fiber.ErrNotFound
+	}
+
+	// Check if this is a point conversion transaction
+	if salaryTransaction.TransactionType != "point_conversion" {
+		u.Log.Warnf("Transaction is not a point conversion: transaction_id=%s, type=%s", id, salaryTransaction.TransactionType)
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Transaction is not a point conversion")
+	}
+
+	// Check if already completed
+	if salaryTransaction.Status == "completed" {
+		u.Log.Warnf("Transaction already completed: transaction_id=%s", id)
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Transaction already completed")
+	}
+
+	// Check if transaction is in pending status
+	if salaryTransaction.Status != "pending" {
+		u.Log.Warnf("Transaction is not in pending status: transaction_id=%s, status=%s", id, salaryTransaction.Status)
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Transaction is not in pending status")
+	}
+
+	// Get the sender (user who is converting points)
+	sender := new(entity.User)
+	if err := u.UserRepository.FindById(tx, sender, salaryTransaction.SenderID.String()); err != nil {
+		u.Log.Warnf("Sender not found: %v", err)
+		return nil, fiber.NewError(fiber.StatusNotFound, "Sender not found")
+	}
+
+	// Check if sender still has sufficient points
+	if sender.Points < salaryTransaction.Amount {
+		u.Log.Warnf("Insufficient points: sender_id=%s, points=%d, required=%d", salaryTransaction.SenderID.String(), sender.Points, salaryTransaction.Amount)
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Insufficient points")
+	}
+
+	// Perform the point to balance conversion
+	sender.Points -= salaryTransaction.Amount
+	sender.Balance += salaryTransaction.Amount
+
+	// Update sender
+	if err := u.UserRepository.Update(tx, sender); err != nil {
+		u.Log.Warnf("Failed to update sender: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	// Update transaction status to completed
+	salaryTransaction.Status = "completed"
+
+	if err := u.SalaryTransactionRepository.Update(tx, salaryTransaction); err != nil {
+		u.Log.Warnf("Failed to update salary transaction: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		u.Log.Warnf("Commit error: %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.SalaryTransactionToSimpleResponse(salaryTransaction), nil
+}
+
 func (u *SalaryTransactionUsecase) Get(ctx context.Context, id string) (*model.SalaryTransactionResponse, error) {
 	tx := u.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()

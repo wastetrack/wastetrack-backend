@@ -6,12 +6,12 @@ DO $$
 BEGIN
     -- Transaction types
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transaction_type') THEN
-        CREATE TYPE transaction_type AS ENUM ('salary', 'waste_payment');
+        CREATE TYPE transaction_type AS ENUM ('salary', 'waste_payment','point_conversion');
     END IF;
     
     -- Transaction status
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transaction_status') THEN
-        CREATE TYPE transaction_status AS ENUM ('completed', 'failed');
+        CREATE TYPE transaction_status AS ENUM ('pending','completed', 'failed');
     END IF;
 END $$;
 

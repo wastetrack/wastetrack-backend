@@ -57,6 +57,28 @@ func (c *SalaryTransactionController) Get(ctx *fiber.Ctx) error {
 	return ctx.JSON(model.WebResponse[*model.SalaryTransactionResponse]{Data: response})
 }
 
+func (c *SalaryTransactionController) CreatePointConversion(ctx *fiber.Ctx) error {
+	auth := middleware.GetUser(ctx)
+
+	authRequest := &model.GetUserRequest{
+		ID: auth.ID,
+	}
+	request := new(model.SalaryTransactionRequest)
+	if err := ctx.BodyParser(request); err != nil {
+		c.Log.Warnf("Failed to parse request body: %v", err)
+		return fiber.ErrBadRequest
+	}
+
+	request.SenderID = authRequest.ID
+	response, err := c.SalaryTransactionUsecase.CreatePointConversion(ctx.UserContext(), request)
+	if err != nil {
+		c.Log.Warnf("Failed to create salary transaction: %v", err)
+		return err
+	}
+
+	return ctx.JSON(model.WebResponse[*model.SalaryTransactionSimpleResponse]{Data: response})
+}
+
 func (c *SalaryTransactionController) List(ctx *fiber.Ctx) error {
 	request := &model.SearchSalaryTransactionRequest{
 		SenderID:        ctx.Query("sender_id"),
