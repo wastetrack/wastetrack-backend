@@ -78,6 +78,17 @@ func (c *SalaryTransactionController) CreatePointConversion(ctx *fiber.Ctx) erro
 
 	return ctx.JSON(model.WebResponse[*model.SalaryTransactionSimpleResponse]{Data: response})
 }
+func (c *SalaryTransactionController) CompletePointConversion(ctx *fiber.Ctx) error {
+	id := ctx.Params("id")
+
+	response, err := c.SalaryTransactionUsecase.CompletePointConversion(ctx.UserContext(), id)
+	if err != nil {
+		c.Log.Warnf("Failed to complete point conversion: %v", err)
+		return err
+	}
+
+	return ctx.JSON(model.WebResponse[*model.SalaryTransactionSimpleResponse]{Data: response})
+}
 
 func (c *SalaryTransactionController) List(ctx *fiber.Ctx) error {
 	request := &model.SearchSalaryTransactionRequest{

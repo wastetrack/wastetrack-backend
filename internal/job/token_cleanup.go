@@ -9,7 +9,7 @@ import (
 )
 
 func StartTokenCleanupJob(db *gorm.DB, jwtHelper *helper.JWTHelper) {
-	ticker := time.NewTicker(time.Hour) // Run hourly
+	ticker := time.NewTicker(time.Hour * 24) // Run Daily
 	go func() {
 		for range ticker.C {
 			if err := jwtHelper.CleanupExpiredTokens(db); err != nil {

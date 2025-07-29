@@ -11,6 +11,7 @@ import (
 	"github.com/wastetrack/wastetrack-backend/internal/delivery/http/middleware"
 	"github.com/wastetrack/wastetrack-backend/internal/delivery/http/route"
 	"github.com/wastetrack/wastetrack-backend/internal/helper"
+	"github.com/wastetrack/wastetrack-backend/internal/job"
 	"github.com/wastetrack/wastetrack-backend/internal/repository"
 	"github.com/wastetrack/wastetrack-backend/internal/usecase"
 	"gorm.io/gorm"
@@ -147,4 +148,5 @@ func Bootstrap(config *BootstrapConfig) {
 	}
 
 	routeConfig.Setup()
+	job.StartTokenCleanupJob(config.DB, jwtHelper)
 }

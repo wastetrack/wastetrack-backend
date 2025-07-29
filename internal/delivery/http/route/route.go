@@ -100,6 +100,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Waste Drop Requests
 	customerOnly.Post("/waste-drop-requests", c.WasteDropRequestController.Create)
 	// Point Conversions
+	customerOnly.Post("/point-conversion-requests", c.SalaryTransactionController.CreatePointConversion)
 	customerOnly.Post("/point-conversions", c.PointConversionController.Create)
 
 	// WasteBank endpoints
@@ -129,6 +130,8 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Salary Transactions
 	wasteBankOnly.Post("/salary-transactions", c.SalaryTransactionController.Create)
 	wasteBankOnly.Put("/salary-transactions/:id", c.SalaryTransactionController.Update)
+	// Point Conversions
+	wasteBankOnly.Post("/point-conversions", c.SalaryTransactionController.CompletePointConversion)
 	// Storage
 	wasteBankOnly.Put("/storages/:id", c.StorageController.Update)
 	// Storage Items
