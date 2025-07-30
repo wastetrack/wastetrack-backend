@@ -440,6 +440,22 @@
             }
           },
           {
+            "name": "latitude",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "schema": {
@@ -1624,6 +1640,146 @@
         }
       }
     },
+    "/api/point-conversions": {
+      "get": {
+        "operationId": "ListPointConversions",
+        "tags": ["User - Point Conversions"],
+        "summary": "List Point ",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "amount",
+            "in": "query",
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "is_deleted",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Point conversions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/WebResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/PointConversionSimpleResponse"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/point-conversions/{id}": {
+      "get": {
+        "operationId": "GetPointConversion",
+        "tags": ["User - Point Conversions"],
+        "summary": "Get point conversion",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Point conversion retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PointConversionResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/api/storages": {
       "get": {
         "operationId": "ListStorages",
@@ -2061,6 +2217,56 @@
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/WasteDropRequestSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/customer/point-conversions": {
+      "post": {
+        "operationId": "CreatePointConversion",
+        "tags": ["Customer - Point Conversion"],
+        "summary": "Create point conversion",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PointConversionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Point conversion created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PointConversionResponse"
                     }
                   }
                 }
@@ -3325,6 +3531,61 @@
         }
       }
     },
+    "/api/waste-bank/storage-items/{id}/deduct-weight": {
+      "put": {
+        "operationId": "DecreaseStorageItemWeight",
+        "tags": ["Waste Bank - Storage Items"],
+        "summary": "Decrease storage item weight",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStorageItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Storage item updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StorageItemSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/api/waste-collector/profiles/{user_id}": {
       "get": {
         "operationId": "GetWasteCollectorProfile",
@@ -3870,6 +4131,7 @@
           }
         }
       },
+
       "delete": {
         "operationId": "DeleteIndustryStorageItem",
         "tags": ["Industry - Storage Items"],
@@ -3887,6 +4149,61 @@
         "responses": {
           "200": {
             "description": "Storage item deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StorageItemSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/industry/storage-items/{id}/deduct-weight": {
+      "put": {
+        "operationId": "DecreaseIndustryStorageItemWeight",
+        "tags": ["Industry - Storage Items"],
+        "summary": "Decrease industry storage item weight",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStorageItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Storage item updated successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -4596,6 +4913,114 @@
           }
         }
       }
+    },
+    "/api/admin/point-conversions/{id}": {
+            "put": {
+        "operationId": "UpdatePointConversion",
+        "tags": ["Admin - Point Conversions"],
+        "summary": "Update point conversion",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePointConversionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Point conversion request updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PointConversionSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "DeletePointConversion",
+        "tags": ["Admin - Point Conversions"],
+        "summary": "Delete point conversion",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Waste drop request deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PointConversionSimpleResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4942,6 +5367,9 @@
           "is_email_verified": {
             "type": "boolean"
           },
+          "is_accepting_customer": {
+            "type": "boolean"
+          },
           "access_token": {
             "type": "string"
           },
@@ -4956,6 +5384,13 @@
             "type": "string",
             "format": "date-time",
             "example": "2023-08-02T10:00:00.000Z"
+          },
+          "is_agreed_to_terms": {
+            "type": "boolean"
+          },
+          "distance": {
+            "type": "number",
+            "format": "float"
           }
         },
         "required": [
@@ -6475,6 +6910,56 @@
             },
             "example": [45.0, 30.2]
           }
+        }
+      },
+      "PointConversionSimpleResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "user_id": { "type": "string" },
+          "amount": { "type": "integer", "format": "int64" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "status": { "type": "string" },
+          "is_deleted": { "type": "boolean" }
+        }
+      },
+      "PointConversionRequest": {
+        "type": "object",
+        "required": ["points"],
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+        "UpdatePointConversionRequest": {
+    "type": "object",
+    "required": ["id"],
+    "properties": {
+      "id": {
+        "type": "string",
+        "maxLength": 100
+      },
+      "user_id": { "type": "string" },
+      "status": { "type": "string" },
+      "is_deleted": { "type": "boolean" }
+    }
+  },
+      "PointConversionResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "user_id": { "type": "string" },
+          "amount": { "type": "integer", "format": "int64" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "status": { "type": "string" },
+          "is_deleted": { "type": "boolean" },
+          "user": { "$ref": "#/components/schemas/UserResponse" }
         }
       }
     }

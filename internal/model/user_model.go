@@ -25,7 +25,7 @@ type UserListResponse struct {
 	CreatedAt           *time.Time        `json:"created_at,omitempty"`
 	UpdatedAt           *time.Time        `json:"updated_at,omitempty"`
 	Distance            *float64          `json:"distance,omitempty"`
-
+	IsAgreeedToTerms    bool              `json:"is_agreed_to_terms"`
 	// Profile data based on role
 	CustomerProfile   *CustomerResponse   `json:"customer_profile,omitempty"`
 	WasteBankProfile  *WasteBankResponse  `json:"waste_bank_profile,omitempty"`
@@ -52,6 +52,7 @@ type UserResponse struct {
 	RefreshToken        string            `json:"refresh_token,omitempty"`
 	CreatedAt           *time.Time        `json:"created_at,omitempty"`
 	UpdatedAt           *time.Time        `json:"updated_at,omitempty"`
+	IsAgreeedToTerms    bool              `json:"is_agreed_to_terms"`
 	// Add distance field (in meters) - will be populated when lat/lng provided in search
 	Distance *float64 `json:"distance,omitempty"`
 }
@@ -69,6 +70,7 @@ type RegisterUserRequest struct {
 	Province            string           `json:"province" validate:"required,max=100"`
 	Location            *LocationRequest `json:"location"` // Optional pointer to allow null
 	InstitutionID       string           `json:"institution_id"`
+	IsAgreedToTerms     bool             `json:"is_agreed_to_terms"`
 }
 
 type LoginUserRequest struct {

@@ -114,6 +114,9 @@ func (c *UserUseCase) Register(ctx context.Context, request *model.RegisterUserR
 			Lng: request.Location.Longitude,
 		}
 	}
+	if !request.IsAgreedToTerms {
+		return nil, fiber.NewError(fiber.StatusBadRequest, "You must agree to the terms and conditions")
+	}
 	isAcceptingCustomer := getIsAcceptingCustomer(request.IsAcceptingCustomer)
 	user := &entity.User{
 		Username:               request.Username,

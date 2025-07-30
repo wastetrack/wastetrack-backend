@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
     location GEOGRAPHY(Point, 4326),
     is_email_verified BOOLEAN DEFAULT FALSE,
     is_accepting_customer BOOLEAN DEFAULT TRUE,
+    is_agreed_to_terms BOOLEAN DEFAULT TRUE,
     email_verification_token TEXT,
     reset_password_token TEXT,
     reset_password_expiry TIMESTAMPTZ,

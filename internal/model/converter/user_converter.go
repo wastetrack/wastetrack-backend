@@ -35,6 +35,7 @@ func UserToResponse(user *entity.User) *model.UserResponse {
 		CreatedAt:           &user.CreatedAt,
 		UpdatedAt:           &user.UpdatedAt,
 		Distance:            user.Distance, // Now directly accessible from entity
+		IsAgreeedToTerms:    user.IsAgreeedToTerms,
 	}
 }
 
@@ -66,5 +67,6 @@ func UserToListResponse(user *entity.User) *model.UserListResponse {
 		CreatedAt:           &user.CreatedAt,
 		UpdatedAt:           &user.UpdatedAt,
 		Distance:            user.Distance,
+		IsAgreeedToTerms:    user.IsAgreeedToTerms,
 	}
 }
