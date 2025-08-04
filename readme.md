@@ -38,7 +38,7 @@ go run ./database/cmd/seeder/main.go -help
 ```
 ### Clear seeders
 ```bash
-go run .\database\cmd\seeder\main.go -db "postgres://user:password@localhost:5432/your_db?sslmode=disable" -clear
+go run .\database\cmd\seeder\main.go -db "postgres://user:password@localhost:5432/your_db?sslmode=disable" -only-clear
 ```
 
 # Run web server
