@@ -99,6 +99,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	customerOnly.Put("/profiles/:id", c.CustomerController.Update)
 	// Waste Drop Requests
 	customerOnly.Post("/waste-drop-requests", c.WasteDropRequestController.Create)
+	customerOnly.Put("/waste-drop-requests/:id", c.WasteDropRequestController.UpdateStatus)
 	// Point Conversions
 	customerOnly.Post("/point-conversion-requests", c.SalaryTransactionController.CreatePointConversion)
 	customerOnly.Post("/point-conversions", c.PointConversionController.Create)

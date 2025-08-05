@@ -15,6 +15,8 @@ import (
 	"github.com/wastetrack/wastetrack-backend/internal/model/converter"
 	"github.com/wastetrack/wastetrack-backend/internal/repository"
 	"github.com/wastetrack/wastetrack-backend/internal/types"
+	"github.com/wastetrack/wastetrack-backend/pkg/timezone"
+
 	"gorm.io/gorm"
 )
 
@@ -43,10 +45,8 @@ func NewWasteTransferRequestUsecase(
 	wasteTransferItemOfferingRepository *repository.WasteTransferItemOfferingRepository,
 	userRepository *repository.UserRepository,
 	wasteTypeRepository *repository.WasteTypeRepository,
-	// Storage repository parameters
 	storageRepository *repository.StorageRepository,
 	storageItemRepository *repository.StorageItemRepository,
-	// NEW: Profile repository parameters
 	industryRepository *repository.IndustryRepository,
 	wasteBankRepository *repository.WasteBankRepository,
 	salaryTransactionRepository *repository.SalaryTransactionRepository,
@@ -285,7 +285,7 @@ func (c *WasteTransferRequestUsecase) Create(ctx context.Context, request *model
 		}
 	}
 
-	// Parse appointment date and times
+	// Parse appointment date
 	appointmentDate, err := time.Parse("2006-01-02", request.AppointmentDate)
 	if err != nil {
 		c.Log.Warnf("Invalid appointment date format: %+v", err)
@@ -293,22 +293,78 @@ func (c *WasteTransferRequestUsecase) Create(ctx context.Context, request *model
 	}
 
 	var appointmentStartTime, appointmentEndTime types.TimeOnly
+	var startTimeLocation, endTimeLocation *time.Location
+
+	// Parse and validate appointment start time
 	if request.AppointmentStartTime != "" {
-		startTime, err := time.Parse("15:04:05Z07:00", request.AppointmentStartTime)
+		startTime, location, err := timezone.ParseTimeWithTimezone(request.AppointmentStartTime)
 		if err != nil {
 			c.Log.Warnf("Invalid appointment start time format: %+v", err)
 			return nil, fiber.ErrBadRequest
 		}
+		startTimeLocation = location
 		appointmentStartTime = types.NewTimeOnly(startTime)
+
+		// Check if appointment start time is in the past
+		if timezone.IsDateTimeInPast(appointmentDate, startTime, location) {
+			c.Log.Warnf("Appointment start time cannot be in the past")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Appointment start time cannot be in the past")
+		}
 	}
 
+	// Parse and validate appointment end time
 	if request.AppointmentEndTime != "" {
-		endTime, err := time.Parse("15:04:05Z07:00", request.AppointmentEndTime)
+		endTime, location, err := timezone.ParseTimeWithTimezone(request.AppointmentEndTime)
 		if err != nil {
 			c.Log.Warnf("Invalid appointment end time format: %+v", err)
 			return nil, fiber.ErrBadRequest
 		}
+		endTimeLocation = location
 		appointmentEndTime = types.NewTimeOnly(endTime)
+
+		// Check if appointment end time is in the past
+		if timezone.IsDateTimeInPast(appointmentDate, endTime, location) {
+			c.Log.Warnf("Appointment end time cannot be in the past")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Appointment end time cannot be in the past")
+		}
+	}
+
+	// Additional validation: if both start and end times are provided, ensure end time is after start time
+	if request.AppointmentStartTime != "" && request.AppointmentEndTime != "" {
+		startTimeWithDate := time.Date(
+			appointmentDate.Year(),
+			appointmentDate.Month(),
+			appointmentDate.Day(),
+			appointmentStartTime.Time.Hour(),
+			appointmentStartTime.Time.Minute(),
+			appointmentStartTime.Time.Second(),
+			0,
+			startTimeLocation,
+		)
+
+		endTimeWithDate := time.Date(
+			appointmentDate.Year(),
+			appointmentDate.Month(),
+			appointmentDate.Day(),
+			appointmentEndTime.Time.Hour(),
+			appointmentEndTime.Time.Minute(),
+			appointmentEndTime.Time.Second(),
+			0,
+			endTimeLocation,
+		)
+
+		if endTimeWithDate.Before(startTimeWithDate) || endTimeWithDate.Equal(startTimeWithDate) {
+			c.Log.Warnf("Appointment end time must be after start time")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Appointment end time must be after start time")
+		}
+	}
+
+	// Validate appointment date is not in the past (even without time)
+	today := time.Now().In(timezone.WIB).Truncate(24 * time.Hour)
+	appointmentDateOnly := appointmentDate.Truncate(24 * time.Hour)
+	if appointmentDateOnly.Before(today) {
+		c.Log.Warnf("Appointment date cannot be in the past")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Appointment date cannot be in the past")
 	}
 
 	wasteTransferRequest := &entity.WasteTransferRequest{
@@ -326,6 +382,7 @@ func (c *WasteTransferRequestUsecase) Create(ctx context.Context, request *model
 		AppointmentStartTime:   appointmentStartTime,
 		AppointmentEndTime:     appointmentEndTime,
 	}
+
 	// Handle appointment location if provided
 	if request.AppointmentLocation != nil {
 		wasteTransferRequest.AppointmentLocation = &types.Point{
@@ -381,6 +438,7 @@ func (c *WasteTransferRequestUsecase) Create(ctx context.Context, request *model
 
 	return converter.WasteTransferRequestToSimpleResponse(wasteTransferRequest), nil
 }
+
 func (c *WasteTransferRequestUsecase) Get(ctx context.Context, request *model.GetWasteTransferRequest) (*model.WasteTransferRequestResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()

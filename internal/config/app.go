@@ -47,7 +47,7 @@ func Bootstrap(config *BootstrapConfig) {
 	storageRepository := repository.NewStorageRepository(config.Log)
 	storageItemRepository := repository.NewStorageItemRepository(config.Log)
 
-	// Setup JWT Helper
+	// Setup Helper
 	jwtHelper := helper.NewJWTHelper(
 		config.Config.GetString("jwt.secret_key"),                     // JWT secret for access tokens
 		config.Config.GetString("jwt.refresh_secret_key"),             // JWT secret for refresh tokens
@@ -56,7 +56,6 @@ func Bootstrap(config *BootstrapConfig) {
 		refreshTokenRepository,
 	)
 
-	// Setup Email Helper
 	emailHelper := helper.NewEmailHelper(
 		config.Config.GetString("email.smtp_host"),     // SMTP server host (e.g., smtp.gmail.com)
 		config.Config.GetString("email.smtp_port"),     // SMTP server port (e.g., 587)

@@ -25,9 +25,9 @@ func NewWasteTransferRequestController(usecase *usecase.WasteTransferRequestUsec
 
 func (c *WasteTransferRequestController) Create(ctx *fiber.Ctx) error {
 	request := new(model.WasteTransferRequestRequest)
-	if err := ctx.BodyParser(request); err != nil {
+	if err := helper.ParseBody(ctx, request); err != nil {
 		c.Log.Warnf("Failed to parse request body: %v", err)
-		return fiber.ErrBadRequest
+		return err
 	}
 
 	response, err := c.WasteTransferRequestUsecase.Create(ctx.UserContext(), request)
@@ -138,7 +138,7 @@ func (c *WasteTransferRequestController) Update(ctx *fiber.Ctx) error {
 	request := new(model.UpdateWasteTransferRequest)
 	request.ID = ctx.Params("id")
 
-	if err := ctx.BodyParser(request); err != nil {
+	if err := helper.ParseBody(ctx, request); err != nil {
 		c.Log.Warnf("Failed to parse request body: %v", err)
 		return fiber.ErrBadRequest
 	}
@@ -228,7 +228,7 @@ func (c *WasteTransferRequestController) AssignCollectorByWasteType(ctx *fiber.C
 	request := new(model.AssignCollectorByWasteTypeRequest)
 	request.ID = ctx.Params("id")
 
-	if err := ctx.BodyParser(request); err != nil {
+	if err := helper.ParseBody(ctx, request); err != nil {
 		c.Log.Warnf("Failed to parse request body: %v", err)
 		return fiber.ErrBadRequest
 	}
@@ -249,7 +249,7 @@ func (c *WasteTransferRequestController) CompleteRequest(ctx *fiber.Ctx) error {
 	request := new(model.CompleteWasteTransferRequest)
 	request.ID = ctx.Params("id")
 
-	if err := ctx.BodyParser(request); err != nil {
+	if err := helper.ParseBody(ctx, request); err != nil {
 		c.Log.Warnf("Failed to parse request body: %v", err)
 		return fiber.ErrBadRequest
 	}
