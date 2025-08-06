@@ -104,7 +104,7 @@ func WasteTransferRequestToResponse(request *entity.WasteTransferRequest) *model
 		assignedCollectorID = request.AssignedCollectorID.String()
 	}
 
-	// Convert items
+	// Convert items with loss weight calculation
 	var items []model.WasteTransferItemOfferingResponse
 	for _, item := range request.Items {
 		items = append(items, *WasteTransferItemOfferingToResponse(&item))
