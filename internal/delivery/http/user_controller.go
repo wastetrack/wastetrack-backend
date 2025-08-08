@@ -312,3 +312,41 @@ func (c *UserController) RefreshToken(ctx *fiber.Ctx) error {
 		Data: response,
 	})
 }
+
+func (c *UserController) RequestEmailChange(ctx *fiber.Ctx) error {
+	auth := middleware.GetUser(ctx)
+
+	request := new(model.ChangeEmailRequest)
+	if err := ctx.BodyParser(request); err != nil {
+		c.Log.Warnf("Failed to parse request body: %v", err)
+		return fiber.ErrBadRequest
+	}
+
+	response, err := c.UserUsecase.RequestEmailChange(ctx.UserContext(), auth.ID, request)
+	if err != nil {
+		c.Log.Warnf("Failed to request email change: %v", err)
+		return err
+	}
+
+	return ctx.JSON(model.WebResponse[*model.ChangeEmailResponse]{
+		Data: response,
+	})
+}
+
+func (c *UserController) ConfirmEmailChange(ctx *fiber.Ctx) error {
+	request := new(model.ConfirmEmailChangeRequest)
+	if err := ctx.BodyParser(request); err != nil {
+		c.Log.Warnf("Failed to parse request body: %v", err)
+		return fiber.ErrBadRequest
+	}
+
+	response, err := c.UserUsecase.ConfirmEmailChange(ctx.UserContext(), request)
+	if err != nil {
+		c.Log.Warnf("Failed to confirm email change: %v", err)
+		return err
+	}
+
+	return ctx.JSON(model.WebResponse[*model.UserResponse]{
+		Data: response,
+	})
+}

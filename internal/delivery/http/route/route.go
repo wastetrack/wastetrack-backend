@@ -25,6 +25,7 @@ type RouteConfig struct {
 	PointConversionController           *http.PointConversionController
 	StorageController                   *http.StorageController
 	StorageItemController               *http.StorageItemController
+	GovernmentController                *http.GovernmentController
 	AuthMiddleware                      fiber.Handler
 }
 
@@ -44,6 +45,7 @@ func (c *RouteConfig) SetupGuestRoute() {
 	c.App.Post("/api/auth/forgot-password", c.UserController.ForgotPassword)
 	c.App.Post("/api/auth/reset-password", c.UserController.ResetPassword)
 	c.App.Post("/api/auth/refresh-token", c.UserController.RefreshToken)
+	c.App.Post("/api/auth/request-email-change/confirm", c.UserController.ConfirmEmailChange)
 }
 
 func (c *RouteConfig) SetupAuthRoute() {
@@ -55,6 +57,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	auth.Get("/users/current", c.UserController.Current)
 	auth.Post("/auth/logout", c.UserController.Logout)
 	auth.Post("/auth/logout-all-devices", c.UserController.LogoutAllDevices)
+	auth.Post("/auth/request-email-change", c.UserController.RequestEmailChange)
 	// Profiles
 	// Waste Bank
 	auth.Get("/waste-bank/profiles/:user_id", c.WasteBankController.Get)
@@ -166,6 +169,11 @@ func (c *RouteConfig) SetupAuthRoute() {
 	industryOnly.Put("/storage-items/:id", c.StorageItemController.Update)
 	industryOnly.Put("/storage-items/:id/deduct-weight", c.StorageItemController.DeductStorageItem)
 	industryOnly.Delete("/storage-items/:id", c.StorageItemController.Delete)
+
+	// Government endpoints
+	governmentOnly := c.App.Group("/api/government", c.AuthMiddleware, middleware.RequireRoles("admin", "government"))
+	// Dashboard
+	governmentOnly.Get("/dashboard", c.GovernmentController.GetDashboard)
 	// Admin endpoints
 	adminOnly := c.App.Group("/api/admin", c.AuthMiddleware, middleware.RequireRoles("admin"))
 	// Customer profiles

@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/sirupsen/logrus"
 	"github.com/wastetrack/wastetrack-backend/internal/entity"
 	"github.com/wastetrack/wastetrack-backend/internal/model"
@@ -67,4 +69,39 @@ func (r *StorageRepository) FilterStorage(request *model.SearchStorageRequest) f
 		}
 		return tx
 	}
+}
+
+func (r *StorageRepository) GetWasteBankStorageVolumes(db *gorm.DB, request *model.GovernmentDashboardRequest) (map[string]float64, error) {
+	var results []struct {
+		UserID      string  `json:"user_id"`
+		TotalVolume float64 `json:"total_volume"`
+	}
+
+	query := db.Raw(`
+		SELECT 
+			s.user_id::text as user_id,
+			SUM(s.length * s.width * s.height) as total_volume
+		FROM storage s
+		JOIN users u ON s.user_id = u.id
+		WHERE s.is_deleted = false
+		  AND u.role IN ('waste_bank_unit', 'waste_bank_central')
+		  AND ($1 = '' OR u.province ILIKE $2)
+		  AND ($3 = '' OR u.city ILIKE $4)
+		GROUP BY s.user_id
+		HAVING SUM(s.length * s.width * s.height) > 0
+	`,
+		request.Province, "%"+request.Province+"%",
+		request.City, "%"+request.City+"%")
+
+	if err := query.Scan(&results).Error; err != nil {
+		return nil, fmt.Errorf("failed to get storage volumes: %v", err)
+	}
+
+	// Convert to map for easy lookup
+	volumes := make(map[string]float64)
+	for _, result := range results {
+		volumes[result.UserID] = result.TotalVolume
+	}
+
+	return volumes, nil
 }

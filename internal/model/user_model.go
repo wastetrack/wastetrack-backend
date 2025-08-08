@@ -116,6 +116,8 @@ type SearchUserRequest struct {
 	RadiusMeters        *int     `json:"radius_meters"`
 	Latitude            *float64 `json:"latitude"`
 	Longitude           *float64 `json:"longitude"`
+	StartMonth          string   `json:"start_month"`
+	EndMonth            string   `json:"end_month"`
 	Page                int      `json:"page,omitempty" validate:"min=1"`
 	Size                int      `json:"size,omitempty" validate:"min=1,max=100"`
 }
@@ -136,4 +138,16 @@ type UpdateUserRequest struct {
 
 type DeleteUserRequest struct {
 	ID string `json:"id" validate:"required"`
+}
+type ChangeEmailRequest struct {
+	NewEmail string `json:"new_email" validate:"required,email,max=100"`
+}
+
+type ConfirmEmailChangeRequest struct {
+	Token string `json:"token" validate:"required"`
+}
+
+type ChangeEmailResponse struct {
+	Message string `json:"message"`
+	Success bool   `json:"success"`
 }

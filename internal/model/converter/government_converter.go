@@ -17,3 +17,17 @@ func GovernmentToResponse(government *entity.GovernmentProfile) *model.Governmen
 		User:   userResponse,
 	}
 }
+func GovernmentDashboardToResponse(dashboard *model.GovernmentDashboardResponse) *model.GovernmentDashboardResponse {
+	if dashboard == nil {
+		return &model.GovernmentDashboardResponse{}
+	}
+
+	return &model.GovernmentDashboardResponse{
+		TotalBankSampah:  dashboard.TotalBankSampah,
+		TotalOfftaker:    dashboard.TotalOfftaker,
+		TotalCollected:   dashboard.TotalCollected,
+		CollectionTrends: dashboard.CollectionTrends,
+		TopOfftakers:     dashboard.TopOfftakers,
+		LargestBanks:     dashboard.LargestBanks,
+	}
+}

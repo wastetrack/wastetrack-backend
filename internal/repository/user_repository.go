@@ -2,7 +2,9 @@ package repository
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/wastetrack/wastetrack-backend/internal/entity"
 	"github.com/wastetrack/wastetrack-backend/internal/model"
@@ -227,4 +229,105 @@ func (r *UserRepository) FindByIDWithDistance(db *gorm.DB, user *entity.User, id
 	}
 
 	return query.First(user).Error
+}
+
+func (r *UserRepository) FindByEmailChangeToken(db *gorm.DB, user *entity.User, token string) error {
+	return db.Where("email_change_token = ? AND email_change_expiry > NOW()", token).First(user).Error
+}
+
+func (r *UserRepository) CountByEmailExcludingUser(db *gorm.DB, email string, userID uuid.UUID) (int64, error) {
+	var total int64
+	err := db.Model(new(entity.User)).Where("email = ? AND id != ?", email, userID).Count(&total).Error
+	return total, err
+}
+
+// Government
+func (r *UserRepository) CountWasteBanks(db *gorm.DB, request *model.GovernmentDashboardRequest) (int64, error) {
+	var count int64
+
+	query := db.Model(&entity.User{}).
+		Where("role IN ?", []string{"waste_bank_unit", "waste_bank_central"})
+
+	if request.EndMonth != "" {
+		endDate, err := time.Parse("2006-01", request.EndMonth)
+		if err != nil {
+			return 0, fmt.Errorf("invalid end_month format: %v", err)
+		}
+		endDate = endDate.AddDate(0, 1, -1).Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+		query = query.Where("created_at <= ?", endDate)
+	}
+
+	// Location filters
+	if request.Province != "" {
+		query = query.Where("province ILIKE ?", "%"+request.Province+"%")
+	}
+
+	if request.City != "" {
+		query = query.Where("city ILIKE ?", "%"+request.City+"%")
+	}
+
+	if err := query.Count(&count).Error; err != nil {
+		return 0, fmt.Errorf("failed to count waste banks: %v", err)
+	}
+
+	return count, nil
+}
+
+func (r *UserRepository) CountOfftakers(db *gorm.DB, request *model.GovernmentDashboardRequest) (int64, error) {
+	var count int64
+
+	query := db.Model(&entity.User{}).
+		Where("role = ?", "industry")
+
+	// Apply date filters only if provided
+	if request.EndMonth != "" {
+		endDate, err := time.Parse("2006-01", request.EndMonth)
+		if err != nil {
+			return 0, fmt.Errorf("invalid end_month format: %v", err)
+		}
+		endDate = endDate.AddDate(0, 1, -1).Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+		query = query.Where("created_at <= ?", endDate)
+	}
+
+	// Location filters
+	if request.Province != "" {
+		query = query.Where("province ILIKE ?", "%"+request.Province+"%")
+	}
+
+	if request.City != "" {
+		query = query.Where("city ILIKE ?", "%"+request.City+"%")
+	}
+
+	if err := query.Count(&count).Error; err != nil {
+		return 0, fmt.Errorf("failed to count offtakers: %v", err)
+	}
+
+	return count, nil
+}
+
+func (r *UserRepository) GetWasteBankUsers(db *gorm.DB, request *model.GovernmentDashboardRequest) (map[string]*entity.User, error) {
+	var users []entity.User
+
+	query := db.Model(&entity.User{}).
+		Where("role IN ? ", []string{"waste_bank_unit", "waste_bank_central"})
+
+	// Apply location filters
+	if request.Province != "" {
+		query = query.Where("province ILIKE ?", "%"+request.Province+"%")
+	}
+	if request.City != "" {
+		query = query.Where("city ILIKE ?", "%"+request.City+"%")
+	}
+
+	if err := query.Find(&users).Error; err != nil {
+		return nil, fmt.Errorf("failed to get waste bank users: %v", err)
+	}
+
+	// Convert to map for easy lookup
+	userMap := make(map[string]*entity.User)
+	for i := range users {
+		userMap[users[i].ID.String()] = &users[i]
+	}
+
+	return userMap, nil
 }

@@ -8,7 +8,6 @@ import (
 	"github.com/wastetrack/wastetrack-backend/internal/types"
 )
 
-// PostGIS-compatible user with geography point
 type User struct {
 	ID          uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 	Username    string    `gorm:"column:username;unique;not null"`
@@ -30,8 +29,12 @@ type User struct {
 	EmailVerificationToken string       `gorm:"column:email_verification_token"`
 	ResetPasswordToken     string       `gorm:"column:reset_password_token"`
 	ResetPasswordExpiry    *time.Time   `gorm:"column:reset_password_expiry"`
-	CreatedAt              time.Time    `gorm:"column:created_at;autoCreateTime"`
-	UpdatedAt              time.Time    `gorm:"column:updated_at;autoUpdateTime"`
-	IsAgreeedToTerms       bool         `gorm:"column:is_agreed_to_terms"`
-	Distance               *float64     `gorm:"->" json:"-"`
+	// Email change fields
+	EmailChangeToken  string     `gorm:"column:email_change_token"`
+	EmailChangeExpiry *time.Time `gorm:"column:email_change_expiry"`
+	NewEmail          string     `gorm:"column:new_email"`
+	CreatedAt         time.Time  `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt         time.Time  `gorm:"column:updated_at;autoUpdateTime"`
+	IsAgreeedToTerms  bool       `gorm:"column:is_agreed_to_terms"`
+	Distance          *float64   `gorm:"->" json:"-"`
 }

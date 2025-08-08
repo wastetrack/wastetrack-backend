@@ -96,6 +96,7 @@ func Bootstrap(config *BootstrapConfig) {
 	pointConversionUseCase := usecase.NewPointConversionUsecase(config.DB, config.Log, config.Validate, pointConversionRepository, userRepository)
 	storageUseCase := usecase.NewStorageUsecase(config.DB, config.Log, config.Validate, storageRepository, userRepository)
 	storageItemUseCase := usecase.NewStorageItemUsecase(config.DB, config.Log, config.Validate, storageRepository, storageItemRepository, wasteTypeRepository)
+	governmentUseCase := usecase.NewGovernmentUseCase(config.DB, config.Log, config.Validate, userRepository, wasteDropRequesItemRepository, wasteTransferItemOfferingRepository, wasteTransferRequestRepository, storageRepository)
 
 	// Setup controllers
 	userController := http.NewUserController(
@@ -118,6 +119,7 @@ func Bootstrap(config *BootstrapConfig) {
 	pointConversionController := http.NewPointConversionController(pointConversionUseCase, config.Log)
 	storageController := http.NewStorageController(storageUseCase, config.Log)
 	storageItemController := http.NewStorageItemController(storageItemUseCase, config.Log)
+	governmentController := http.NewGovernmentController(governmentUseCase, config.Log)
 
 	// Setup middlewares
 	authMiddleware := middleware.NewJWTAuth(
@@ -143,6 +145,7 @@ func Bootstrap(config *BootstrapConfig) {
 		PointConversionController:           pointConversionController,
 		StorageController:                   storageController,
 		StorageItemController:               storageItemController,
+		GovernmentController:                governmentController,
 		AuthMiddleware:                      authMiddleware,
 	}
 

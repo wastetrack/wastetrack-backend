@@ -768,3 +768,163 @@ func (c *UserUseCase) LogoutAllDevices(ctx context.Context, userID string) error
 
 	return tx.Commit().Error
 }
+func (c *UserUseCase) RequestEmailChange(ctx context.Context, userID string, request *model.ChangeEmailRequest) (*model.ChangeEmailResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request body: %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	// Find the current user
+	user := new(entity.User)
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		c.Log.Warnf("Invalid user ID: %v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	if err := c.UserRepository.FindById(tx, user, userID); err != nil {
+		c.Log.Warnf("Failed to find user: %v", err)
+		return nil, fiber.ErrNotFound
+	}
+
+	// Check if the new email is the same as current email
+	if user.Email == request.NewEmail {
+		return nil, fiber.NewError(fiber.StatusBadRequest, "New email cannot be the same as current email")
+	}
+
+	// Check if new email already exists (excluding current user)
+	total, err := c.UserRepository.CountByEmailExcludingUser(tx, request.NewEmail, userUUID)
+	if err != nil {
+		c.Log.Warnf("Failed to count by email: %v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+	if total > 0 {
+		c.Log.Warnf("New email already exists")
+		return nil, fiber.NewError(fiber.StatusConflict, "Email already exists")
+	}
+
+	// Generate email change verification token
+	changeToken, err := c.EmailHelper.GenerateVerificationToken()
+	if err != nil {
+		c.Log.Warnf("Failed to generate email change token: %v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	// Set token and expiry (1 hour)
+	expiry := time.Now().Add(time.Hour)
+	user.EmailChangeToken = changeToken
+	user.EmailChangeExpiry = &expiry
+	user.NewEmail = request.NewEmail // Store the new email temporarily
+
+	if err := c.UserRepository.Update(tx, user); err != nil {
+		c.Log.Warnf("Failed to update user: %v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed to commit transaction: %v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	// Send email change confirmation email
+	go func() {
+		if err := c.EmailHelper.SendEmailChangeConfirmation(request.NewEmail, user.Username, changeToken, c.BaseURL); err != nil {
+			c.Log.Errorf("Failed to send email change confirmation: %v", err)
+		}
+	}()
+
+	return &model.ChangeEmailResponse{
+		Message: "Email change confirmation sent to new email address",
+		Success: true,
+	}, nil
+}
+
+func (c *UserUseCase) ConfirmEmailChange(ctx context.Context, request *model.ConfirmEmailChangeRequest) (*model.UserResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request body: %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	user := new(entity.User)
+	if err := c.UserRepository.FindByEmailChangeToken(tx, user, request.Token); err != nil {
+		c.Log.Warnf("Failed to find user by email change token: %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Invalid or expired email change token")
+	}
+
+	// Double-check that the new email is still available
+	if user.NewEmail != "" {
+		total, err := c.UserRepository.CountByEmailExcludingUser(tx, user.NewEmail, user.ID)
+		if err != nil {
+			c.Log.Warnf("Failed to count by email: %v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+		if total > 0 {
+			c.Log.Warnf("New email is no longer available")
+			return nil, fiber.NewError(fiber.StatusConflict, "Email is no longer available")
+		}
+	}
+
+	// Update email and clear change tokens
+	user.Email = user.NewEmail
+	user.NewEmail = ""
+	user.EmailChangeToken = ""
+	user.EmailChangeExpiry = nil
+	// Reset email verification status since it's a new email
+	user.IsEmailVerified = false
+
+	// Generate new email verification token for the new email
+	verificationToken, err := c.EmailHelper.GenerateVerificationToken()
+	if err != nil {
+		c.Log.Warnf("Failed to generate verification token: %v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+	user.EmailVerificationToken = verificationToken
+
+	if err := c.UserRepository.Update(tx, user); err != nil {
+		c.Log.Warnf("Failed to update user: %v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	// Revoke all existing tokens since email changed (security measure)
+	if err := c.JWTHelper.RevokeAllUserTokens(tx, user.ID); err != nil {
+		c.Log.Warnf("Failed to revoke all user tokens: %v", err)
+		// Continue anyway, this is not critical
+	}
+
+	// Generate new tokens with updated email verification status
+	accessToken, err := c.JWTHelper.GenerateAccessToken(user.ID.String(), user.Role, user.IsEmailVerified)
+	if err != nil {
+		c.Log.Warnf("Failed to generate access token: %v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	refreshToken, err := c.JWTHelper.GenerateRefreshToken(tx, user.ID)
+	if err != nil {
+		c.Log.Warnf("Failed to generate refresh token: %v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed to commit transaction: %v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	// Send verification email to the new email address
+	go func() {
+		if err := c.EmailHelper.SendVerificationEmail(user.Email, user.Username, verificationToken, c.BaseURL); err != nil {
+			c.Log.Errorf("Failed to send verification email: %v", err)
+		}
+	}()
+
+	response := converter.UserToResponse(user)
+	response.AccessToken = accessToken
+	response.RefreshToken = refreshToken
+
+	return response, nil
+}

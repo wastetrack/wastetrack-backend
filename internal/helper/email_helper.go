@@ -58,11 +58,11 @@ func (e *EmailHelper) SendVerificationEmail(toEmail, username, token, baseURL st
 func (e *EmailHelper) SendPasswordResetEmail(toEmail, username, token, baseURL string) error {
 	resetURL := fmt.Sprintf("%s/reset-password?token=%s", baseURL, token)
 
-	subject := "Password Reset - Blessing BE"
+	subject := "Password Reset - Wastetrack"
 	body := fmt.Sprintf(`
 		Hi %s,
 		
-		You requested a password reset for your Blessing BE account. Click the link below to reset your password:
+		You requested a password reset for your Wastetrack account. Click the link below to reset your password:
 		
 		%s
 		
@@ -71,8 +71,36 @@ func (e *EmailHelper) SendPasswordResetEmail(toEmail, username, token, baseURL s
 		If you didn't request this, please ignore this email.
 		
 		Best regards,
-		The Blessing BE Team
+		Wastetrack Team
 	`, username, resetURL)
+
+	return e.sendEmail(toEmail, subject, body)
+}
+
+func (e *EmailHelper) SendEmailChangeConfirmation(toEmail, username, token, baseURL string) error {
+	confirmationURL := fmt.Sprintf("%s/confirm-email-change?token=%s", baseURL, token)
+
+	subject := "Email Change Confirmation - Wastetrack"
+	body := fmt.Sprintf(`
+		Hi %s,
+		
+		You requested to change your email address for your Wastetrack account. 
+		
+		To confirm this change and update your email to: %s
+		
+		Please click the link below:
+		
+		%s
+		
+		This link will expire in 1 hour.
+		
+		If you didn't request this email change, please ignore this email and your account will remain unchanged.
+		
+		Important: After confirming, you'll need to verify this new email address to regain full access to your account.
+		
+		Best regards,
+		Wastetrack Team
+	`, username, toEmail, confirmationURL)
 
 	return e.sendEmail(toEmail, subject, body)
 }
